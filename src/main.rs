@@ -10,6 +10,7 @@ mod terminators;
 mod directives;
 mod file_system;
 mod arguments;
+mod types;
 mod testing;
 
 use crate::abstract_syntax::*;

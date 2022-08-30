@@ -8,6 +8,7 @@ use crate:: {
     enclosures::*,
     terminators::*,
     directives::*,
+    types::*,
 };
 
 #[derive(PartialEq, Debug, Clone)]
@@ -24,6 +25,7 @@ fn create_token(position: SourceFilePosition, item: SourceTokenItem) -> SourceTo
 pub enum SourceTokenItem {
     Directive(Directive),
     Identifier(String),
+    Type(BuiltInType),
     Keyword(Keyword),
     Enclosure(Enclosure),
     Range(Range),
@@ -49,6 +51,10 @@ fn create_identifier_token_item(name: String) -> SourceTokenItem {
 
 fn create_keyword_token_item(keyword: Keyword) -> SourceTokenItem {
     SourceTokenItem::Keyword(keyword)
+}
+
+fn create_type_token_item(built_in_type: BuiltInType) -> SourceTokenItem {
+    SourceTokenItem::Type(built_in_type)
 }
 
 fn create_error_token_item(error: SourceTokenError) -> SourceTokenItem {
@@ -110,7 +116,7 @@ fn peek_next_token_peeks_correctly() {
 
 #[test]
 fn compound_get_next_token_gets_correctly_with_positioning() {
-    let mut lexer = lex("#run 1 + 2");
+    let mut lexer = lex("#run 1 + 2 - 5");
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.position.absolute, 0);
@@ -135,6 +141,18 @@ fn compound_get_next_token_gets_correctly_with_positioning() {
     assert_eq!(token.position.col, 10);
     assert_eq!(token.position.line, 1);
     assert_eq!(token.item, SourceTokenItem::Literal(Literal::Int(2)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.position.absolute, 11);
+    assert_eq!(token.position.col, 12);
+    assert_eq!(token.position.line, 1);
+    assert_eq!(token.item, SourceTokenItem::Operator(Operator::Subtract));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.position.absolute, 13);
+    assert_eq!(token.position.col, 14);
+    assert_eq!(token.position.line, 1);
+    assert_eq!(token.item, SourceTokenItem::Literal(Literal::Int(5)));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.position.absolute, 0);
@@ -213,12 +231,45 @@ fn compound_get_for_for_loop() {
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Close)));
 }
 
+
 #[test]
 fn compound_get_for_function_declaration() {
-    let mut lexer = lex("main :: (a: int, b: float) { }");
+    let mut lexer = lex("SomeFunction :: (x: float) -> void");
 
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Identifier("main".to_string()));
+    assert_eq!(token.item, SourceTokenItem::Identifier("SomeFunction".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::Declaration));
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::Initialise));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::GoesTo));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Void));
+}
+
+#[test]
+fn compound_get_for_function_declaration_two_args() {
+    let mut lexer = lex("SomeFunction :: (a: int, b: float) -> void { }");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("SomeFunction".to_string()));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::Declaration));
@@ -233,7 +284,7 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Keyword(Keyword::Int));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Int));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
@@ -245,10 +296,16 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Keyword(Keyword::Float));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(AssignmentOperator::GoesTo));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Void));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Open)));
@@ -307,6 +364,8 @@ const SOURCE_SYMBOL_COMMA: char = ',';
 const SOURCE_SYMBOL_COLON: char = ':';
 const SOURCE_SYMBOL_EQUALS: char = '=';
 const SOURCE_SYMBOL_ADD: char = '+';
+const SOURCE_SYMBOL_SUBTRACT: char = '-';
+const SOURCE_SYMBOL_GREATER_THAN: char = '>';
 const SOURCE_SYMBOL_PERIOD: char = '.';
 const SOURCE_SYMBOL_OPEN_BRACE: char = '{';
 const SOURCE_SYMBOL_CLOSE_BRACE: char = '}';
@@ -338,6 +397,13 @@ pub fn eat_next_token(lexer: &mut Lexer) {
     get_next_token(lexer);
 }
 
+pub fn try_get_identifier(item: SourceTokenItem) -> Option<String> {
+    if let SourceTokenItem::Identifier(name) = item {
+       return Some(name);
+    }
+    None
+}
+
 fn read_next_token(lexer: &mut Lexer) -> SourceToken {
     eat_white_space(&mut lexer.reader);
     
@@ -355,7 +421,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         eat_next_character(&mut lexer.reader);
         return create_token(
             get_character_position(&next_character), 
-            create_terminator_token_item(create_arg_terminator())
+            create_terminator_token_item(create_arg_separator())
         );
     }
 
@@ -379,6 +445,21 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         return create_token(
             get_character_position(&next_character), 
             create_operator_token_item(create_add_operator())
+        );
+    }
+
+    if is_character(&next_character, SOURCE_SYMBOL_SUBTRACT) {
+        eat_next_character(&mut lexer.reader);
+        if is_character(&peek_next_character(&mut lexer.reader), SOURCE_SYMBOL_GREATER_THAN) {
+            eat_next_character(&mut lexer.reader);
+            return create_token(
+                get_character_position(&next_character), 
+                create_assignment_token_item(create_goes_to_assignment_operator())
+            );
+        }
+        return create_token(
+            get_character_position(&next_character), 
+            create_operator_token_item(create_subtract_operator())
         );
     }
 
@@ -475,6 +556,13 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
             return create_token(
                 get_character_position(&next_character), 
                 create_number_literal_token_item(number)
+            );
+        }
+
+        if let Some(built_in_type) = parse_built_in_type(&alphanumeric_string) {
+            return create_token(
+                get_character_position(&next_character), 
+                create_type_token_item(built_in_type)
             );
         }
 
