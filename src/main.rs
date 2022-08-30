@@ -54,6 +54,11 @@ enum JobResult {
 }
 
 fn process_job_results(results: Vec<JobResult>) -> Option<Vec<JobRequest>> {
+    for result in results {
+        match result {
+            JobResult::FileParsed(tree) => { dbg!(tree); },
+        }
+    }
     None
 }
 

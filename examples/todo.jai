@@ -100,3 +100,5 @@ loop {
 
 wait semaphore handler will halt executiion in a pipe until released by message
 */
+
+//cargo run C:\work\other\rust-hephaestus\examples\calc.jai
