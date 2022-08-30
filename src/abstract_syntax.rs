@@ -262,10 +262,10 @@ pub enum AbstractSyntaxNodeItem {
 }
 
 
-pub fn parse_file(file_name: String) -> AbstractSyntaxTree {
-    match read_file_to_string(&file_name) {
+pub fn parse_file(file_name: &str) -> AbstractSyntaxTree {
+    match read_file_to_string(file_name) {
         Ok(file_content) => parse(&file_content),
-        Err(_) => create_tree(vec!(create_error_node(file_not_found_error(file_name), empty_position())))
+        Err(_) => create_tree(vec!(create_error_node(file_not_found_error(file_name.to_string()), empty_position())))
     }
 }
 
