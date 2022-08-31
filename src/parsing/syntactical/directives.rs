@@ -1,14 +1,14 @@
 use crate::parsing::*;
 
-pub fn parse_directive(directive: Directive, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn parse_directive(directive: Directive, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     match directive {
-        Directive::Run => parse_run_directive(lexer, position),
+        Directive::Run => parse_run_directive(lexer, position, units),
         Directive::Load => parse_load_directive(lexer, position)
     }
 }
 
-fn parse_run_directive(lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(create_run_directive_item(parse_next_node(lexer)), position)
+fn parse_run_directive(lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
+    create_node(create_run_directive_item(parse_next_node(lexer, units)), position)
 }
 
 fn parse_load_directive(lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {

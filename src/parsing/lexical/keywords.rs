@@ -1,7 +1,14 @@
+use crate::parsing::*;
+
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Keyword {
     For,
 }
+
+pub fn create_keyword_token_item(keyword: Keyword) -> SourceTokenItem {
+    SourceTokenItem::Keyword(keyword)
+}
+
 
 type ParseKeywordOption = Option<Keyword>;
 

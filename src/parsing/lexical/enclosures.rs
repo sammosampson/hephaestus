@@ -1,4 +1,4 @@
-use super::tokenisation::*;
+use crate::parsing::*;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum EnclosureType {
@@ -10,6 +10,10 @@ pub enum EnclosureType {
 pub enum Enclosure {
     Brace(EnclosureType),
     Parentheses(EnclosureType),
+}
+
+pub fn create_enclosure_token_item(enclosure: Enclosure) -> SourceTokenItem {
+    SourceTokenItem::Enclosure(enclosure)
 }
 
 pub fn create_open_brace_enclosure() -> Enclosure {

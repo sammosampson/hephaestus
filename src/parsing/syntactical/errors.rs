@@ -1,8 +1,7 @@
 use crate::parsing::*;
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum AbstractSyntaxParseError {
-    FileNotFoundError(String),
+pub enum ParseError {
     ExpectedFileName,
     ExpectedOpenBrace,
     ExpectedArgName,
@@ -13,42 +12,38 @@ pub enum AbstractSyntaxParseError {
     Unimplemented
 }
 
-pub fn create_error_node(error: AbstractSyntaxParseError, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn create_error_node(error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNode {
     create_node(AbstractSyntaxNodeItem::Error(error), position)
 }
 
-pub fn tokenisation_error(error: SourceTokenError) -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::TokenisationError(error)
+pub fn tokenisation_error(error: SourceTokenError) -> ParseError {
+    ParseError::TokenisationError(error)
 }
 
-pub fn unimplemented_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::Unimplemented
+pub fn unimplemented_error() -> ParseError {
+    ParseError::Unimplemented
 }
 
-pub fn expected_open_brace_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::ExpectedOpenBrace
+pub fn expected_open_brace_error() -> ParseError {
+    ParseError::ExpectedOpenBrace
 }
 
-pub fn expected_arg_name_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::ExpectedArgName
+pub fn expected_arg_name_error() -> ParseError {
+    ParseError::ExpectedArgName
 }
 
-pub fn expected_initialise_assignment_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::ExpectedArgInitialise
+pub fn expected_initialise_assignment_error() -> ParseError {
+    ParseError::ExpectedArgInitialise
 }
 
-pub fn expected_arg_separator_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::ExpectedArgSeparator
+pub fn expected_arg_separator_error() -> ParseError {
+    ParseError::ExpectedArgSeparator
 }
 
-pub fn expected_type_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::ExpectedType
+pub fn expected_type_error() -> ParseError {
+    ParseError::ExpectedType
 }
 
-pub fn expected_file_name_error() -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::ExpectedFileName
-}
-
-pub fn file_not_found_error(file_name: String) -> AbstractSyntaxParseError {
-    AbstractSyntaxParseError::FileNotFoundError(file_name)
+pub fn expected_file_name_error() -> ParseError {
+    ParseError::ExpectedFileName
 }

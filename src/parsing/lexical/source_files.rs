@@ -1,5 +1,5 @@
 use std::{ iter::*, str::* };
-use crate::parsing::source_files::*;
+use crate::parsing::*;
 
 type CharacterEnumerator<'a> = Enumerate<Chars<'a>>;
 const CHARACTER_LF: char = '\n';

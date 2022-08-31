@@ -1,109 +1,4 @@
-use std::num::*;
-
-use super:: {
-    source_files::*,
-    literals::*,
-    operators::*,
-    keywords::*,
-    ranges::*,
-    enclosures::*,
-    terminators::*,
-    directives::*,
-    types::*,
-};
-use crate::parsing::source_files::*;
-
-#[derive(PartialEq, Debug, Clone)]
-pub struct SourceToken {
-    pub position: SourceFilePosition,
-    pub item: SourceTokenItem
-}
-
-fn create_token(position: SourceFilePosition, item: SourceTokenItem) -> SourceToken {
-    SourceToken { position, item }
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum SourceTokenItem {
-    Directive(Directive),
-    Identifier(String),
-    Type(BuiltInType),
-    Keyword(Keyword),
-    Enclosure(Enclosure),
-    Range(Range),
-    Operator(Operator),
-    Assignment(AssignmentOperator),
-    Literal(Literal),
-    Terminator(Terminator),
-    Error(SourceTokenError),
-    Eof
-}
-
-fn create_eof_token_item() -> SourceTokenItem {
-    SourceTokenItem::Eof
-}
-
-fn create_directive_token_item(directive: Directive) -> SourceTokenItem {
-    SourceTokenItem::Directive(directive)
-}
-
-fn create_identifier_token_item(name: String) -> SourceTokenItem {
-    SourceTokenItem::Identifier(name)
-}
-
-fn create_keyword_token_item(keyword: Keyword) -> SourceTokenItem {
-    SourceTokenItem::Keyword(keyword)
-}
-
-fn create_type_token_item(built_in_type: BuiltInType) -> SourceTokenItem {
-    SourceTokenItem::Type(built_in_type)
-}
-
-fn create_error_token_item(error: SourceTokenError) -> SourceTokenItem {
-    SourceTokenItem::Error(error)
-}
-
-fn create_number_literal_token_item(number: usize) -> SourceTokenItem {
-    SourceTokenItem::Literal(Literal::Int(number))
-}
-
-fn create_string_literal_token_item(string: String) -> SourceTokenItem {
-    SourceTokenItem::Literal(Literal::String(string))
-}
-
-fn create_operator_token_item(op: Operator) -> SourceTokenItem {
-    SourceTokenItem::Operator(op)
-}
-
-fn create_assignment_token_item(op: AssignmentOperator) -> SourceTokenItem {
-    SourceTokenItem::Assignment(op)
-}
-
-fn create_range_token_item(range: Range) -> SourceTokenItem {
-    SourceTokenItem::Range(range)
-}
-
-fn create_enclosure_token_item(enclosure: Enclosure) -> SourceTokenItem {
-    SourceTokenItem::Enclosure(enclosure)
-}
-
-fn create_terminator_token_item(terminator: Terminator) -> SourceTokenItem {
-    SourceTokenItem::Terminator(terminator)
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum SourceTokenError {
-    UnknownToken(char),
-    UnknownDirective(String)
-}
-
-fn create_unknown_token_error(token: char) -> SourceTokenError {
-    SourceTokenError::UnknownToken(token)
-}
-
-fn create_unknown_directive_error(name: String) -> SourceTokenError {
-    SourceTokenError::UnknownDirective(name)
-}
+use crate::parsing::*;
 
 const SOURCE_SYMBOL_DIRECTIVE: char = '#';
 const SOURCE_SYMBOL_SEMICOLON: char = ';';
@@ -201,7 +96,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
             eat_next_character(&mut lexer.reader);
             return create_token(
                 get_character_position(&next_character), 
-                create_assignment_token_item(create_goes_to_assignment_operator())
+                create_assignment_token_item(create_goes_to_assignment())
             );
         }
         return create_token(
@@ -214,7 +109,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         eat_next_character(&mut lexer.reader);
         return create_token(
             get_character_position(&next_character), 
-            create_assignment_token_item(create_assign_value_assignment_operator())
+            create_assignment_token_item(create_assign_value_assignment())
         );
     }
 
@@ -224,7 +119,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
             eat_next_character(&mut lexer.reader);
             return create_token(
                 get_character_position(&next_character), 
-                create_assignment_token_item(create_initialise_assign_value_assignment_operator())
+                create_assignment_token_item(create_initialise_assign_value_assignment())
             );
         }
 
@@ -232,13 +127,13 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
             eat_next_character(&mut lexer.reader);
             return create_token(
                 get_character_position(&next_character), 
-                create_assignment_token_item(create_declaration_assignment_operator())
+                create_assignment_token_item(create_declaration_assignment())
             );
         }
 
         return create_token(
             get_character_position(&next_character), 
-            create_assignment_token_item(create_initialise_assignment_operator())
+            create_assignment_token_item(create_initialise_assignment())
         );
     }
 
@@ -347,10 +242,4 @@ fn read_up_until_quotes(lexer: &mut Lexer) -> String {
         &mut lexer.reader, 
         |c| is_character(c, SOURCE_SYMBOL_QUOTES)
     )
-}
-
-type ParseNumberResult = Result<usize, ParseIntError>;
-
-fn parse_number(from: &str) -> ParseNumberResult {
-    from.parse::<usize>()
 }

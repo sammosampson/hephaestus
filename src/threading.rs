@@ -5,7 +5,7 @@ use std::thread;
 
 use crate::collections::*;
 
-type Runnable<T> = Box<dyn Fn() -> T + Send>;
+type Runnable<T> = Box<dyn Fn(&mut Receiver<T>) -> T + Send>;
 pub type ConcurrentSender<T> = Arc<Mutex<Sender<T>>>;
 type ConcurrentAtomicBool = Arc<AtomicBool>;
 type SenderIn<T> = Mutex<Sender<Task<T>>>;
@@ -29,7 +29,14 @@ pub fn create_task<T: Send>(runnable: Runnable<T>, result_sender: ConcurrentSend
 
 pub struct Worker<T: Send> {
     sender_in: SenderIn<T>, 
+    runnable_sender: Mutex<Sender<T>>, 
     is_running: ConcurrentAtomicBool,
+}
+
+fn send_result_to_workers<T: Send + Clone + 'static>(workers: &Workers<T>, result: T) {
+    for worker in workers {
+        worker.runnable_sender.lock().unwrap().send(result.clone());
+    }
 }
 
 fn send_task_to_worker<T: Send + 'static>(worker: &Worker<T>, task: Task<T>) {
@@ -42,13 +49,14 @@ fn create_worker<T: Send + 'static>(sender_out: Sender<()>) -> Worker<T> {
     let (sender_in, receiver) = channel::<Task<T>>();
     let is_running = Arc::new(AtomicBool::new(false));
     let is_running_clone = Arc::clone(&is_running);
-    
+    let (runnable_sender, mut runnable_receiver) = channel::<T>();
+        
     thread::spawn(move || {
         for task in receiver {                
             task.result_sender
                 .lock()
                 .unwrap()
-                .send((task.runnable)())
+                .send((task.runnable)(&mut runnable_receiver))
                 .unwrap(); 
             is_running_clone.store(false, Ordering::Relaxed);
             sender_out.send(()).unwrap();
@@ -57,6 +65,7 @@ fn create_worker<T: Send + 'static>(sender_out: Sender<()>) -> Worker<T> {
 
     Worker {
         sender_in: Mutex::new(sender_in),
+        runnable_sender: Mutex::new(runnable_sender),
         is_running,
     }
 }
@@ -92,6 +101,10 @@ pub fn schedule_task<T: Send + 'static>(thread_pool: &mut ThreadPool<T>, task: T
         let mut queue = thread_pool.tasks.lock().unwrap();
         enqueue(&mut queue, task);
     }
+}
+
+pub fn notify_all_running_tasks_of_result<T: Send + Clone + 'static>(thread_pool: &ThreadPool<T>, result: T) {
+    send_result_to_workers(&thread_pool.workers, result);
 }
 
 pub fn create_thread_pool<T: Send + 'static>(n_workers: u8) -> ThreadPool<T> {

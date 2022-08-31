@@ -9,10 +9,6 @@ pub fn create_source_file_position(absolute: usize, line: usize, col: usize) -> 
     SourceFilePosition { absolute, line, col }
 }
 
-pub fn empty_position() -> SourceFilePosition {
-    SourceFilePosition::default()
-}
-
 pub fn first_character_in_source_file_position() -> SourceFilePosition {
     create_source_file_position(0, 1, 1)
 }

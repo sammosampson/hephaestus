@@ -1,11 +1,4 @@
-use super::tokenisation::*;
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum Type {
-    BuiltIn(BuiltInType),
-    Compound(String)
-}
-
+use crate::parsing::*;
 
 type TypeOption = Option<Type>;
 
@@ -15,13 +8,6 @@ pub fn try_get_type(item: &SourceTokenItem) -> TypeOption {
         SourceTokenItem::Identifier(name) => Some(Type::Compound(name.clone())),
         _ => None
     }
-}
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum BuiltInType {
-    Int,
-    Float,
-    Void
 }
 
 type BuiltInTypeOption = Option<BuiltInType>;
@@ -41,4 +27,8 @@ pub fn parse_built_in_type(from: &str) -> BuiltInTypeOption {
         return Some(BuiltInType::Void);
     }
     None
+}
+
+pub fn create_type_token_item(built_in_type: BuiltInType) -> SourceTokenItem {
+    SourceTokenItem::Type(built_in_type)
 }

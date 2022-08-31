@@ -1,15 +1,17 @@
 use crate::parsing::*;
 
-pub fn parse_function_header(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn parse_function_header(name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     let args = parse_function_args(lexer);
     
     assert!(is_close_paren(&peek_next_token(lexer).item));
     eat_next_token(lexer);
 
     let return_types = parse_function_return_types(lexer);
-    let body = parse_function_body(lexer);
+    let body = create_unit(parse_function_body(lexer));
+    let body_ref = body.id;
+    units.push(body);
 
-    create_node(create_function_declaration_item(name, args, return_types, body), position)
+    create_node(create_function_declaration_item(name, args, return_types, body_ref), position)
 }
 
 fn parse_function_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
@@ -118,8 +120,13 @@ fn parse_function_body_nodes(_lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     vec!()
 }
 
-fn create_function_declaration_item(name: String, arguments: AbstractSyntaxChildNodes, return_types: AbstractSyntaxChildNodes, body: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::FunctionHeader { name, arguments, return_types, body }
+fn create_function_declaration_item(
+    name: String,
+    arguments: AbstractSyntaxChildNodes,
+    return_types: AbstractSyntaxChildNodes,
+    body_ref: CompilationUnitId
+) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::FunctionHeader { name, arguments, return_types, body: CompilationUnitReference::Resolved(body_ref) }
 }
 
 fn create_function_body_item(children: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {

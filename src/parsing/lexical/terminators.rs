@@ -1,9 +1,13 @@
-use super::tokenisation::*;
+use crate::parsing::*;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Terminator {
     Line,
     Arg
+}
+
+pub fn create_terminator_token_item(terminator: Terminator) -> SourceTokenItem {
+    SourceTokenItem::Terminator(terminator)
 }
 
 pub fn create_line_terminator() -> Terminator {
