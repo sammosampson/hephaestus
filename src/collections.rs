@@ -1,17 +1,5 @@
 use std::{borrow::BorrowMut, mem::take};
 
-#[test]
-fn test_queue() {
-    let mut q = create_queue::<u32>();
-    enqueue(&mut q, 1);
-    enqueue(&mut q, 2);
-    enqueue(&mut q, 3);
-    assert_eq!(dequeue(&mut q), Some(1));
-    assert_eq!(dequeue(&mut q), Some(2));
-    assert_eq!(dequeue(&mut q), Some(3));
-    assert!(is_queue_empty(&q));
-}
-
 struct QueueNode<T> {
     value: T,
     next: Option<Box<QueueNode<T>>>,

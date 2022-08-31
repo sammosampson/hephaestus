@@ -1,4 +1,4 @@
-use crate::tokenisation::*;
+use super::tokenisation::*;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Type {
