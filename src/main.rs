@@ -1,4 +1,6 @@
+#[cfg(test)]
 mod tests;
+
 mod parsing;
 mod file_system;
 mod arguments;

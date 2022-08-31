@@ -1,5 +1,8 @@
 use crate::parsing::*;
-use super::assert_fail;
+
+fn assert_fail(failure_text: &str) {
+    panic!("asertion failed: {failure_text}")
+}
 
 #[test]
 fn parse_empty_input_parses_correctly() {
