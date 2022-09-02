@@ -15,3 +15,7 @@ fn main() {
         None => panic!("No compilation file name argument passed")
     }
 }
+
+struct Node {
+    name: String
+}

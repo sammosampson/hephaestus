@@ -7,9 +7,9 @@ pub enum FileParseResult {
     NotFound(String),
 }
 
-pub fn parse_file(file_name: String) -> FileParseResult {
-    match read_file_to_string(&file_name) {
-        Ok(file_content) => FileParseResult::CompilationUnits { file_name, units: parse(&file_content) },
+pub fn parse_file(file_name: &str) -> FileParseResult {
+    match read_file_to_string(file_name) {
+        Ok(file_content) => FileParseResult::CompilationUnits { file_name: file_name.to_string(), units: parse(&file_content) },
         Err(_) => FileParseResult::NotFound(file_name.to_string())
     }
 }

@@ -1,4 +1,12 @@
-use std::sync::mpsc::*;
+use std::{
+    sync::{
+        mpsc::*,
+        Arc,
+        Mutex
+    },
+    ops::DerefMut
+};
+
 use crate::{
     parsing::*,
     typing::*,
@@ -110,8 +118,9 @@ fn enqueue_job(job_queue: &mut JobQueue, job: JobRequest) {
     );
 }
 
-#[derive(Clone)]
-enum JobRequest {
+type JobRequest = Concurrent<JobRequestItem>;
+
+enum JobRequestItem {
     ParseFile(String),
     PerformTyping(CompilationUnit),
 }
@@ -119,16 +128,16 @@ enum JobRequest {
 type JobRequests = Vec<JobRequest>;
 
 fn parse_file_job_request(file_name: String) -> JobRequest {
-    JobRequest::ParseFile(file_name)
+    create_concurrent(JobRequestItem::ParseFile(file_name))
 }
 
 fn perform_typing_job_request(unit: CompilationUnit) -> JobRequest {
-    JobRequest::PerformTyping(unit)
+    create_concurrent(JobRequestItem::PerformTyping(unit))
 }
 
 fn handle_job_request(job: JobRequest, runnable_receiver: &mut JobResultReceiver) -> JobResult {
-    match job {
-        JobRequest::ParseFile(file_name) => JobResult::FileParsed(parse_file(file_name)),
-        JobRequest::PerformTyping(unit) => JobResult::UnitTyped(perform_typing(unit, runnable_receiver)),
+    match lock(&job).deref_mut() {
+        JobRequestItem::ParseFile(file_name) => JobResult::FileParsed(parse_file(file_name)),
+        JobRequestItem::PerformTyping(unit) => JobResult::UnitTyped(perform_typing(unit, runnable_receiver)),
     }
 }
