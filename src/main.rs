@@ -16,6 +16,3 @@ fn main() {
     }
 }
 
-struct Node {
-    name: String
-}

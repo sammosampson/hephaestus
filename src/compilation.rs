@@ -1,9 +1,5 @@
 use std::{
-    sync::{
-        mpsc::*,
-        Arc,
-        Mutex
-    },
+    sync::mpsc::*,
     ops::DerefMut
 };
 

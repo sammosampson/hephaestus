@@ -48,7 +48,6 @@ pub fn parse_next_node(lexer: &mut Lexer, units: &mut CompilationUnits) -> Abstr
     }
 }
 
-
 fn create_eof_item() -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Eof
 }

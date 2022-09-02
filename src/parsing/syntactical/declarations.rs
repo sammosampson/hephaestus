@@ -6,7 +6,7 @@ pub fn parse_declaration(name: String, lexer: &mut Lexer, position: SourceFilePo
     } 
     eat_next_token(lexer);
 
-    parse_function_header(name, lexer, position, units)
+    parse_procedure_header(name, lexer, position, units)
 }
 
 fn create_constant_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {

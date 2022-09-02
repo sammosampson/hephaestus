@@ -19,20 +19,27 @@ impl AbstractSyntaxNode {
 pub enum AbstractSyntaxNodeItem {
     Run { expr: AbstractSyntaxNode },
     Load { file_name: String },
-    FunctionHeader {
+    ProcedureHeader {
         name: String,
         arguments: AbstractSyntaxChildNodes,
         return_types: AbstractSyntaxChildNodes,
         body: CompilationUnitReference
     },
-    FunctionBody(AbstractSyntaxChildNodes),
+    ProcedureBody(AbstractSyntaxChildNodes),
+    ProcedureCall {
+        name: String,
+        arguments: AbstractSyntaxChildNodes,
+        arg_type: Type
+    },
     ArgumentDeclaration { name: String, arg_type: Type },
+    Argument { expr: AbstractSyntaxNode, arg_type: Type },
     Type(Type),
     Constant {
         name: String,
         value: AbstractSyntaxNode
     },
     Literal(Literal),
+    Identifier(String),
     BinaryExpr {
         op: Operator,
         lhs: AbstractSyntaxNode,

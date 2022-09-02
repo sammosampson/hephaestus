@@ -1,0 +1,111 @@
+use crate::parsing::*;
+
+#[test]
+fn compound_get_for_function_declaration() {
+    let mut lexer = lex("SomeFunction :: (x: float) -> void");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("SomeFunction".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Declaration));
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::GoesTo));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Void));
+}
+
+#[test]
+fn compound_get_for_function_declaration_two_args() {
+    let mut lexer = lex("SomeFunction :: (a: int, b: float) -> void { }");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("SomeFunction".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Declaration));
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("a".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Int));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("b".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::GoesTo));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Void));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Close)));
+
+}
+
+#[test]
+fn compound_get_for_function_call() {
+    let mut lexer = lex("main(a, 2);");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("main".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("a".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Literal(Literal::Int(2)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
+
+}
