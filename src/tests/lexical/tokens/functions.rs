@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::typing::*;
 
 #[test]
 fn compound_get_for_function_declaration() {
@@ -20,7 +21,7 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float32));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
@@ -31,6 +32,43 @@ fn compound_get_for_function_declaration() {
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Void));
 }
+
+#[test]
+fn compound_get_for_function_declaration_with_body() {
+    let mut lexer = lex("SomeFunction :: () {
+    x := 1;
+}");
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("SomeFunction".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Declaration));
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Open)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::InitialiseAssignValue));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Literal(Literal::Int(1)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Close)));
+}
+
 
 #[test]
 fn compound_get_for_function_declaration_two_args() {
@@ -52,7 +90,7 @@ fn compound_get_for_function_declaration_two_args() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Int));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Int32));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
@@ -64,7 +102,7 @@ fn compound_get_for_function_declaration_two_args() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float32));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));

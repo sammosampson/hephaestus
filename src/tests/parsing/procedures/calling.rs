@@ -1,11 +1,19 @@
 use crate::parsing::*;
+use crate::typing::*;
 
 #[test]
 fn parse_procedure_call_parses_correctly() {
-    let ast = parse("#run SomeProcedure()");
-    assert_eq!(ast.len(), 1);
+    let file_path = "test.hep";
+    
+    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
+        file_path, 
+        "#run SomeProcedure()"
+    );
+       
+    assert_eq!(actual_file_path, file_path.to_string());
+    assert_eq!(units.len(), 1);
     assert_eq!(
-        ast[0].tree, 
+        units[0].tree, 
         AbstractSyntaxNode {
             item: Box::new(
                 AbstractSyntaxNodeItem::Run {
@@ -13,8 +21,8 @@ fn parse_procedure_call_parses_correctly() {
                         item: Box::new(
                             AbstractSyntaxNodeItem::ProcedureCall {
                                 name: "SomeProcedure".to_string(),
-                                arguments: vec!(),
-                                arg_type: Type::Unknown
+                                args: vec!(),
+                                arg_type: ResolvableType::Unresolved
                             }
                         ),
                         position: SourceFilePosition { absolute: 5, line: 1, col: 6 }
@@ -28,10 +36,18 @@ fn parse_procedure_call_parses_correctly() {
 
 #[test]
 fn parse_procedure_call_with_arg_parses_correctly() {
-    let ast = parse("#run SomeProcedure(a, b)");
-    assert_eq!(ast.len(), 1);
+    let content = "#run SomeProcedure(a, b)";
+    let file_path = "test.hep";
+    
+    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
+        file_path, 
+        content
+    );
+       
+    assert_eq!(actual_file_path, file_path.to_string());
+    assert_eq!(units.len(), 1);
     assert_eq!(
-        ast[0].tree, 
+        units[0].tree, 
         AbstractSyntaxNode {
             item: Box::new(
                 AbstractSyntaxNodeItem::Run {
@@ -39,7 +55,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                         item: Box::new(
                             AbstractSyntaxNodeItem::ProcedureCall {
                                 name: "SomeProcedure".to_string(),
-                                arguments: vec!(
+                                args: vec!(
                                     AbstractSyntaxNode {
                                         item: Box::new(
                                             AbstractSyntaxNodeItem::Argument { 
@@ -49,7 +65,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                                     ),
                                                     position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
                                                 },
-                                                arg_type: Type::Unknown
+                                                arg_type: ResolvableType::Unresolved
                                             }
                                         ),
                                         position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
@@ -63,13 +79,13 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                                     ),
                                                     position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
                                                 },
-                                                arg_type: Type::Unknown
+                                                arg_type: ResolvableType::Unresolved
                                             }
                                         ),
                                         position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
                                     }
                                 ),
-                                arg_type: Type::Unknown
+                                arg_type: ResolvableType::Unresolved
                             }
                         ),
                         position: SourceFilePosition { absolute: 5, line: 1, col: 6 }

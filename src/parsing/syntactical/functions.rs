@@ -1,7 +1,8 @@
 use crate::parsing::*;
+use crate::typing::*;
 
-pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
-    let arguments = parse_procedure_call_args(lexer, units);
+pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+    let arguments = parse_procedure_call_args(lexer);
     
     assert!(is_close_paren(&peek_next_token(lexer).item));
     eat_next_token(lexer);
@@ -9,7 +10,7 @@ pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFil
     create_node(create_procedure_call_item(name, arguments), position)
 }
 
-fn parse_procedure_call_args(lexer: &mut Lexer, units: &mut CompilationUnits) -> Vec<AbstractSyntaxNode> {
+fn parse_procedure_call_args(lexer: &mut Lexer) -> Vec<AbstractSyntaxNode> {
     let mut args = vec!();
 
     if is_close_paren(&peek_next_token(lexer).item) {
@@ -17,7 +18,7 @@ fn parse_procedure_call_args(lexer: &mut Lexer, units: &mut CompilationUnits) ->
     }
 
     loop {
-        args.push(parse_procedure_call_arg(lexer, units));
+        args.push(parse_procedure_call_arg(lexer));
 
         let next_token = peek_next_token(lexer);
         
@@ -34,16 +35,28 @@ fn parse_procedure_call_args(lexer: &mut Lexer, units: &mut CompilationUnits) ->
     }
 }
 
-fn parse_procedure_call_arg(lexer: &mut Lexer, units: &mut CompilationUnits) -> AbstractSyntaxNode {
-    let expr = parse_next_node(lexer, units);
+fn parse_procedure_call_arg(lexer: &mut Lexer) -> AbstractSyntaxNode {
+    let expr = parse_procedure_call_arg_expr(lexer);
     let pos = expr.position;
 
     create_node(
         create_arg_item(
             expr, 
-            Type::Unknown
+            ResolvableType::Unresolved
         ), 
         pos)        
+}
+
+pub fn parse_procedure_call_arg_expr(lexer: &mut Lexer) -> AbstractSyntaxNode {
+    let token = get_next_token(lexer);
+
+    match token.item {
+        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position),
+        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
+        SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
+        SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
+        _ => create_error_node(unimplemented_error(), token.position),
+    }
 }
 
 pub fn parse_procedure_header(name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
@@ -153,7 +166,7 @@ fn parse_procedure_body(lexer: &mut Lexer) -> AbstractSyntaxNode {
     }
 
     let brace = get_next_token(lexer);
-    let children = parse_procedure_body_nodes(lexer);
+    let children = parse_procedure_body_lines(lexer);
     
     assert!(is_close_brace(&peek_next_token(lexer).item));
     eat_next_token(lexer);
@@ -161,8 +174,35 @@ fn parse_procedure_body(lexer: &mut Lexer) -> AbstractSyntaxNode {
     create_node(create_procedure_body_item(children), brace.position)
 }
 
-fn parse_procedure_body_nodes(_lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
-    vec!()
+fn parse_procedure_body_lines(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+    if is_close_brace(&peek_next_token(lexer).item) {
+        return vec!();
+    }
+    
+    let mut lines = vec!();
+
+    loop {
+        lines.push(parse_procedure_body_line(lexer));
+
+        if is_line_terminiator(&peek_next_token(lexer).item) {
+            eat_next_token(lexer)
+        }
+
+        if is_close_brace(&peek_next_token(lexer).item) {
+            return lines
+        }
+    }
+}
+
+pub fn parse_procedure_body_line(lexer: &mut Lexer) -> AbstractSyntaxNode {
+    let token = get_next_token(lexer);
+
+    match token.item {
+        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position),
+        SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
+        SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
+        _ => create_error_node(unimplemented_error(), token.position),
+    }
 }
 
 fn create_procedure_header_item(
@@ -171,7 +211,7 @@ fn create_procedure_header_item(
     return_types: AbstractSyntaxChildNodes,
     body_ref: CompilationUnitId
 ) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureHeader { name, arguments, return_types, body: CompilationUnitReference::Resolved(body_ref) }
+    AbstractSyntaxNodeItem::ProcedureHeader { name, args: arguments, return_types, body: CompilationUnitReference::Resolved(body_ref) }
 }
 
 fn create_procedure_body_item(children: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
@@ -179,17 +219,17 @@ fn create_procedure_body_item(children: AbstractSyntaxChildNodes) -> AbstractSyn
 }
 
 fn create_procedure_call_item(name: String, arguments: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureCall { name, arguments, arg_type: Type::Unknown }
+    AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, arg_type: ResolvableType::Unresolved }
 }
 
-fn create_arg_declaraton_item(name: String, arg_type: Type) -> AbstractSyntaxNodeItem {
+fn create_arg_declaraton_item(name: String, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::ArgumentDeclaration { name, arg_type }
 }
 
-fn create_arg_item(expr: AbstractSyntaxNode, arg_type: Type) -> AbstractSyntaxNodeItem {
+fn create_arg_item(expr: AbstractSyntaxNode, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Argument { expr, arg_type }
 }
 
-fn create_type_item(t: Type) -> AbstractSyntaxNodeItem {
+fn create_type_item(t: ResolvableType) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Type(t)
 }

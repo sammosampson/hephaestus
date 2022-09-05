@@ -1,5 +1,28 @@
 use crate::file_system::*;
 use crate::parsing::*;
+use crate::acting::*;
+use crate::compilation::*;
+
+pub struct ParserActor<T: FileRead> { file_reader: T }
+
+pub fn create_parser_actor<T: FileRead>(file_reader: T) -> ParserActor<T>  {
+    ParserActor { file_reader }
+}
+
+impl<T: FileRead> Actor<CompilationMessage> for ParserActor<T>  {
+    fn receive(&self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
+        match message {
+            CompilationMessage::ParseFile(file_name, compiler_handle) => handle_parse_file(&self.file_reader, file_name, compiler_handle),
+            _ => continue_listening_after_receive()
+        }
+    }
+}
+
+fn handle_parse_file<T: FileRead>(file_reader: &T, file_name: String, compiler_handle: ActorHandle<CompilationMessage>) -> AfterReceiveAction {
+    let result = parse_file(file_reader, &file_name);
+    send_message_to_actor(&compiler_handle, create_file_parsed_event(result));
+    shutdown_after_receive()
+}
 
 #[derive(Clone)]
 pub enum FileParseResult {
@@ -7,9 +30,12 @@ pub enum FileParseResult {
     NotFound(String),
 }
 
-pub fn parse_file(file_name: &str) -> FileParseResult {
-    match read_file_to_string(file_name) {
-        Ok(file_content) => FileParseResult::CompilationUnits { file_name: file_name.to_string(), units: parse(&file_content) },
+pub fn parse_file<T: FileRead>(file_reader: &T, file_name: &str) -> FileParseResult {
+    match file_reader.read_file_to_string(file_name) {
+        Ok(file_content) => FileParseResult::CompilationUnits { 
+            file_name: file_name.to_string(), 
+            units: parse(&file_content) 
+        },
         Err(_) => FileParseResult::NotFound(file_name.to_string())
     }
 }
@@ -39,17 +65,13 @@ pub fn parse_next_node(lexer: &mut Lexer, units: &mut CompilationUnits) -> Abstr
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position, units),
-        SourceTokenItem::Directive(name) => parse_directive(name, lexer, token.position, units),
-        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position, units),
+        SourceTokenItem::Identifier(name) => parse_top_level_identifier(name, lexer, token.position, units),
+        SourceTokenItem::Directive(name) => parse_directive(name, lexer, token.position),
+        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
         _ => create_error_node(unimplemented_error(), token.position),
     }
-}
-
-fn create_eof_item() -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Eof
 }
 
 pub fn create_node(item: AbstractSyntaxNodeItem, position: SourceFilePosition) -> AbstractSyntaxNode {

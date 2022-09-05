@@ -2,10 +2,16 @@ use crate::parsing::*;
 
 #[test]
 fn parse_const_declaration_parses_correctly() {
-    let ast = parse("SomeValue :: 1");
+    let file_path = "test.hep";
     
+    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
+        file_path, 
+        "SomeValue :: 1"
+    );
+       
+    assert_eq!(actual_file_path, file_path.to_string());
     assert_eq!(
-        ast[0].tree, 
+        units[0].tree, 
         AbstractSyntaxNode {
             item: Box::new(
                 AbstractSyntaxNodeItem::Constant {

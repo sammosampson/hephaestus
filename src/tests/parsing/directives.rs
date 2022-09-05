@@ -1,11 +1,18 @@
 use crate::parsing::*;
 
 #[test]
-fn parse_run_directive_parses_correctly() {
-    let ast = parse("#run 1 + 2");
-    assert_eq!(ast.len(), 1);
+fn parse_run_directive_parses_correctly() {    
+    let file_path = "test.hep";
+    
+    let (actual_file_path, units) = crate::tests::parsing::run_parse_file(
+        file_path, 
+        "#run 1 + 2"
+    );
+    
+    assert_eq!(actual_file_path, file_path.to_string());
+    assert_eq!(units.len(), 1);
     assert_eq!(
-        ast[0].tree, 
+        units[0].tree, 
         AbstractSyntaxNode {
             item: Box::new(
                 AbstractSyntaxNodeItem::Run {
@@ -35,10 +42,17 @@ fn parse_run_directive_parses_correctly() {
 
 #[test]
 fn parse_load_directive_parses_correctly() {
-    let ast = parse("#load \"test.jai\"");
-    assert_eq!(ast.len(), 1);
+    let file_path = "test.hep";
+    
+    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
+        file_path, 
+        "#load \"test.jai\""
+    );
+       
+    assert_eq!(actual_file_path, file_path.to_string());
+    assert_eq!(units.len(), 1);
     assert_eq!(
-        ast[0].tree, 
+        units[0].tree, 
         AbstractSyntaxNode {
             item: Box::new(
                 AbstractSyntaxNodeItem::Load {

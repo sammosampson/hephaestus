@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::typing::*;
 
 pub type AbstractSyntaxChildNodeItem = Box<AbstractSyntaxNodeItem>;
 pub type AbstractSyntaxChildNodes = Vec<AbstractSyntaxNode>;
@@ -21,20 +22,24 @@ pub enum AbstractSyntaxNodeItem {
     Load { file_name: String },
     ProcedureHeader {
         name: String,
-        arguments: AbstractSyntaxChildNodes,
+        args: AbstractSyntaxChildNodes,
         return_types: AbstractSyntaxChildNodes,
         body: CompilationUnitReference
     },
     ProcedureBody(AbstractSyntaxChildNodes),
     ProcedureCall {
         name: String,
-        arguments: AbstractSyntaxChildNodes,
-        arg_type: Type
+        args: AbstractSyntaxChildNodes,
+        arg_type: ResolvableType
     },
-    ArgumentDeclaration { name: String, arg_type: Type },
-    Argument { expr: AbstractSyntaxNode, arg_type: Type },
-    Type(Type),
+    ArgumentDeclaration { name: String, arg_type: ResolvableType },
+    Argument { expr: AbstractSyntaxNode, arg_type: ResolvableType },
+    Type(ResolvableType),
     Constant {
+        name: String,
+        value: AbstractSyntaxNode
+    },
+    Assignment {
         name: String,
         value: AbstractSyntaxNode
     },

@@ -11,7 +11,6 @@ pub type Concurrent<T> = Shareable<Lockable<T>>;
 pub type Notifier = Sender<()>;
 pub type NotificationReceiver = Receiver<()>;
 pub type ConcurrentSender<T> = Concurrent<Sender<T>>;
-pub type LockableMessageSender<T> = Lockable<Sender<T>>;
 type ConcurrentBool = Shareable<AtomicBool>;
 
 pub fn lock<T>(to_lock: &Lockable<T>) -> Locked<T> {
@@ -21,7 +20,6 @@ pub fn lock<T>(to_lock: &Lockable<T>) -> Locked<T> {
 fn create_lockable<T>(to_wrap: T) -> Lockable<T> {
     Mutex::new(to_wrap)
 }
-
 
 pub fn create_sharable<T>(to_wrap: T) -> Shareable<T> {
     Arc::new(to_wrap)
@@ -36,7 +34,9 @@ pub fn create_concurrent<T>(to_wrap: T) -> Concurrent<T> {
 }
 
 fn send<T>(sender: &Sender<T>, to_send: T) {
-    sender.send(to_send).unwrap();
+    if let Err(error) = sender.send(to_send) {
+        println!("error sending message in threading: {}", error)
+    }
 }
 
 fn notify(sender: &Notifier) {
@@ -63,30 +63,34 @@ pub fn set_concurrent_bool(to_set: &ConcurrentBool, to: bool) {
     to_set.store(to, Ordering::Relaxed)
 }
 
-pub fn get_concurrent_bool_value(is_running: Arc<AtomicBool>) -> bool {
-    is_running.load(Ordering::Relaxed)
+
+pub trait ParallelisableClone: Parallelisable + Clone {
 }
 
-pub trait Parallelisable: Send + Clone + 'static {
+pub trait Parallelisable: Send + 'static {
 }
 
 impl<T> Parallelisable for T 
-    where T: Send + Clone + 'static {
+    where T: Send + 'static {
 }
 
-pub type ParallelisableRunner<T> = Box<dyn Fn(&mut Receiver<T>) -> T + Send>;
+impl<T> ParallelisableClone for T 
+    where T: Parallelisable + Clone {
+}
+
+pub type ParallelisableRunner<T> = Box<dyn FnOnce() -> T + Send>;
 type LockableTaskMessageSender<T> = Lockable<Sender<Task<T>>>;
 type Workers<T> = Vec<Worker<T>>;
 type ShareableWorkers<T> = Shareable<Workers<T>>;
 type ConcurrentTasks<T> = Concurrent<Tasks<T>>;
 type Tasks<T> = Queue<Task<T>>;
 
-pub struct ThreadPool<T: Parallelisable> {
+pub struct ThreadPool<T: ParallelisableClone> {
     workers: ShareableWorkers<T>, 
     tasks: ConcurrentTasks<T>
 }
 
-pub fn schedule_task<T: Parallelisable>(thread_pool: &mut ThreadPool<T>, task: Task<T>) {
+pub fn schedule_task<T: ParallelisableClone>(thread_pool: &ThreadPool<T>, task: Task<T>) {
     if let Some(worker) = find_and_acquire_free_worker(&thread_pool.workers) {            
         send_task_to_worker(worker, task);
     } else {
@@ -94,15 +98,7 @@ pub fn schedule_task<T: Parallelisable>(thread_pool: &mut ThreadPool<T>, task: T
     }
 }
 
-pub fn is_thread_pool_performing_work<T: Parallelisable>(thread_pool: &ThreadPool<T>) -> bool {
-    !are_all_workers_free(&clone_shareable(&thread_pool.workers))
-}
-
-pub fn notify_all_running_tasks_of_result<T: Parallelisable>(thread_pool: &ThreadPool<T>, result: T) {
-    send_result_to_workers(&thread_pool.workers, result);
-}
-
-pub fn create_thread_pool<T: Parallelisable>(number_of_workers: u8) -> ThreadPool<T> {
+pub fn create_thread_pool<T: ParallelisableClone>(number_of_workers: u8) -> ThreadPool<T> {
     let (
         worker_free_notifier, 
         worker_free_notification_receiver
@@ -127,7 +123,7 @@ pub fn create_thread_pool<T: Parallelisable>(number_of_workers: u8) -> ThreadPoo
     }
 }
 
-fn start_schedule_tasks_thread<T: Parallelisable>(
+fn start_schedule_tasks_thread<T: ParallelisableClone>(
     worker_free_notification_receiver: NotificationReceiver, 
     tasks: ConcurrentTasks<T>,
     workers: ShareableWorkers<T>
@@ -145,38 +141,31 @@ fn start_schedule_tasks_thread<T: Parallelisable>(
 
 
 
-pub struct Task<T: Parallelisable> {
+pub struct Task<T: ParallelisableClone> {
     runnable: ParallelisableRunner<T>,
     result_sender: ConcurrentSender<T>,
 }
 
-pub fn create_task<T: Parallelisable>(runnable: ParallelisableRunner<T>, result_sender: ConcurrentSender<T>) -> Task<T> {
+pub fn create_task<T: ParallelisableClone>(runnable: ParallelisableRunner<T>, result_sender: ConcurrentSender<T>) -> Task<T> {
     Task {
         runnable,
         result_sender,
     }
 }
 
-struct Worker<T: Parallelisable> {
+struct Worker<T: ParallelisableClone> {
     task_sender: LockableTaskMessageSender<T>, 
-    runnable_sender: LockableMessageSender<T>, 
     is_running: ConcurrentBool,
 }
 
-fn send_result_to_workers<T: Parallelisable>(workers: &Workers<T>, result: T) {
-    for worker in workers {
-        send(&lock(&worker.runnable_sender),result.clone());
-    }
-}
-
-fn send_task_to_worker<T: Parallelisable>(worker: &Worker<T>, task: Task<T>) {
+fn send_task_to_worker<T: ParallelisableClone>(worker: &Worker<T>, task: Task<T>) {
     if let Err(e) = lock(&worker.task_sender).send(task) {
         println!("{}", e);
     }
 }
 
 
-fn create_workers<T: Parallelisable>(number_of_workers: u8, worker_free_notifier: Notifier) -> ShareableWorkers<T> {
+fn create_workers<T: ParallelisableClone>(number_of_workers: u8, worker_free_notifier: Notifier) -> ShareableWorkers<T> {
     let mut workers = vec![];
 
     for _ in 0..number_of_workers {
@@ -186,15 +175,14 @@ fn create_workers<T: Parallelisable>(number_of_workers: u8, worker_free_notifier
     create_sharable(workers)
 }
 
-fn create_worker<T: Parallelisable>(worker_free_notifier: Notifier) -> Worker<T> {
+fn create_worker<T: ParallelisableClone>(worker_free_notifier: Notifier) -> Worker<T> {
     let (worker_task_sender, worker_task_receiver) = channel::<Task<T>>();
-    let (runnable_sender, mut runnable_receiver) = channel::<T>();
     let is_running = create_concurrent_bool();
     let shared_is_running = is_running.clone();    
 
     thread::spawn(move || {
         for task in worker_task_receiver {                
-            send(&lock(&task.result_sender), (task.runnable)(&mut runnable_receiver)); 
+            send(&lock(&task.result_sender), (task.runnable)()); 
             set_concurrent_bool(&clone_shareable(&shared_is_running), false);
             notify(&worker_free_notifier);
         }
@@ -202,20 +190,15 @@ fn create_worker<T: Parallelisable>(worker_free_notifier: Notifier) -> Worker<T>
 
     Worker {
         task_sender: create_lockable(worker_task_sender),
-        runnable_sender: create_lockable(runnable_sender),
         is_running,
     }
 }
 
-fn are_all_workers_free<T: Parallelisable>(workers: &Workers<T>) -> bool {
-    workers.iter().all(|worker| get_concurrent_bool_value(worker.is_running.clone()))
-}
-
-fn find_and_acquire_free_worker<T: Parallelisable>(workers: &Workers<T>) -> Option<&Worker<T>> {
+fn find_and_acquire_free_worker<T: ParallelisableClone>(workers: &Workers<T>) -> Option<&Worker<T>> {
     workers.iter().find(|worker| acquire_free_worker(*worker))
 }
 
-fn acquire_free_worker<T: Parallelisable>(worker: &Worker<T>) -> bool {
+fn acquire_free_worker<T: ParallelisableClone>(worker: &Worker<T>) -> bool {
     match compare_and_exchange_concurrent_bool_value(&worker.is_running, false, true) {
         Ok(_) => true,
         Err(_) => false,

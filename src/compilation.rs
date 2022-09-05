@@ -1,139 +1,118 @@
-use std::{
-    sync::mpsc::*,
-    ops::DerefMut
-};
-
 use crate::{
     parsing::*,
     typing::*,
-    threading::*
+    acting::*,
+    file_system::*
 };
 
-pub fn compile(file_name: String) {
-    let mut job_queue = create_job_queue();
-    enqueue_job(&mut job_queue, parse_file_job_request(file_name));
-    process_jobs(job_queue);
-}
-
-fn process_jobs(mut job_queue: JobQueue) {
-    loop {
-        let jobs = process_job_results(&job_queue, drain_job_results(&job_queue));
-        
-        if jobs.len() == 0 && !are_any_jobs_active(&job_queue) {
-            break;
-        }
-        
-        enqueue_jobs(&mut job_queue, jobs);
-    }
-}
-
 #[derive(Clone)]
-pub enum JobResult {
+pub enum CompilationMessage {
+    Compile(String),
+    ParseFile(String, CompilationActorHandle),
     FileParsed(FileParseResult),
-    UnitTyped(CompilationUnitId)
+    PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
+    UnitTyped(ResolvedTypes, CompilationUnit),
+    FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
+    TypeFound(ResolvedTypeId)
 }
 
-type JobResults = Vec<JobResult>;
-pub type JobResultReceiver = Receiver<JobResult>;
+pub type CompilationActorHandle = ActorHandle<CompilationMessage>;
+pub type CompilationMessageContext = ActorContext<CompilationMessage>;
 
-fn process_job_results(job_queue: &JobQueue, results: JobResults) -> JobRequests {
-    let mut jobs = vec!();
 
-    for result in results {
-        notify_all_jobs_of_result(job_queue, result.clone());
-
-        match result {
-            JobResult::FileParsed(result) => match result {
-                FileParseResult::CompilationUnits { units, .. } => { 
-                    process_parsed_compilation_units(units, &mut jobs);
-                },
-                FileParseResult::NotFound(file_name) => {
-                    process_parse_file_not_found(file_name, &mut jobs);
-                }
-            }
-            JobResult::UnitTyped(_) => todo!(),
-        }       
-    }
-
-    jobs
+fn create_compile_command(file_name: String) -> CompilationMessage {
+    CompilationMessage::Compile(file_name)
 }
 
-fn process_parsed_compilation_units(units: CompilationUnits, jobs: &mut JobRequests) {
-    for unit in units {
-        jobs.push(perform_typing_job_request(unit))
-    }
+pub fn create_parse_file_command(file_name: String, handle: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::ParseFile(file_name, handle)
 }
 
-fn process_parse_file_not_found(file_name: String, _jobs: &mut JobRequests)  {
-    panic!("{} not found", file_name);
+fn create_perform_typing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::PerformTyping { unit, type_repository, compiler }
 }
 
-
-struct JobQueue {
-    pool: ThreadPool<JobResult>,
-    sender: ConcurrentSender<JobResult>,
-    receiver: JobResultReceiver
+pub fn create_find_type_request(criteria: FindTypeCriteria, respond_to: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::FindType { criteria, respond_to }
 }
 
-fn create_job_queue() -> JobQueue {
-    let (sender, receiver) = channel::<JobResult>();
-
-    JobQueue {
-        pool: create_thread_pool(4),
-        sender: get_concurrent_sender(sender),
-        receiver
-    }
+pub fn create_file_parsed_event(parse_result: FileParseResult) -> CompilationMessage {
+    CompilationMessage::FileParsed(parse_result)
 }
 
-fn notify_all_jobs_of_result(job_queue: &JobQueue, result: JobResult) {
-    notify_all_running_tasks_of_result(&job_queue.pool, result);
+pub fn create_unit_typed_event(resolved_types: ResolvedTypes, unit: CompilationUnit) -> CompilationMessage {
+    CompilationMessage::UnitTyped(resolved_types, unit)
 }
 
-fn are_any_jobs_active(job_queue: &JobQueue) -> bool {
-    is_thread_pool_performing_work(&job_queue.pool)
+pub fn create_type_found_event(resolved_type: ResolvedTypeId) -> CompilationMessage {
+    CompilationMessage::TypeFound(resolved_type)
 }
 
-fn drain_job_results(job_queue: &JobQueue) -> JobResults {
-    let results = job_queue.receiver.try_iter();
-    results.collect()
-}
-
-fn enqueue_jobs(job_queue: &mut JobQueue, jobs: JobRequests) {
-    for job in jobs {
-        enqueue_job(job_queue, job);
-    }
-}
-
-fn enqueue_job(job_queue: &mut JobQueue, job: JobRequest) {    
-    schedule_task(
-        &mut job_queue.pool, 
-        create_task(
-            Box::new(move |mut runnable_receiver| handle_job_request(job.clone(), &mut runnable_receiver)), 
-            clone_concurrent_sender(&job_queue.sender)
-        )
+pub fn compile(file_name: String) {
+    let (type_repository_handle, ..) = start_singleton_actor(create_type_repository_actor());
+    let (compiler_handle, compiler_shutdown_notifier) = start_singleton_actor(
+        create_compiler_actor(type_repository_handle)
     );
+    
+    send_message_to_actor(
+        &compiler_handle, 
+        create_compile_command(file_name)
+    );
+
+    await_shutdown(&compiler_shutdown_notifier);
 }
 
-type JobRequest = Concurrent<JobRequestItem>;
+struct CompilerActor { type_repository: CompilationActorHandle }
 
-enum JobRequestItem {
-    ParseFile(String),
-    PerformTyping(CompilationUnit),
+fn create_compiler_actor(type_repository: ActorHandle<CompilationMessage>) -> CompilerActor {
+    CompilerActor { type_repository }
 }
 
-type JobRequests = Vec<JobRequest>;
 
-fn parse_file_job_request(file_name: String) -> JobRequest {
-    create_concurrent(JobRequestItem::ParseFile(file_name))
-}
-
-fn perform_typing_job_request(unit: CompilationUnit) -> JobRequest {
-    create_concurrent(JobRequestItem::PerformTyping(unit))
-}
-
-fn handle_job_request(job: JobRequest, runnable_receiver: &mut JobResultReceiver) -> JobResult {
-    match lock(&job).deref_mut() {
-        JobRequestItem::ParseFile(file_name) => JobResult::FileParsed(parse_file(file_name)),
-        JobRequestItem::PerformTyping(unit) => JobResult::UnitTyped(perform_typing(unit, runnable_receiver)),
+impl Actor<CompilationMessage> for CompilerActor {
+    fn receive(&self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+        match message {
+            CompilationMessage::Compile(file_name) => handle_compile(file_name, ctx),
+            CompilationMessage::FileParsed(parse_result) => handle_file_parsed(&self, parse_result, ctx),
+            CompilationMessage::UnitTyped(_resolved_types, _unit) => shutdown_after_receive(),
+            _ => continue_listening_after_receive()
+        }
     }
+}
+
+fn handle_compile(file_name: String, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    let (parser_handle, ..) = start_actor(ctx, create_parser_actor(create_file_reader()));
+    let compiler_handle = create_self_handle(ctx);
+    
+    send_message_to_actor(
+        &parser_handle, 
+        create_parse_file_command(file_name, compiler_handle)
+    );
+
+    continue_listening_after_receive()
+}
+
+fn handle_file_parsed(compiler: &CompilerActor, parse_result: FileParseResult, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    match parse_result {
+        FileParseResult::CompilationUnits { units, .. } => process_parsed_compilation_units(compiler, units, ctx),
+        FileParseResult::NotFound(file_name) => process_parse_file_not_found(file_name)
+    }
+}
+
+fn process_parsed_compilation_units(compiler: &CompilerActor, units: CompilationUnits, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    for unit in units {
+        let (typing_handle, ..) = start_actor(&ctx, TypingActor);
+        
+        send_message_to_actor(
+            &typing_handle, 
+            create_perform_typing_command(unit, compiler.type_repository.clone(), create_self_handle(ctx))
+        );
+    }
+
+    continue_listening_after_receive()
+}
+
+fn process_parse_file_not_found(file_name: String) -> AfterReceiveAction {
+    println!("{} not found", file_name);
+    shutdown_after_receive()
 }

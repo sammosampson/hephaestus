@@ -21,3 +21,7 @@ pub fn create_arg_separator() -> Terminator {
 pub fn is_arg_separator(item: &SourceTokenItem) -> bool {
     item == &SourceTokenItem::Terminator(Terminator::Arg)
 }
+
+pub fn is_line_terminiator(item: &SourceTokenItem) -> bool {
+    item == &SourceTokenItem::Terminator(Terminator::Line)
+}

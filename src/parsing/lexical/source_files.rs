@@ -48,6 +48,7 @@ pub fn eat_next_character(reader: &mut SourceFileCharacterReader) {
 pub fn eat_white_space(reader: &mut SourceFileCharacterReader) {
     if is_character_whitespace(&peek_next_character(reader)) {
         eat_next_character(reader);
+        eat_white_space(reader);
     }
 }
 

@@ -8,6 +8,7 @@ mod arguments;
 mod threading;
 mod compilation;
 mod collections;
+mod acting;
 
 fn main() {
     match arguments::get_file_to_compile_from_invocation_arguments() {

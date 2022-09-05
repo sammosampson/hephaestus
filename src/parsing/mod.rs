@@ -6,20 +6,6 @@ pub use syntactical::*;
 pub use lexical::*;
 pub use source_files::*;
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum Type {
-    BuiltIn(BuiltInType),
-    Compound(String),
-    Unknown
-}
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum BuiltInType {
-    Int,
-    Float,
-    Void
-}
-
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Operator {
     Add,

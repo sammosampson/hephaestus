@@ -25,6 +25,10 @@ pub fn is_initialise_assignment(item: &SourceTokenItem) -> bool {
     item == &SourceTokenItem::Assignment(Assignment::Initialise)
 }
 
+pub fn is_initialise_assign_value_assignment(item: &SourceTokenItem) -> bool {
+    item == &SourceTokenItem::Assignment(Assignment::InitialiseAssignValue)
+}
+
 pub fn is_goes_to_assignment(item: &SourceTokenItem) -> bool {
     item == &SourceTokenItem::Assignment(Assignment::GoesTo)
 }
