@@ -1,7 +1,7 @@
 mod parser;
 mod expressions;
 mod directives;
-mod functions;
+mod procedures;
 mod literals;
 mod declarations;
 mod identifiers;
@@ -14,7 +14,7 @@ mod assigment;
 pub use parser::*;
 pub use expressions::*;
 pub use directives::*;
-pub use functions::*;
+pub use procedures::*;
 pub use literals::*;
 pub use declarations::*;
 pub use identifiers::*;

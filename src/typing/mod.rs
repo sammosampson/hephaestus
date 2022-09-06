@@ -14,7 +14,7 @@ pub enum ResolvableType {
 
 pub type ResolvedTypes = Vec<ResolvedType>;
 
-#[derive(PartialEq, Debug, Clone, Hash)]
+#[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub enum ResolvedTypeId {
     NotResolved,
     BuiltInType(BuiltInType),
@@ -23,7 +23,7 @@ pub enum ResolvedTypeId {
 
 pub type ResolvedTypeIds = Vec<ResolvedTypeId>;
 
-#[derive(PartialEq, Debug, Clone, Copy, Hash)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum BuiltInType {
     Int32,
     Float32,
@@ -56,7 +56,7 @@ pub enum TypeItem {
     ProcedureDefinition { arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds },
 }
 
-pub fn create_procedure_defnition_type_item(arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> TypeItem {
+pub fn create_procedure_definition_type_item(arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> TypeItem {
     TypeItem::ProcedureDefinition { arg_types, return_types }
 }
 

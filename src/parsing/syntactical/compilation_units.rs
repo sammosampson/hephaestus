@@ -1,7 +1,7 @@
 use uuid::*;
 use crate::parsing::*;
 
-#[derive(PartialEq, Debug, Clone, Copy, Hash)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub struct CompilationUnitId {
     id: Uuid
 }

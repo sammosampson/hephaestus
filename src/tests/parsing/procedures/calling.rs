@@ -22,7 +22,7 @@ fn parse_procedure_call_parses_correctly() {
                             AbstractSyntaxNodeItem::ProcedureCall {
                                 name: "SomeProcedure".to_string(),
                                 args: vec!(),
-                                arg_type: ResolvableType::Unresolved
+                                type_id: ResolvableType::Unresolved
                             }
                         ),
                         position: SourceFilePosition { absolute: 5, line: 1, col: 6 }
@@ -65,7 +65,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                                     ),
                                                     position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
                                                 },
-                                                arg_type: ResolvableType::Unresolved
+                                                type_id: ResolvableType::Unresolved
                                             }
                                         ),
                                         position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
@@ -79,13 +79,13 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                                     ),
                                                     position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
                                                 },
-                                                arg_type: ResolvableType::Unresolved
+                                                type_id: ResolvableType::Unresolved
                                             }
                                         ),
                                         position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
                                     }
                                 ),
-                                arg_type: ResolvableType::Unresolved
+                                type_id: ResolvableType::Unresolved
                             }
                         ),
                         position: SourceFilePosition { absolute: 5, line: 1, col: 6 }

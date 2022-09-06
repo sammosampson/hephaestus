@@ -27,9 +27,9 @@ pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<Compilatio
     (actual_file_path, units)
 }
 
-pub fn run_parse_file_return_only_units(file_path: &str, content: &str) -> Vec<CompilationUnit> {
+pub fn run_parse_file_return_only_units(content: &str) -> Vec<CompilationUnit> {
     let (_actual_file_path, units) = crate::tests::parsing::run_parse_file(
-        file_path, 
+        "test.hep", 
         content
     );
 

@@ -127,7 +127,7 @@ fn parse_procedure_header_with_arg_parses_correctly() {
                             item: Box::new(
                                 AbstractSyntaxNodeItem::ArgumentDeclaration { 
                                     name: "x".to_string(),
-                                    arg_type: ResolvableType::Resolved(ResolvedTypeId::BuiltInType(BuiltInType::Int32)),
+                                    type_id: ResolvableType::Resolved(ResolvedTypeId::BuiltInType(BuiltInType::Int32)),
                                 }
                             ),
                             position: SourceFilePosition { absolute: 18, line: 1, col: 19 }
@@ -163,11 +163,11 @@ fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
                     name: "SomeProcedure".to_string(),
                     args: vec!(
                         AbstractSyntaxNode {
-                            item: Box::new(AbstractSyntaxNodeItem::ArgumentDeclaration { name: "x".to_string() , arg_type: ResolvableType::Resolved(ResolvedTypeId::BuiltInType(BuiltInType::Float32)) }),
+                            item: Box::new(AbstractSyntaxNodeItem::ArgumentDeclaration { name: "x".to_string() , type_id: ResolvableType::Resolved(ResolvedTypeId::BuiltInType(BuiltInType::Float32)) }),
                             position: SourceFilePosition { absolute: 18, line: 1, col: 19 }
                         },
                         AbstractSyntaxNode {
-                            item: Box::new(AbstractSyntaxNodeItem::ArgumentDeclaration { name: "y".to_string() , arg_type: ResolvableType::UnresolvedNamed("SomeType".to_string()) }),
+                            item: Box::new(AbstractSyntaxNodeItem::ArgumentDeclaration { name: "y".to_string() , type_id: ResolvableType::UnresolvedNamed("SomeType".to_string()) }),
                             position: SourceFilePosition { absolute: 28, line: 1, col: 29 }
                         }
                     ),

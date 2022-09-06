@@ -10,7 +10,7 @@ pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFil
     create_node(create_procedure_call_item(name, arguments), position)
 }
 
-fn parse_procedure_call_args(lexer: &mut Lexer) -> Vec<AbstractSyntaxNode> {
+fn parse_procedure_call_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     let mut args = vec!();
 
     if is_close_paren(&peek_next_token(lexer).item) {
@@ -40,10 +40,7 @@ fn parse_procedure_call_arg(lexer: &mut Lexer) -> AbstractSyntaxNode {
     let pos = expr.position;
 
     create_node(
-        create_arg_item(
-            expr, 
-            ResolvableType::Unresolved
-        ), 
+        create_arg_item(expr, ResolvableType::Unresolved), 
         pos)        
 }
 
@@ -219,15 +216,15 @@ fn create_procedure_body_item(children: AbstractSyntaxChildNodes) -> AbstractSyn
 }
 
 fn create_procedure_call_item(name: String, arguments: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, arg_type: ResolvableType::Unresolved }
+    AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, type_id: ResolvableType::Unresolved }
 }
 
 fn create_arg_declaraton_item(name: String, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ArgumentDeclaration { name, arg_type }
+    AbstractSyntaxNodeItem::ArgumentDeclaration { name, type_id: arg_type }
 }
 
 fn create_arg_item(expr: AbstractSyntaxNode, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Argument { expr, arg_type }
+    AbstractSyntaxNodeItem::Argument { expr, type_id: arg_type }
 }
 
 fn create_type_item(t: ResolvableType) -> AbstractSyntaxNodeItem {

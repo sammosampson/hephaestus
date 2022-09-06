@@ -50,12 +50,12 @@ fn parse_procedure_body_parses_correctly() {
                                                     AbstractSyntaxNodeItem::Identifier("a".to_string())
                                                 ),
                                             },
-                                            arg_type: ResolvableType::Unresolved
+                                            type_id: ResolvableType::Unresolved
                                         }
                                     )
                                 }
                             ),
-                            arg_type: ResolvableType::Unresolved
+                            type_id: ResolvableType::Unresolved
                         }
                     )
                 }                        

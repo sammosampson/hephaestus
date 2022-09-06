@@ -38,5 +38,21 @@ pub fn add_resolved_type(typing_repository: &CompilationActorHandle, resolved_ty
         typing_repository, 
         create_add_resolved_type_command(resolved_type)
     );
+}
 
+pub fn create_procedure_definition_type(name: &str, arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> ResolvedType {
+    let other_proc_type = create_type(
+        create_compilation_unit_id(), 
+        name.to_string(),
+        create_procedure_definition_type_item(arg_types, return_types)
+    );
+    other_proc_type
+}
+
+pub fn create_procedure_definition_type_with_no_args(name: &str) -> ResolvedType {
+    create_procedure_definition_type(
+        name,
+        vec!(), 
+        vec!()
+    )
 }
