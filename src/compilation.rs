@@ -13,7 +13,8 @@ pub enum CompilationMessage {
     PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
     UnitTyped(ResolvedTypes, CompilationUnit),
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
-    TypeFound(ResolvedTypeId)
+    TypeFound(ResolvedTypeId),
+    AddResolvedType(ResolvedType),
 }
 
 pub type CompilationActorHandle = ActorHandle<CompilationMessage>;
@@ -48,6 +49,10 @@ pub fn create_type_found_event(resolved_type: ResolvedTypeId) -> CompilationMess
     CompilationMessage::TypeFound(resolved_type)
 }
 
+pub fn create_add_resolved_type_command(resolved_type: ResolvedType) -> CompilationMessage {
+    CompilationMessage::AddResolvedType(resolved_type)
+}
+
 pub fn compile(file_name: String) {
     let (type_repository_handle, ..) = start_singleton_actor(create_type_repository_actor());
     let (compiler_handle, compiler_shutdown_notifier) = start_singleton_actor(
@@ -70,11 +75,11 @@ fn create_compiler_actor(type_repository: ActorHandle<CompilationMessage>) -> Co
 
 
 impl Actor<CompilationMessage> for CompilerActor {
-    fn receive(&self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::Compile(file_name) => handle_compile(file_name, ctx),
             CompilationMessage::FileParsed(parse_result) => handle_file_parsed(&self, parse_result, ctx),
-            CompilationMessage::UnitTyped(_resolved_types, _unit) => shutdown_after_receive(),
+            CompilationMessage::UnitTyped(resolved_types, _unit) => handle_unit_typed(&self, resolved_types),
             _ => continue_listening_after_receive()
         }
     }
@@ -101,6 +106,13 @@ fn handle_file_parsed(compiler: &CompilerActor, parse_result: FileParseResult, c
         FileParseResult::CompilationUnits { units, .. } => process_parsed_compilation_units(compiler, units, ctx),
         FileParseResult::NotFound(file_name) => process_parse_file_not_found(file_name)
     }
+}
+
+fn handle_unit_typed(compiler: &CompilerActor, resolved_types: ResolvedTypes) -> AfterReceiveAction {
+    for resolved_type in resolved_types {
+        send_message_to_actor(&compiler.type_repository, create_add_resolved_type_command(resolved_type));
+    }
+    continue_listening_after_receive()
 }
 
 fn process_parsed_compilation_units(compiler: &CompilerActor, units: CompilationUnits, ctx: &CompilationMessageContext) -> AfterReceiveAction {

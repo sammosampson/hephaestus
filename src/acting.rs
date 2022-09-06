@@ -34,7 +34,7 @@ pub fn shutdown_after_receive() -> AfterReceiveAction {
 
 pub trait Actor<TMessage> : Parallelisable
     where TMessage: ParallelisableClone {
-    fn receive(&self, message: TMessage, ctx: &ActorContext<TMessage>) -> AfterReceiveAction;
+    fn receive(&mut self, message: TMessage, ctx: &ActorContext<TMessage>) -> AfterReceiveAction;
 }
 
 pub fn send_message_to_actor<TMessage>(actor: &ActorHandle<TMessage>, message: TMessage) {
@@ -123,7 +123,7 @@ where TActor: Actor<TMessage>, TMessage: ParallelisableClone {
     }
 }
 
-fn run_actor<TActor, TMessage>(runner: ActorRunner<TActor, TMessage>)
+fn run_actor<TActor, TMessage>(mut runner: ActorRunner<TActor, TMessage>)
 where TActor: Actor<TMessage>, TMessage: ParallelisableClone {
     for message in &runner.context.receiver {
         if let AfterReceiveAction::Shutdown = runner.actor.receive(message, &runner.context) {

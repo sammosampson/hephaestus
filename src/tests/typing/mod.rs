@@ -32,3 +32,11 @@ pub fn start_type_repository_actor() -> CompilationActorHandle {
     let (handle, _) = start_singleton_actor(create_type_repository_actor());
     handle
 }
+
+pub fn add_resolved_type(typing_repository: &CompilationActorHandle, resolved_type: ResolvedType) {
+    send_message_to_actor(
+        typing_repository, 
+        create_add_resolved_type_command(resolved_type)
+    );
+
+}

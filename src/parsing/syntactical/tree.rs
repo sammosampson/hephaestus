@@ -14,6 +14,10 @@ impl AbstractSyntaxNode {
     pub fn item_ref(&self) -> &AbstractSyntaxNodeItem {
         self.item.as_ref()
     }
+
+    pub fn item_mut(&mut self) -> &mut AbstractSyntaxNodeItem {
+        self.item.as_mut()
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]

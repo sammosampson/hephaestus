@@ -28,20 +28,30 @@ fn await_type_found_response(ctx: &ActorContext<CompilationMessage>)-> ResolvedT
     result
 }
 
-pub struct TypeRepositoryActor;
+pub struct TypeRepositoryActor(ResolvedTypes);
 
-pub fn create_type_repository_actor() -> TypeRepositoryActor { TypeRepositoryActor }
+pub fn create_type_repository_actor() -> TypeRepositoryActor {
+    TypeRepositoryActor(vec!())
+}
 
 impl Actor<CompilationMessage> for TypeRepositoryActor {
-    fn receive(&self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::FindType { criteria, respond_to } => handle_find_type(criteria, respond_to),
+            CompilationMessage::FindType { criteria, respond_to } =>
+                handle_find_type(self, criteria, respond_to),
+            CompilationMessage::AddResolvedType(resolved_type) => 
+                handle_add_resolved_type(self, resolved_type),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn handle_find_type(_criteria: FindTypeCriteria, respond_to: CompilationActorHandle) -> AfterReceiveAction {
-    send_message_to_actor(&respond_to, create_type_found_event(ResolvedTypeId::BuiltInType(BuiltInType::Float32)));
+fn handle_find_type(repository: &mut TypeRepositoryActor, _criteria: FindTypeCriteria, respond_to: CompilationActorHandle) -> AfterReceiveAction {
+    send_message_to_actor(&respond_to, create_type_found_event(repository.0[0].id.clone()));
+    continue_listening_after_receive()
+}
+
+fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type: ResolvedType) -> AfterReceiveAction {
+    repository.0.push(resolved_type);
     continue_listening_after_receive()
 }

@@ -10,7 +10,7 @@ pub fn create_parser_actor<T: FileRead>(file_reader: T) -> ParserActor<T>  {
 }
 
 impl<T: FileRead> Actor<CompilationMessage> for ParserActor<T>  {
-    fn receive(&self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::ParseFile(file_name, compiler_handle) => handle_parse_file(&self.file_reader, file_name, compiler_handle),
             _ => continue_listening_after_receive()

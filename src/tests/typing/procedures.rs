@@ -1,4 +1,5 @@
 use crate::typing::*;
+use crate::parsing::*;
 
 #[test]
 fn typing_procedure_header_returns_correct_types() {
@@ -75,14 +76,45 @@ fn typing_procedure_body_waits_for_external_procedure() {
         content
     );
 
-    let proc_header = units.pop().unwrap();
-    let _proc_header_id = proc_header.id;
-
     let typing_repository = crate::tests::typing::start_type_repository_actor();
 
-    let (_types, _unit) = crate::tests::typing::run_typing_on_unit(
-        typing_repository, 
-        proc_header
+    let other_proc_type_id = create_compilation_unit_id();
+
+    let other_proc_type = create_type(
+        other_proc_type_id, 
+        "SomeOtherProcedure".to_string(),
+        create_procedure_defnition_type_item(vec!(), vec!())
     );
+
+    crate::tests::typing::add_resolved_type(&typing_repository, other_proc_type);
+
+    let _proc_header = units.pop().unwrap();
+    let proc_body = units.pop().unwrap();
+
+    let (types, unit) = crate::tests::typing::run_typing_on_unit(
+        typing_repository, 
+        proc_body
+    );
+
+    assert_eq!(types.len(), 0);
+    assert_eq!(
+        unit.tree, 
+        AbstractSyntaxNode {
+            position: SourceFilePosition { absolute: 20, line: 1, col: 21 },
+            item: Box::new(AbstractSyntaxNodeItem::ProcedureBody(vec!(                       
+                AbstractSyntaxNode {                    
+                    position: SourceFilePosition { absolute: 26, line: 2, col: 5 },
+                    item: Box::new(
+                        AbstractSyntaxNodeItem::ProcedureCall {
+                            name: "SomeOtherProcedure".to_string(),
+                            args: vec!(),
+                            arg_type: ResolvableType::Resolved(ResolvedTypeId::UserDefined(other_proc_type_id))
+                        }
+                    )
+                }                        
+            )))
+        }
+    );
+
 }
 
