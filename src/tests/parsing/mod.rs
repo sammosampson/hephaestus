@@ -12,7 +12,7 @@ pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<Compilatio
     let mut reader = create_mock_file_reader();
     add_mock_file(&mut reader, file_path.to_string(), content.to_string());
 
-    let (message_receiver_handle, message_receiver) = create_test_message_receiver_handle();
+    let (message_receiver_handle, message_receiver) = create_test_message_receiver_actor();
     
     let (parser, ..) = start_singleton_actor(create_parser_actor(reader));
     send_message_to_actor(&parser, create_parse_file_command(file_path.to_string(), message_receiver_handle));
@@ -26,6 +26,16 @@ pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<Compilatio
 
     (actual_file_path, units)
 }
+
+pub fn run_parse_file_return_only_units(file_path: &str, content: &str) -> Vec<CompilationUnit> {
+    let (_actual_file_path, units) = crate::tests::parsing::run_parse_file(
+        file_path, 
+        content
+    );
+
+    units
+}
+
 
 #[test]
 fn parse_empty_input_parses_correctly() {

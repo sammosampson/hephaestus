@@ -28,7 +28,7 @@ pub fn create_parse_file_command(file_name: String, handle: CompilationActorHand
     CompilationMessage::ParseFile(file_name, handle)
 }
 
-fn create_perform_typing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle) -> CompilationMessage {
+pub fn create_perform_typing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle) -> CompilationMessage {
     CompilationMessage::PerformTyping { unit, type_repository, compiler }
 }
 
@@ -81,7 +81,11 @@ impl Actor<CompilationMessage> for CompilerActor {
 }
 
 fn handle_compile(file_name: String, ctx: &CompilationMessageContext) -> AfterReceiveAction {
-    let (parser_handle, ..) = start_actor(ctx, create_parser_actor(create_file_reader()));
+    let (parser_handle, ..) = start_actor(
+        ctx, 
+        create_parser_actor(create_file_reader())
+    );
+
     let compiler_handle = create_self_handle(ctx);
     
     send_message_to_actor(
@@ -101,11 +105,15 @@ fn handle_file_parsed(compiler: &CompilerActor, parse_result: FileParseResult, c
 
 fn process_parsed_compilation_units(compiler: &CompilerActor, units: CompilationUnits, ctx: &CompilationMessageContext) -> AfterReceiveAction {
     for unit in units {
-        let (typing_handle, ..) = start_actor(&ctx, TypingActor);
+        let (typing_handle, ..) = start_actor(&ctx, create_typing_actor());
         
         send_message_to_actor(
             &typing_handle, 
-            create_perform_typing_command(unit, compiler.type_repository.clone(), create_self_handle(ctx))
+            create_perform_typing_command(
+                unit, 
+                compiler.type_repository.clone(), 
+                create_self_handle(ctx)
+            )
         );
     }
 
