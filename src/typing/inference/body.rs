@@ -16,8 +16,14 @@ pub fn create_procedure_body_visitor<'a>(
 }
 
 impl <'a> AbstractSyntaxProcedureBodyNodeVisitor for ProcedureBodyInferenceVisitor<'a> {
-    fn visit_procedure_call(&mut self, name: &mut String, args: &mut AbstractSyntaxChildNodes, type_id: &mut ResolvableType) {
-        visit_procedure_call(self.ctx, self.type_repository, args, name, type_id);
+    fn visit_procedure_call(
+        &mut self,
+        name: &mut String,
+        args: &mut AbstractSyntaxChildNodes,
+        type_id: &mut ResolvableType,
+        return_type_ids: &mut ResolvableTypes
+    ) {
+        visit_procedure_call(self.ctx, self.type_repository, args, name, type_id, return_type_ids);
     }
 
     fn visit_assignment(&mut self, _name: &mut String, _value: &mut AbstractSyntaxNode) {
@@ -29,7 +35,8 @@ fn visit_procedure_call(
     type_repository: &CompilationActorHandle,
     args: &mut AbstractSyntaxChildNodes,
     name: &mut String, 
-    type_id: &mut ResolvableType
+    type_id: &mut ResolvableType, 
+    _return_type_ids: &mut ResolvableTypes
 ) {
     let mut visitor = create_procedure_call_visitor(ctx, type_repository);
     apply_visitor_to_ast_procedure_call(args, &mut visitor);
@@ -40,7 +47,14 @@ fn visit_procedure_call(
         type_repository
     );
 
-    *type_id = ResolvableType::Resolved(resolved_type);
+    *type_id = resolved_resolvable_type(resolved_type.id);
+
+    if let Some(found_type_return_types) = try_get_procedure_definition_type_item(resolved_type.item) {
+        for _return_type in found_type_return_types {
+
+        }
+        //*return_type_ids = found_type_return_types;
+    }
 }
 
 
@@ -83,7 +97,7 @@ pub fn create_expression_visitor<'a>(
     ExpressionInferenceVisitor::<'a> {
         ctx,
         type_repository, 
-        resolved_type: ResolvedTypeId::NotResolved
+        resolved_type: not_resolved_type_id()
     }
 }
 
@@ -95,7 +109,13 @@ impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a>
         }
     }
 
-    fn visit_procedure_call(&mut self, name: &mut String, args: &mut AbstractSyntaxChildNodes, type_id: &mut ResolvableType) {
-        visit_procedure_call(self.ctx, self.type_repository, args, name, type_id);
+    fn visit_procedure_call(
+        &mut self,
+        name: &mut String,
+        args: &mut AbstractSyntaxChildNodes,
+        type_id: &mut ResolvableType,
+        return_type_ids: &mut ResolvableTypes
+    ) {
+        visit_procedure_call(self.ctx, self.type_repository, args, name, type_id, return_type_ids);
     }
 }

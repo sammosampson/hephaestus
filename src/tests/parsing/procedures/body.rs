@@ -1,5 +1,6 @@
 use crate::parsing::*;
 use crate::typing::*;
+use crate::tests::parsing::*;
 
 #[test]
 fn parse_procedure_body_parses_correctly() {
@@ -14,49 +15,44 @@ fn parse_procedure_body_parses_correctly() {
        
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            position: SourceFilePosition { absolute: 20, line: 1, col: 21 },
-            item: Box::new(AbstractSyntaxNodeItem::ProcedureBody(vec!(
-                AbstractSyntaxNode {
-                    position: SourceFilePosition { absolute: 26, line: 2, col: 5 },
-                    item: Box::new(
-                        AbstractSyntaxNodeItem::Assignment {
-                            name: "a".to_string(),
-                            value: AbstractSyntaxNode {
-                                position: SourceFilePosition { absolute: 31, line: 2, col: 10 },
-                                item: Box::new(
-                                    AbstractSyntaxNodeItem::Literal(Literal::Int(1))
-                                ),
-                            },
-                        }
+        node(
+            position(20, 1, 21),
+            procedure_body_item(
+                vec!(),
+                vec!(),
+                vec!(
+                    node( 
+                        position(26, 2, 5),
+                        assignment_item( 
+                            string("a"),
+                            node(
+                                position(31, 2, 10),
+                                literal_item(int_literal(1))
+                            )
+                        )
                     ),
-                },                        
-                AbstractSyntaxNode {                    
-                    position: SourceFilePosition { absolute: 38, line: 3, col: 5 },
-                    item: Box::new(
-                        AbstractSyntaxNodeItem::ProcedureCall {
-                            name: "SomeOtherProcedure".to_string(),
-                            args: vec!(
-                                AbstractSyntaxNode {
-                                    position: SourceFilePosition { absolute: 57, line: 3, col: 24 },
-                                    item: Box::new(
-                                        AbstractSyntaxNodeItem::Argument { 
-                                            expr: AbstractSyntaxNode {
-                                                position: SourceFilePosition { absolute: 57, line: 3, col: 24 },
-                                                item: Box::new(
-                                                    AbstractSyntaxNodeItem::Identifier{ name: "a".to_string() }
-                                                ),
-                                            },
-                                            type_id: ResolvableType::Unresolved
-                                        }
+                    node(
+                        position(38, 3, 5),
+                        procedure_call_item(
+                            string("SomeOtherProcedure"),
+                            vec!(
+                                node(
+                                    position(57, 3, 24),
+                                    arg_item(
+                                        node(
+                                            position(57, 3, 24),
+                                            identifier_item(string("a"))
+                                        ),
+                                        unresolved_resolvable_type()
                                     )
-                                }
+                                )
                             ),
-                            type_id: ResolvableType::Unresolved
-                        }
-                    )
-                }                        
-            )))
-        }
+                            unresolved_resolvable_type(),
+                            vec!()
+                        )
+                    )                        
+                )
+            )
+        )
     );
 }

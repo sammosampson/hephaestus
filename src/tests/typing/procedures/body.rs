@@ -1,6 +1,7 @@
 
 use crate::typing::*;
 use crate::parsing::*;
+use crate::tests::parsing::*;
 
 #[test]
 fn typing_procedure_body_waits_for_external_procedure() {
@@ -19,8 +20,7 @@ fn typing_procedure_body_waits_for_external_procedure() {
     let external_proc_type_id = external_proc_type.id.clone();
 
     let typing_repository = crate::tests::typing::start_type_repository_actor();
-    
-    
+        
     crate::tests::typing::add_resolved_type(
         &typing_repository, 
         crate::tests::typing::create_procedure_definition_type_with_no_args("SomeExternalProcedure")
@@ -44,36 +44,34 @@ fn typing_procedure_body_waits_for_external_procedure() {
     assert_eq!(types.len(), 0);
     assert_eq!(
         unit.tree, 
-        AbstractSyntaxNode {
-            position: SourceFilePosition { absolute: 20, line: 1, col: 21 },
-            item: Box::new(AbstractSyntaxNodeItem::ProcedureBody(vec!(                       
-                AbstractSyntaxNode {                    
-                    position: SourceFilePosition { absolute: 26, line: 2, col: 5 },
-                    item: Box::new(
-                        AbstractSyntaxNodeItem::ProcedureCall {
-                            name: "SomeExternalProcedure".to_string(),
-                            args: vec!(
-                                AbstractSyntaxNode {
-                                    position: SourceFilePosition { absolute: 48, line: 2, col: 27 },
-                                    item: Box::new(
-                                        AbstractSyntaxNodeItem::Argument { 
-                                            expr: AbstractSyntaxNode {
-                                                position: SourceFilePosition { absolute: 48, line: 2, col: 27 },
-                                                item: Box::new(
-                                                    AbstractSyntaxNodeItem::Literal(Literal::Int(1))
-                                                )
-                                            },
-                                            type_id: ResolvableType::Resolved(ResolvedTypeId::BuiltInType(BuiltInType::Int32)) 
-                                        }
-                                    ),
-                                }
+        node(
+            position(20, 1, 21),
+            procedure_body_item(
+                vec!(),
+                vec!(),
+                vec!(                       
+                    node(                    
+                        position(26, 2, 5),
+                        procedure_call_item(
+                            string("SomeExternalProcedure"),
+                            vec!(
+                                node(
+                                    position(48, 2, 27),                            
+                                    arg_item( 
+                                        node(
+                                            position(48, 2, 27),
+                                            literal_item(int_literal(1))
+                                        ),
+                                        resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
+                                    )
+                                ),
                             ),
-                            type_id: ResolvableType::Resolved(external_proc_type_id)
-                        }
+                            resolved_resolvable_type(external_proc_type_id),
+                            vec!()
+                        )
                     )
-                }                        
-            )))
-        }
-    );
-
+                )
+            )
+        )
+    )
 }

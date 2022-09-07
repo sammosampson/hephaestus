@@ -12,11 +12,11 @@ pub enum Operator {
     Subtract
 }
 
-pub fn create_add_operator() -> Operator {
+pub fn add_operator() -> Operator {
     Operator::Add
 }
 
-pub fn create_subtract_operator() -> Operator {
+pub fn subtract_operator() -> Operator {
     Operator::Subtract
 }
 
@@ -25,4 +25,12 @@ pub fn create_subtract_operator() -> Operator {
 pub enum Literal {
     Int(usize),
     String(String)
+}
+
+pub fn int_literal(number: usize) -> Literal {
+    Literal::Int(number)
+}
+
+pub fn string_literal(string: String) -> Literal {
+    Literal::String(string)
 }

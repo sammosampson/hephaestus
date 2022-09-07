@@ -85,15 +85,19 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
         let resolved_type = create_type(
             self.unit_id,
             name.clone(),
-            create_procedure_definition_type_item(visitor.arg_types, visitor.return_types)
+            procedure_definition_type_item(visitor.arg_types, visitor.return_types)
         );
         
         self.resolved_types.push(resolved_type);
     }
 
-    fn visit_procedure_body(&mut self, statements: &mut AbstractSyntaxChildNodes) {
+    fn visit_procedure_body(
+        &mut self,
+        _args: &mut AbstractSyntaxChildNodes,
+        _return_types: &mut AbstractSyntaxChildNodes,
+        statements: &mut AbstractSyntaxChildNodes
+    ) {
         let mut visitor = create_procedure_body_visitor(self.ctx, self.type_repository);
         apply_visitor_to_ast_procedure_body(statements, &mut visitor);
-        
     }
 }

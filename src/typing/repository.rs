@@ -13,7 +13,7 @@ pub fn create_find_type_criteria(name: String, args: ResolvedTypeIds) -> FindTyp
     FindTypeCriteria { name, args }
 }
 
-pub fn find_type(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> ResolvedTypeId {
+pub fn find_type(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> ResolvedType {
     send_find_type_request(type_repository, criteria, ctx);  
     await_type_found_response(ctx)
 }
@@ -22,18 +22,23 @@ fn send_find_type_request(type_repository: &ActorHandle<CompilationMessage>, cri
     send_message_to_actor(type_repository, create_find_type_request(criteria, create_self_handle(ctx)))
 }
 
-fn await_type_found_response(ctx: &ActorContext<CompilationMessage>) -> ResolvedTypeId {
-    let mut result = ResolvedTypeId::NotResolved;
+fn await_type_found_response(ctx: &ActorContext<CompilationMessage>) -> ResolvedType {
+    let mut result = None;
     
     await_message(ctx, |message| {
-        if let CompilationMessage::TypeFound(resolved_type) = message {
+        let resolved_type = try_get_type_found_compilation_message(message);
+        if resolved_type.is_some() {
             result = resolved_type;
             return true;
         }
         false
     });
 
-    result
+    if let Some(result) = result {
+        return result
+    }
+
+    todo!("wait and send back type when it exists")
 }
 
 pub struct TypeRepositoryActor { 
@@ -62,7 +67,7 @@ fn handle_find_type(repository: &mut TypeRepositoryActor, criteria: FindTypeCrit
     let resolved_type = repository.type_map.get(&criteria);
 
     if let Some(resolved_type) = resolved_type {
-        send_message_to_actor(&respond_to, create_type_found_event(resolved_type.id.clone()));
+        send_message_to_actor(&respond_to, create_type_found_event(resolved_type.clone()));
     }
 
     continue_listening_after_receive()
@@ -72,6 +77,7 @@ fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type:
     let criteria = match &resolved_type.item {
         TypeItem::ProcedureDefinition { arg_types, .. } => 
             create_find_type_criteria(resolved_type.name.clone(), arg_types.clone()),
+        _ => todo!("add other types")
     };
     
     repository.type_map.insert(criteria, resolved_type);

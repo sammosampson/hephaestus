@@ -1,7 +1,7 @@
 use crate::parsing::*;
 
 pub fn parse_value_assignment(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(create_assignment_item(name, parse_value_assignment_value(lexer)), position)
+    create_node(assignment_item(name, parse_value_assignment_value(lexer)), position)
 }
 
 pub fn parse_value_assignment_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
@@ -16,6 +16,6 @@ pub fn parse_value_assignment_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
     }
 }
 
-fn create_assignment_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
+pub fn assignment_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Assignment { name, value }
 }

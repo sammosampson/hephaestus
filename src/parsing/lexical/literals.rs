@@ -8,11 +8,11 @@ pub fn parse_number(from: &str) -> ParseNumberResult {
 }
 
 pub fn create_number_literal_token_item(number: usize) -> SourceTokenItem {
-    SourceTokenItem::Literal(Literal::Int(number))
+    SourceTokenItem::Literal(int_literal(number))
 }
 
 pub fn create_string_literal_token_item(string: String) -> SourceTokenItem {
-    SourceTokenItem::Literal(Literal::String(string))
+    SourceTokenItem::Literal(string_literal(string))
 }
 
 pub fn try_get_string_literal(item: &SourceTokenItem) -> Option<String> {

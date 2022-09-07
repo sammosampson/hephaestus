@@ -13,13 +13,12 @@ pub enum CompilationMessage {
     PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
     UnitTyped(ResolvedTypes, CompilationUnit),
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
-    TypeFound(ResolvedTypeId),
+    TypeFound(ResolvedType),
     AddResolvedType(ResolvedType),
 }
 
 pub type CompilationActorHandle = ActorHandle<CompilationMessage>;
 pub type CompilationMessageContext = ActorContext<CompilationMessage>;
-
 
 fn create_compile_command(file_name: String) -> CompilationMessage {
     CompilationMessage::Compile(file_name)
@@ -45,12 +44,19 @@ pub fn create_unit_typed_event(resolved_types: ResolvedTypes, unit: CompilationU
     CompilationMessage::UnitTyped(resolved_types, unit)
 }
 
-pub fn create_type_found_event(resolved_type: ResolvedTypeId) -> CompilationMessage {
+pub fn create_type_found_event(resolved_type: ResolvedType) -> CompilationMessage {
     CompilationMessage::TypeFound(resolved_type)
 }
 
 pub fn create_add_resolved_type_command(resolved_type: ResolvedType) -> CompilationMessage {
     CompilationMessage::AddResolvedType(resolved_type)
+}
+
+pub fn try_get_type_found_compilation_message(message: CompilationMessage) -> Option<ResolvedType> {
+    if let CompilationMessage::TypeFound(resolved_type) = message {
+       return Some(resolved_type);
+    }
+    None
 }
 
 pub fn compile(file_name: String) {

@@ -1,4 +1,8 @@
-use crate::parsing::*;
+use crate::{
+    parsing::*,
+    typing::*,
+    tests::parsing::*, 
+};
 
 #[test]
 fn parse_literal_expression_parses_correctly() {        
@@ -6,46 +10,43 @@ fn parse_literal_expression_parses_correctly() {
         x := 1 + 2;
     }");
 
-    dbg!(&units[0].tree);
-    dbg!(&units[1].tree);
-
     assert_eq!(units.len(), 2);
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            position: SourceFilePosition { absolute: 11, line: 1, col: 12 },
-            item: Box::new(
-                AbstractSyntaxNodeItem::ProcedureBody(vec!(
-                    AbstractSyntaxNode {
-                        position: SourceFilePosition { absolute: 21, line: 2, col: 9 },
-                        item: Box::new(
-                            AbstractSyntaxNodeItem::Assignment {            
-                                name: "x".to_string(), 
-                                value:
-                                    AbstractSyntaxNode {
-                                        position: SourceFilePosition { absolute: 26, line: 2, col: 14 },
-                                        item: Box::new(
-                                            AbstractSyntaxNodeItem::BinaryExpr {
-                                                op: Operator::Add,
-                                                lhs: AbstractSyntaxNode {
-                                                    item: Box::new(AbstractSyntaxNodeItem::Literal(Literal::Int(1))),
-                                                    position: SourceFilePosition { absolute: 26, line: 2, col: 14 }
-                                                },
-                                                rhs: AbstractSyntaxNode {
-                                                    item: Box::new(AbstractSyntaxNodeItem::Literal(Literal::Int(2))),
-                                                    position: SourceFilePosition { absolute: 30, line: 2, col: 18 }
-                                                }
-                                            }
-                                        ),
-                                    }
-                            }
+        node(
+            position(11, 1, 12),
+            procedure_body_item(
+                vec!(),
+                vec!(),
+                vec!(
+                    node(
+                        position(21, 2, 9),
+                        assignment_item(            
+                            string("x"),                     
+                            node(
+                                position(26, 2, 14),
+                                binary_expression_item(
+                                    node(
+                                        position(28, 2, 16),
+                                        operator_item(add_operator())
+                                    ),
+                                    node(
+                                        position(26, 2, 14),
+                                        literal_item(int_literal(1)),
+                                    ),
+                                    node(
+                                        position(30, 2, 18),
+                                        literal_item(int_literal(2)),
+                                    )
+                                )
+                            )
                         )
-                    }
-                ))
+                    )
+                )
             )
-        }
+        )
     )
-}
+}                       
 
 #[test]
 fn parse_variable_expression_parses_correctly() {        
@@ -55,37 +56,52 @@ fn parse_variable_expression_parses_correctly() {
     assert_eq!(units.len(), 2);
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            position: SourceFilePosition { absolute: 25, line: 1, col: 26 },
-            item: Box::new(
-                AbstractSyntaxNodeItem::ProcedureBody(vec!(
-                    AbstractSyntaxNode {
-                        position: SourceFilePosition { absolute: 31, line: 2, col: 5 },
-                        item: Box::new(
-                            AbstractSyntaxNodeItem::Assignment {            
-                                name: "x".to_string(), 
-                                value:
-                                    AbstractSyntaxNode {
-                                        position: SourceFilePosition { absolute: 36, line: 2, col: 10 },
-                                        item: Box::new(
-                                            AbstractSyntaxNodeItem::BinaryExpr {
-                                                op: Operator::Add,
-                                                lhs: AbstractSyntaxNode {
-                                                    item: Box::new(AbstractSyntaxNodeItem::Identifier{ name: "a".to_string() }),
-                                                    position: SourceFilePosition { absolute: 36, line: 2, col: 10 }
-                                                },
-                                                rhs: AbstractSyntaxNode {
-                                                    item: Box::new(AbstractSyntaxNodeItem::Identifier { name: "b".to_string() }),
-                                                    position: SourceFilePosition { absolute: 40, line: 2, col: 14 }
-                                                }
-                                            }
-                                        ),
-                                    }
-                            }
+        node(
+            position(25, 1, 26),
+            procedure_body_item(
+                vec!(
+                    node(
+                        position(9, 1, 10),
+                        arg_declaration_item( 
+                            string("a"),
+                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())),
                         )
-                    }
-                ))
+                    ),
+                    node(
+                        position(17, 1, 18),
+                        arg_declaration_item( 
+                            string("b"),
+                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())),
+                        )
+                    )
+                ),
+                vec!(),
+                vec!(
+                    node(
+                        position(31, 2, 5),
+                        assignment_item(            
+                            string("x"), 
+                            node(
+                                position(36, 2, 10),
+                                binary_expression_item(
+                                    node(
+                                        position(38, 2, 12),
+                                        operator_item(add_operator())
+                                    ),
+                                    node(
+                                        position(36, 2, 10),
+                                        identifier_item(string("a")),
+                                    ),
+                                    node(
+                                        position(40, 2, 14),
+                                        identifier_item(string("b")),
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
             )
-        }
+        )
     )
 }

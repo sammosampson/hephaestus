@@ -7,6 +7,7 @@ pub enum ParseError {
     ExpectedArgName,
     ExpectedArgInitialise,
     ExpectedArgSeparator,
+    ExpectedOperator,
     ExpectedType,
     TokenisationError(SourceTokenError),
     Unimplemented
@@ -22,6 +23,10 @@ pub fn tokenisation_error(error: SourceTokenError) -> ParseError {
 
 pub fn unimplemented_error() -> ParseError {
     ParseError::Unimplemented
+}
+
+pub fn expected_operator_error() -> ParseError {
+    ParseError::ExpectedOperator
 }
 
 pub fn expected_open_brace_error() -> ParseError {

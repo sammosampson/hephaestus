@@ -86,7 +86,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         eat_next_character(&mut lexer.reader);
         return create_token(
             get_character_position(&next_character), 
-            create_operator_token_item(create_add_operator())
+            create_operator_token_item(add_operator())
         );
     }
 
@@ -101,7 +101,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         }
         return create_token(
             get_character_position(&next_character), 
-            create_operator_token_item(create_subtract_operator())
+            create_operator_token_item(subtract_operator())
         );
     }
 

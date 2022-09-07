@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::tests::parsing::*;
 
 #[test]
 fn parse_const_declaration_parses_correctly() {
@@ -8,17 +9,15 @@ fn parse_const_declaration_parses_correctly() {
        
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            item: Box::new(
-                AbstractSyntaxNodeItem::Constant {
-                    name: "SomeValue".to_string(),
-                    value: AbstractSyntaxNode {
-                        item: Box::new(AbstractSyntaxNodeItem::Literal(Literal::Int(1))),
-                        position: SourceFilePosition { absolute: 13, line: 1, col: 14 }            
-                    }            
-                }
-            ),
-            position: SourceFilePosition { absolute: 0, line: 1, col: 1 }
-        }
+        node(
+            position(0, 1, 1),
+            constant_item(
+                string("SomeValue"),
+                node(
+                    position(13, 1, 14),
+                    literal_item(int_literal(1)),
+                )
+            )    
+        )
     );
 }

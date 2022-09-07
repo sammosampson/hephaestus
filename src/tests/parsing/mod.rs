@@ -9,6 +9,18 @@ use crate::compilation::*;
 use crate::tests::file_system::*;
 use crate::tests::acting::*;
 
+pub fn string(value: &str) -> String {
+    value.to_string()
+}
+
+pub fn node(position: SourceFilePosition, item: AbstractSyntaxNodeItem) -> AbstractSyntaxNode {
+    create_node(item, position)
+}
+
+pub fn position(absolute: usize, line: usize, col: usize) -> SourceFilePosition {
+    create_source_file_position(absolute, line, col)
+}
+
 pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<CompilationUnit>) {
     let mut reader = create_mock_file_reader();
     add_mock_file(&mut reader, file_path.to_string(), content.to_string());

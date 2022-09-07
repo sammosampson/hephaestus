@@ -44,7 +44,7 @@ pub fn create_procedure_definition_type(name: &str, arg_types: ResolvedTypeIds, 
     let other_proc_type = create_type(
         create_compilation_unit_id(), 
         name.to_string(),
-        create_procedure_definition_type_item(arg_types, return_types)
+        procedure_definition_type_item(arg_types, return_types)
     );
     other_proc_type
 }

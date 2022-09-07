@@ -12,6 +12,19 @@ pub enum ResolvableType {
     Unresolved
 }
 
+pub type ResolvableTypes = Vec<ResolvableType>;
+
+pub fn unresolved_resolvable_type() -> ResolvableType {
+    ResolvableType::Unresolved
+}
+
+pub fn unresolved_named_resolvable_type(name: String) -> ResolvableType {
+    ResolvableType::UnresolvedNamed(name)
+}
+pub fn resolved_resolvable_type(type_id: ResolvedTypeId) -> ResolvableType {
+    ResolvableType::Resolved(type_id)
+}
+
 pub type ResolvedTypes = Vec<ResolvedType>;
 
 #[derive(PartialEq, Debug, Clone, Hash, Eq)]
@@ -19,6 +32,18 @@ pub enum ResolvedTypeId {
     NotResolved,
     BuiltInType(BuiltInType),
     UserDefined(CompilationUnitId)
+}
+
+pub fn built_in_type_resolved_type_id(built_in_type: BuiltInType) -> ResolvedTypeId {
+    ResolvedTypeId::BuiltInType(built_in_type)
+}
+
+pub fn user_defined_resolved_type_id(unit_id: CompilationUnitId) -> ResolvedTypeId {
+    ResolvedTypeId::UserDefined(unit_id)
+}
+
+pub fn not_resolved_type_id() -> ResolvedTypeId {
+    ResolvedTypeId::NotResolved
 }
 
 pub type ResolvedTypeIds = Vec<ResolvedTypeId>;
@@ -30,9 +55,18 @@ pub enum BuiltInType {
     Void
 }
 
-pub fn create_built_in_type_id(built_in_type: &BuiltInType) -> ResolvedTypeId {
-    ResolvedTypeId::BuiltInType(*built_in_type)
+pub fn void_built_in_type() -> BuiltInType {
+    BuiltInType::Void
 }
+
+pub fn int_32_built_in_type() -> BuiltInType {
+    BuiltInType::Int32
+}
+
+pub fn float_32_built_in_type() -> BuiltInType {
+    BuiltInType::Float32
+}
+
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct ResolvedType {
@@ -44,24 +78,42 @@ pub struct ResolvedType {
 
 pub fn create_type(id: CompilationUnitId, name: String, item: TypeItem) -> ResolvedType {
     ResolvedType {
-        id: ResolvedTypeId::UserDefined(id),
+        id: user_defined_resolved_type_id(id),
         name,
         item,
-        size: TypeSize::Unresolved
+        size: unresolved_type_size()
     }
 }
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum TypeItem {
+    None,
     ProcedureDefinition { arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds },
 }
 
-pub fn create_procedure_definition_type_item(arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> TypeItem {
+impl Default for TypeItem {
+    fn default() -> Self {
+        TypeItem::None
+    }
+}
+
+pub fn procedure_definition_type_item(arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> TypeItem {
     TypeItem::ProcedureDefinition { arg_types, return_types }
 }
 
 
+pub fn try_get_procedure_definition_type_item(item: TypeItem) -> Option<ResolvedTypeIds> {
+    if let TypeItem::ProcedureDefinition { return_types, .. } = item {
+       return Some(return_types);
+    }
+    None
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum TypeSize {
     Unresolved,
+}
+
+pub fn unresolved_type_size() -> TypeSize {
+    TypeSize::Unresolved
 }

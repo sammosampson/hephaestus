@@ -1,5 +1,6 @@
 use crate::parsing::*;
 use crate::typing::*;
+use crate::tests::parsing::*;
 
 #[test]
 fn parse_procedure_call_parses_correctly() {
@@ -8,23 +9,20 @@ fn parse_procedure_call_parses_correctly() {
     assert_eq!(units.len(), 1);
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            item: Box::new(
-                AbstractSyntaxNodeItem::Run {
-                    expr: AbstractSyntaxNode {
-                        item: Box::new(
-                            AbstractSyntaxNodeItem::ProcedureCall {
-                                name: "SomeProcedure".to_string(),
-                                args: vec!(),
-                                type_id: ResolvableType::Unresolved
-                            }
-                        ),
-                        position: SourceFilePosition { absolute: 5, line: 1, col: 6 }
-                    }                        
-                }
-            ),
-            position: SourceFilePosition { absolute: 0, line: 1, col: 1 }
-        }
+        node(
+            position(0, 1, 1),
+            AbstractSyntaxNodeItem::Run {
+                expr: node(
+                    position(5, 1, 6),
+                    procedure_call_item(
+                        string("SomeProcedure"),
+                        vec!(),
+                        unresolved_resolvable_type(),
+                        vec!()
+                    )
+                ),                        
+            }      
+        )
     );
 }
 
@@ -36,51 +34,40 @@ fn parse_procedure_call_with_arg_parses_correctly() {
     assert_eq!(units.len(), 1);
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            item: Box::new(
-                AbstractSyntaxNodeItem::Run {
-                    expr: AbstractSyntaxNode {
-                        item: Box::new(
-                            AbstractSyntaxNodeItem::ProcedureCall {
-                                name: "SomeProcedure".to_string(),
-                                args: vec!(
-                                    AbstractSyntaxNode {
-                                        item: Box::new(
-                                            AbstractSyntaxNodeItem::Argument { 
-                                                expr: AbstractSyntaxNode {
-                                                    item: Box::new(
-                                                        AbstractSyntaxNodeItem::Identifier { name: "a".to_string() }
-                                                    ),
-                                                    position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
-                                                },
-                                                type_id: ResolvableType::Unresolved
-                                            }
-                                        ),
-                                        position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
-                                    },                                    
-                                    AbstractSyntaxNode {
-                                        item: Box::new(
-                                            AbstractSyntaxNodeItem::Argument { 
-                                                expr: AbstractSyntaxNode {
-                                                    item: Box::new(
-                                                        AbstractSyntaxNodeItem::Identifier{ name: "b".to_string() }
-                                                    ),
-                                                    position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
-                                                },
-                                                type_id: ResolvableType::Unresolved
-                                            }
-                                        ),
-                                        position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
-                                    }
-                                ),
-                                type_id: ResolvableType::Unresolved
-                            }
+        node(
+            position(0, 1, 1),
+            run_directive_item(
+                node(
+                    position(5, 1, 6),
+                    procedure_call_item(
+                        string("SomeProcedure"),
+                        vec!(
+                            node(
+                                position(19, 1, 20),
+                                arg_item(
+                                    node(                                                    
+                                        position(19, 1, 20),
+                                        identifier_item(string("a"))
+                                    ),
+                                    unresolved_resolvable_type()
+                                )
+                            ),
+                            node(
+                                position(22, 1, 23),
+                                arg_item( 
+                                    node(
+                                        position(22, 1, 23),
+                                        identifier_item(string("b"))
+                                    ),
+                                    unresolved_resolvable_type()
+                                )
+                            ),
                         ),
-                        position: SourceFilePosition { absolute: 5, line: 1, col: 6 }
-                    }                        
-                }
-            ),
-            position: SourceFilePosition { absolute: 0, line: 1, col: 1 }
-        }
+                        unresolved_resolvable_type(),
+                        vec!()
+                    )
+                )                        
+            )
+        )
     );
 }

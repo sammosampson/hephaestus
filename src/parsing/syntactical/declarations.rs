@@ -10,7 +10,7 @@ pub fn parse_top_level_declaration(name: String, lexer: &mut Lexer, position: So
 }
 
 pub fn parse_declaration(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(create_constant_item(name, parse_constant_value(lexer)), position)
+    create_node(constant_item(name, parse_constant_value(lexer)), position)
 }
 
 pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
@@ -24,6 +24,6 @@ pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
     }
 }
 
-fn create_constant_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
+pub fn constant_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Constant { name, value }
 }

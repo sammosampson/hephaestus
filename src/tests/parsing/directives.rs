@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::tests::parsing::*;
 
 #[test]
 fn parse_run_directive_parses_correctly() {        
@@ -7,30 +8,28 @@ fn parse_run_directive_parses_correctly() {
     assert_eq!(units.len(), 1);
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            item: Box::new(
-                AbstractSyntaxNodeItem::Run {
-                    expr: 
-                        AbstractSyntaxNode {
-                            item: Box::new(
-                                AbstractSyntaxNodeItem::BinaryExpr {
-                                    op: Operator::Add,
-                                    lhs: AbstractSyntaxNode {
-                                        item: Box::new(AbstractSyntaxNodeItem::Literal(Literal::Int(1))),
-                                        position: SourceFilePosition { absolute: 5, line: 1, col: 6 }
-                                    },
-                                    rhs: AbstractSyntaxNode {
-                                        item: Box::new(AbstractSyntaxNodeItem::Literal(Literal::Int(2))),
-                                        position: SourceFilePosition { absolute: 9, line: 1, col: 10 }
-                                    }
-                                }
-                            ),
-                            position: SourceFilePosition { absolute: 5, line: 1, col: 6 }
-                        }
-                    }
-            ),
-            position: SourceFilePosition { absolute: 0, line: 1, col: 1 }
-        }
+        node(
+            position(0, 1, 1),
+            run_directive_item(
+                node(
+                    position(5, 1, 6),
+                    binary_expression_item(
+                        node(
+                            position(7, 1, 8),
+                            operator_item(add_operator())
+                        ),
+                        node(
+                            position(5, 1, 6),
+                            literal_item(int_literal(1)),
+                        ),
+                        node(
+                            position(9, 1, 10),
+                            literal_item(int_literal(2)),
+                        )
+                    )
+                )  
+            )
+        )
     )
 }
 
@@ -41,13 +40,9 @@ fn parse_load_directive_parses_correctly() {
     assert_eq!(units.len(), 1);
     assert_eq!(
         units[0].tree, 
-        AbstractSyntaxNode {
-            item: Box::new(
-                AbstractSyntaxNodeItem::Load {
-                    file_name: "test.jai".to_string()
-                }
-            ),
-            position: SourceFilePosition { absolute: 0, line: 1, col: 1 }
-        }
+        node(
+            position(0, 1, 1),
+            load_directive_item("test.jai".to_string())
+        )
     );
 }
