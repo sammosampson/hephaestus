@@ -1,5 +1,5 @@
-main :: () {
-    x := 1 + 2;
+main :: (a: int, b: int) {
+    x := a + b;
 }
 
-#run main()
+#run main(1, 2)

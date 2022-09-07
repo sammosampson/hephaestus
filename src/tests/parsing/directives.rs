@@ -35,17 +35,6 @@ fn parse_run_directive_parses_correctly() {
 }
 
 #[test]
-fn parse_run_directive_with_procedure_call_parses_correctly() {        
-    let units = crate::tests::parsing::run_parse_file_return_only_units("main :: (a: int, b: int) {
-    x := a + b;
-}
-#run main(1, 2)");
-    
-    assert_eq!(units.len(), 3);
-    dbg!(&units[0].tree);
-}
-
-#[test]
 fn parse_load_directive_parses_correctly() {
     let units = crate::tests::parsing::run_parse_file_return_only_units("#load \"test.jai\"");
        

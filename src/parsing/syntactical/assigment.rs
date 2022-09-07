@@ -9,6 +9,7 @@ pub fn parse_value_assignment_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
 
     match token.item {
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
+        SourceTokenItem::Identifier(identifier) => parse_identifier(identifier, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
         _ => create_error_node(unimplemented_error(), token.position),

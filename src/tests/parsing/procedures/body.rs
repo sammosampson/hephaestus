@@ -3,18 +3,15 @@ use crate::typing::*;
 
 #[test]
 fn parse_procedure_body_parses_correctly() {
-    let file_path = "test.hep";
     let content = &"SomeProcedure :: () {
     a := 1;
     SomeOtherProcedure(a);
 }";
     
-    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
-        file_path, 
+    let units = crate::tests::parsing::run_parse_file_return_only_units(
         content
     );
        
-    assert_eq!(actual_file_path, file_path.to_string());
     assert_eq!(
         units[0].tree, 
         AbstractSyntaxNode {
@@ -47,7 +44,7 @@ fn parse_procedure_body_parses_correctly() {
                                             expr: AbstractSyntaxNode {
                                                 position: SourceFilePosition { absolute: 57, line: 3, col: 24 },
                                                 item: Box::new(
-                                                    AbstractSyntaxNodeItem::Identifier("a".to_string())
+                                                    AbstractSyntaxNodeItem::Identifier{ name: "a".to_string() }
                                                 ),
                                             },
                                             type_id: ResolvableType::Unresolved

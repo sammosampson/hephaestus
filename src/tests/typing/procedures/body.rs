@@ -77,4 +77,3 @@ fn typing_procedure_body_waits_for_external_procedure() {
     );
 
 }
-

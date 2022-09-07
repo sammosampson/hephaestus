@@ -30,9 +30,15 @@ pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: 
         return parse_procedure_call(name, lexer, position);
     }
 
-    create_node(create_identifier_item(name), position)
+    let node = create_node(create_identifier_item(name), position);
+    
+    if let SourceTokenItem::Operator(op) = peek_next_token(lexer).item {
+        return parse_expression(lexer, op, node, position);
+    }
+
+    node
 }
 
 pub fn create_identifier_item(name: String) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Identifier(name)
+    AbstractSyntaxNodeItem::Identifier { name }
 }

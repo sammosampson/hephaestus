@@ -48,7 +48,7 @@ pub enum AbstractSyntaxNodeItem {
         value: AbstractSyntaxNode
     },
     Literal(Literal),
-    Identifier(String),
+    Identifier { name: String },
     BinaryExpr {
         op: Operator,
         lhs: AbstractSyntaxNode,

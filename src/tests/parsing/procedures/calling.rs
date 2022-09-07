@@ -3,14 +3,8 @@ use crate::typing::*;
 
 #[test]
 fn parse_procedure_call_parses_correctly() {
-    let file_path = "test.hep";
-    
-    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
-        file_path, 
-        "#run SomeProcedure()"
-    );
+    let units = crate::tests::parsing::run_parse_file_return_only_units("#run SomeProcedure()");
        
-    assert_eq!(actual_file_path, file_path.to_string());
     assert_eq!(units.len(), 1);
     assert_eq!(
         units[0].tree, 
@@ -37,14 +31,8 @@ fn parse_procedure_call_parses_correctly() {
 #[test]
 fn parse_procedure_call_with_arg_parses_correctly() {
     let content = "#run SomeProcedure(a, b)";
-    let file_path = "test.hep";
-    
-    let (actual_file_path, units, ..) = crate::tests::parsing::run_parse_file(
-        file_path, 
-        content
-    );
+    let units= crate::tests::parsing::run_parse_file_return_only_units(content);
        
-    assert_eq!(actual_file_path, file_path.to_string());
     assert_eq!(units.len(), 1);
     assert_eq!(
         units[0].tree, 
@@ -61,7 +49,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                             AbstractSyntaxNodeItem::Argument { 
                                                 expr: AbstractSyntaxNode {
                                                     item: Box::new(
-                                                        AbstractSyntaxNodeItem::Identifier("a".to_string())
+                                                        AbstractSyntaxNodeItem::Identifier { name: "a".to_string() }
                                                     ),
                                                     position: SourceFilePosition { absolute: 19, line: 1, col: 20 }
                                                 },
@@ -75,7 +63,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                             AbstractSyntaxNodeItem::Argument { 
                                                 expr: AbstractSyntaxNode {
                                                     item: Box::new(
-                                                        AbstractSyntaxNodeItem::Identifier("b".to_string())
+                                                        AbstractSyntaxNodeItem::Identifier{ name: "b".to_string() }
                                                     ),
                                                     position: SourceFilePosition { absolute: 22, line: 1, col: 23 }
                                                 },

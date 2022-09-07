@@ -211,22 +211,22 @@ fn create_procedure_header_item(
     AbstractSyntaxNodeItem::ProcedureHeader { name, args: arguments, return_types, body: CompilationUnitReference::Resolved(body_ref) }
 }
 
-fn create_procedure_body_item(children: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
+pub fn create_procedure_body_item(children: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::ProcedureBody(children)
 }
 
-fn create_procedure_call_item(name: String, arguments: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
+pub fn create_procedure_call_item(name: String, arguments: AbstractSyntaxChildNodes) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, type_id: ResolvableType::Unresolved }
 }
 
-fn create_arg_declaraton_item(name: String, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
+pub fn create_arg_declaraton_item(name: String, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::ArgumentDeclaration { name, type_id: arg_type }
 }
 
-fn create_arg_item(expr: AbstractSyntaxNode, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
+pub fn create_arg_item(expr: AbstractSyntaxNode, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Argument { expr, type_id: arg_type }
 }
 
-fn create_type_item(t: ResolvableType) -> AbstractSyntaxNodeItem {
+pub fn create_type_item(t: ResolvableType) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Type(t)
 }
