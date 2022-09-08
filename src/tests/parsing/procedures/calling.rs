@@ -4,7 +4,7 @@ use crate::tests::parsing::*;
 
 #[test]
 fn parse_procedure_call_parses_correctly() {
-    let units = crate::tests::parsing::run_parse_file_return_only_units("#run SomeProcedure()");
+    let units = run_parse_file_return_only_units("#run SomeProcedure()");
        
     assert_eq!(units.len(), 1);
     assert_eq!(
@@ -28,8 +28,7 @@ fn parse_procedure_call_parses_correctly() {
 
 #[test]
 fn parse_procedure_call_with_arg_parses_correctly() {
-    let content = "#run SomeProcedure(a, b)";
-    let units= crate::tests::parsing::run_parse_file_return_only_units(content);
+    let units= run_parse_file_return_only_units("#run SomeProcedure(a, b)");
        
     assert_eq!(units.len(), 1);
     assert_eq!(

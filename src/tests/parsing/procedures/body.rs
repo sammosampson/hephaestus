@@ -4,13 +4,10 @@ use crate::tests::parsing::*;
 
 #[test]
 fn parse_procedure_body_parses_correctly() {
-    let content = &"SomeProcedure :: () {
+    let units = run_parse_file_return_only_units("SomeProcedure :: () {
     a := 1;
     SomeOtherProcedure(a);
-}";
-    
-    let units = crate::tests::parsing::run_parse_file_return_only_units(
-        content
+}"
     );
        
     assert_eq!(

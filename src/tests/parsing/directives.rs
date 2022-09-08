@@ -3,7 +3,7 @@ use crate::tests::parsing::*;
 
 #[test]
 fn parse_run_directive_parses_correctly() {        
-    let units = crate::tests::parsing::run_parse_file_return_only_units("#run 1 + 2");
+    let units = run_parse_file_return_only_units("#run 1 + 2");
     
     assert_eq!(units.len(), 1);
     assert_eq!(
@@ -35,7 +35,7 @@ fn parse_run_directive_parses_correctly() {
 
 #[test]
 fn parse_load_directive_parses_correctly() {
-    let units = crate::tests::parsing::run_parse_file_return_only_units("#load \"test.jai\"");
+    let units = run_parse_file_return_only_units("#load \"test.jai\"");
        
     assert_eq!(units.len(), 1);
     assert_eq!(

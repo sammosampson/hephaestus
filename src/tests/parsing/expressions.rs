@@ -6,7 +6,7 @@ use crate::{
 
 #[test]
 fn parse_literal_expression_parses_correctly() {        
-    let units = crate::tests::parsing::run_parse_file_return_only_units("main :: () {
+    let units = run_parse_file_return_only_units("main :: () {
         x := 1 + 2;
     }");
 
@@ -50,7 +50,7 @@ fn parse_literal_expression_parses_correctly() {
 
 #[test]
 fn parse_variable_expression_parses_correctly() {        
-    let units = crate::tests::parsing::run_parse_file_return_only_units("main :: (a: int, b: int) {
+    let units = run_parse_file_return_only_units("main :: (a: int, b: int) {
     x := a + b;
 }");    
     assert_eq!(units.len(), 2);

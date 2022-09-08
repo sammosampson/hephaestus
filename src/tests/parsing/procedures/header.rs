@@ -5,9 +5,8 @@ use crate::tests::parsing::*;
 
 #[test]
 fn parse_procedure_header_parses_correctly() {
-    let content = "SomeProcedure :: () {
-}";
-    let units = crate::tests::parsing::run_parse_file_return_only_units(content);
+    let units = run_parse_file_return_only_units("SomeProcedure :: () {
+}");
     
     assert_eq!(units.len(), 2);
     assert_eq!(
@@ -26,9 +25,8 @@ fn parse_procedure_header_parses_correctly() {
 
 #[test]
 fn parse_procedure_header_with_return_type_parses_correctly() {
-    let content = "SomeProcedure :: () -> void {
-}";   
-    let units = crate::tests::parsing::run_parse_file_return_only_units(content);
+    let units = run_parse_file_return_only_units("SomeProcedure :: () -> void {
+}");
     
     assert_eq!(units.len(), 2);
     assert_eq!(
@@ -52,9 +50,8 @@ fn parse_procedure_header_with_return_type_parses_correctly() {
 
 #[test]
 fn parse_procedure_header_with_return_types_parses_correctly() {
-    let content = "SomeProcedure :: () -> SomeType, int {
-}";
-    let units = crate::tests::parsing::run_parse_file_return_only_units(content);
+    let units = run_parse_file_return_only_units("SomeProcedure :: () -> SomeType, int {
+}");
     
     assert_eq!(units.len(), 2);
     assert_eq!(
@@ -82,9 +79,8 @@ fn parse_procedure_header_with_return_types_parses_correctly() {
 
 #[test]
 fn parse_procedure_header_with_arg_parses_correctly() {
-    let content = "SomeProcedure :: (x: int) {
-}";
-    let units = crate::tests::parsing::run_parse_file_return_only_units(content);
+    let units = run_parse_file_return_only_units("SomeProcedure :: (x: int) {
+}");
     
     assert_eq!(units.len(), 2);
     assert_eq!(
@@ -111,9 +107,8 @@ fn parse_procedure_header_with_arg_parses_correctly() {
 
 #[test]
 fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
-    let content = "SomeProcedure :: (x: float, y: SomeType) -> void {
-}";
-    let units= crate::tests::parsing::run_parse_file_return_only_units(content);
+    let units= run_parse_file_return_only_units("SomeProcedure :: (x: float, y: SomeType) -> void {
+}");
 
     assert_eq!(units.len(), 2);
     assert_eq!(

@@ -3,9 +3,7 @@ use crate::tests::parsing::*;
 
 #[test]
 fn parse_const_declaration_parses_correctly() {
-    let units = crate::tests::parsing::run_parse_file_return_only_units(
-        "SomeValue :: 1"
-    );
+    let units = run_parse_file_return_only_units("SomeValue :: 1");
        
     assert_eq!(
         units[0].tree, 
