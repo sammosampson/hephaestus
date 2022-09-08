@@ -38,8 +38,7 @@ pub enum AbstractSyntaxNodeItem {
     ProcedureCall {
         name: String,
         args: AbstractSyntaxChildNodes,
-        type_id: ResolvableType,
-        return_type_ids: ResolvableTypes,
+        type_id: ResolvableType
     },
     ArgumentDeclaration {
         name: String,
@@ -55,7 +54,8 @@ pub enum AbstractSyntaxNodeItem {
     },
     Assignment {
         name: String,
-        value: AbstractSyntaxNode
+        value: AbstractSyntaxNode,
+        type_id: ResolvableType
     },
     BinaryExpr {
         op: AbstractSyntaxNode,
@@ -99,11 +99,15 @@ pub trait AbstractSyntaxProcedureBodyNodeVisitor {
         &mut self,
         name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
-        type_id: &mut ResolvableType,
-        return_type_ids: &mut ResolvableTypes,
+        type_id: &mut ResolvableType
     );
     
-    fn visit_assignment(&mut self, name: &mut String, value: &mut AbstractSyntaxNode);
+    fn visit_assignment(
+        &mut self,
+        name: &mut String,
+        value: &mut AbstractSyntaxNode,
+        type_id: &mut ResolvableType
+    );
 }
 
 pub trait AbstractSyntaxProcedureCallNodeVisitor {
@@ -116,8 +120,7 @@ pub trait AbstractSyntaxExpressionNodeVisitor {
         &mut self,
         name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
-        type_id: &mut ResolvableType,
-        return_type_ids: &mut ResolvableTypes,
+        type_id: &mut ResolvableType
     );
 }
 
@@ -173,12 +176,11 @@ where TVistor : AbstractSyntaxProcedureBodyNodeVisitor {
             AbstractSyntaxNodeItem::ProcedureCall { 
                 name, 
                 args, 
-                type_id, 
-                return_type_ids
+                type_id
             } => 
-                visitor.visit_procedure_call(name, args, type_id, return_type_ids),
-            AbstractSyntaxNodeItem::Assignment { name, value } => 
-                visitor.visit_assignment(name, value),
+                visitor.visit_procedure_call(name, args, type_id),
+            AbstractSyntaxNodeItem::Assignment { name, value, type_id } => 
+                visitor.visit_assignment(name, value, type_id),
             item => handle_cannot_visit_node(item)
         }
     }
@@ -202,10 +204,9 @@ where TVistor : AbstractSyntaxExpressionNodeVisitor {
         AbstractSyntaxNodeItem::ProcedureCall {
             name, 
             args, 
-            type_id,
-            return_type_ids
+            type_id
         } => 
-                visitor.visit_procedure_call(name, args, type_id, return_type_ids),
+                visitor.visit_procedure_call(name, args, type_id),
         item => handle_cannot_visit_node(item)
     }
 }

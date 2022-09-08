@@ -1,7 +1,8 @@
 use crate::parsing::*;
+use crate::typing::*;
 
 pub fn parse_value_assignment(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(assignment_item(name, parse_value_assignment_value(lexer)), position)
+    create_node(assignment_item(name, parse_value_assignment_value(lexer), unresolved_resolvable_type()), position)
 }
 
 pub fn parse_value_assignment_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
@@ -16,6 +17,6 @@ pub fn parse_value_assignment_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
     }
 }
 
-pub fn assignment_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Assignment { name, value }
+pub fn assignment_item(name: String, value: AbstractSyntaxNode, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Assignment { name, value, type_id }
 }

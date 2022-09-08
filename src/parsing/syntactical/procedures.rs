@@ -7,7 +7,7 @@ pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFil
     assert!(is_close_paren(&peek_next_token(lexer).item));
     eat_next_token(lexer);
 
-    create_node(procedure_call_item(name, arguments, unresolved_resolvable_type(), vec!()), position)
+    create_node(procedure_call_item(name, arguments, unresolved_resolvable_type()), position)
 }
 
 fn parse_procedure_call_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
@@ -230,10 +230,9 @@ pub fn procedure_body_item(
 pub fn procedure_call_item(
     name: String,
     arguments: AbstractSyntaxChildNodes,
-    type_id: ResolvableType,
-    return_type_ids: ResolvableTypes
+    type_id: ResolvableType
 ) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, type_id, return_type_ids }
+    AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, type_id }
 }
 
 pub fn arg_declaration_item(name: String, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {

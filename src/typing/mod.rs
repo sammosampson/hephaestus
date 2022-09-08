@@ -12,8 +12,6 @@ pub enum ResolvableType {
     Unresolved
 }
 
-pub type ResolvableTypes = Vec<ResolvableType>;
-
 pub fn unresolved_resolvable_type() -> ResolvableType {
     ResolvableType::Unresolved
 }
@@ -99,14 +97,6 @@ impl Default for TypeItem {
 
 pub fn procedure_definition_type_item(arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> TypeItem {
     TypeItem::ProcedureDefinition { arg_types, return_types }
-}
-
-
-pub fn try_get_procedure_definition_type_item(item: TypeItem) -> Option<ResolvedTypeIds> {
-    if let TypeItem::ProcedureDefinition { return_types, .. } = item {
-       return Some(return_types);
-    }
-    None
 }
 
 #[derive(PartialEq, Debug, Clone)]

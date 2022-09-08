@@ -39,7 +39,8 @@ fn parse_literal_expression_parses_correctly() {
                                         literal_item(int_literal(2)),
                                     )
                                 )
-                            )
+                            ),
+                            unresolved_resolvable_type()
                         )
                     )
                 )
@@ -97,7 +98,8 @@ fn parse_variable_expression_parses_correctly() {
                                         identifier_item(string("b")),
                                     )
                                 )
-                            )
+                            ),
+                            unresolved_resolvable_type()
                         )
                     )
                 )

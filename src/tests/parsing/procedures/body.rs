@@ -25,7 +25,8 @@ fn parse_procedure_body_parses_correctly() {
                             node(
                                 position(31, 2, 10),
                                 literal_item(int_literal(1))
-                            )
+                            ),
+                            unresolved_resolvable_type()
                         )
                     ),
                     node(
@@ -44,8 +45,7 @@ fn parse_procedure_body_parses_correctly() {
                                     )
                                 )
                             ),
-                            unresolved_resolvable_type(),
-                            vec!()
+                            unresolved_resolvable_type()
                         )
                     )                        
                 )

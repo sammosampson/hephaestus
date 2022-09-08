@@ -17,8 +17,7 @@ fn parse_procedure_call_parses_correctly() {
                     procedure_call_item(
                         string("SomeProcedure"),
                         vec!(),
-                        unresolved_resolvable_type(),
-                        vec!()
+                        unresolved_resolvable_type()
                     )
                 ),                        
             }      
@@ -62,8 +61,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                 )
                             ),
                         ),
-                        unresolved_resolvable_type(),
-                        vec!()
+                        unresolved_resolvable_type()
                     )
                 )                        
             )
