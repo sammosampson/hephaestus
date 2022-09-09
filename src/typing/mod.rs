@@ -23,6 +23,13 @@ pub fn resolved_resolvable_type(type_id: ResolvedTypeId) -> ResolvableType {
     ResolvableType::Resolved(type_id)
 }
 
+pub fn try_get_built_in_type_from_resolved_resolvable_type(resolvable_type: &ResolvableType) -> Option<BuiltInType> {
+    if let ResolvableType::Resolved(ResolvedTypeId::BuiltInType(built_in_type)) = resolvable_type {
+       return Some(*built_in_type);
+    }
+    None
+}
+
 pub type ResolvedTypes = Vec<ResolvedType>;
 
 #[derive(PartialEq, Debug, Clone, Hash, Eq)]

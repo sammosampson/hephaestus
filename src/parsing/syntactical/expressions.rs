@@ -1,9 +1,10 @@
 use crate::parsing::*;
+use crate::typing::*;
 
 pub fn parse_expression(lexer: &mut Lexer, lhs: AbstractSyntaxNode, position: SourceFilePosition) -> AbstractSyntaxNode {
     let op = parse_operator(lexer);
     let rhs_node = parse_rhs(lexer);
-    create_node(binary_expression_item(op, lhs, rhs_node), position)
+    create_node(binary_expression_item(op, lhs, rhs_node, unresolved_resolvable_type()), position)
 }
 
 pub fn parse_rhs(lexer: &mut Lexer) -> AbstractSyntaxNode {
@@ -28,11 +29,17 @@ pub fn parse_operator(lexer: &mut Lexer) -> AbstractSyntaxNode {
     }
 }
 
-pub fn binary_expression_item(op: AbstractSyntaxNode, lhs: AbstractSyntaxNode, rhs: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
+pub fn binary_expression_item(
+    op: AbstractSyntaxNode,
+    lhs: AbstractSyntaxNode,
+    rhs: AbstractSyntaxNode,
+    type_id: ResolvableType
+) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::BinaryExpr {
         op,
         lhs,
-        rhs
+        rhs,
+        type_id
     }
 }
 

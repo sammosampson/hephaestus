@@ -23,12 +23,17 @@ pub fn subtract_operator() -> Operator {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Literal {
-    Int(usize),
+    UnsignedInt(u64),
+    Float(f64),
     String(String)
 }
 
-pub fn int_literal(number: usize) -> Literal {
-    Literal::Int(number)
+pub fn unsigned_int_literal(number: u64) -> Literal {
+    Literal::UnsignedInt(number)
+}
+
+pub fn float_literal(number: f64) -> Literal {
+    Literal::Float(number)
 }
 
 pub fn string_literal(string: String) -> Literal {

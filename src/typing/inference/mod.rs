@@ -67,7 +67,8 @@ fn create_root_visitor<'a>(
 
 impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
     fn visit_run(&mut self, expr: &mut AbstractSyntaxNode) {
-        let mut visitor = create_expression_visitor(self.ctx, self.type_repository);
+        let local_type_map = create_local_type_map();
+        let mut visitor = create_expression_visitor(self.ctx, self.type_repository, &local_type_map);
         apply_visitor_to_ast_expression(expr, &mut visitor);
         dbg!(expr);
     }
@@ -93,11 +94,11 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
 
     fn visit_procedure_body(
         &mut self,
-        _args: &mut AbstractSyntaxChildNodes,
-        _return_types: &mut AbstractSyntaxChildNodes,
+        args: &mut AbstractSyntaxChildNodes,
+        return_types: &mut AbstractSyntaxChildNodes,
         statements: &mut AbstractSyntaxChildNodes
     ) {
         let mut visitor = create_procedure_body_visitor(self.ctx, self.type_repository);
-        apply_visitor_to_ast_procedure_body(statements, &mut visitor);
+        apply_visitor_to_ast_procedure_body(args, return_types, statements, &mut visitor);
     }
 }

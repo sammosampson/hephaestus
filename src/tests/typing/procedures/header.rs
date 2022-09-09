@@ -24,7 +24,8 @@ fn typing_procedure_header_returns_correct_types() {
 
 #[test]
 fn typing_procedure_header_with_args_returns_correct_types() {
-    let mut units = run_parse_file_return_only_units("SomeProcedure :: (a: int, b: float) -> float, int {}");
+    let mut units = run_parse_file_return_only_units("SomeProcedure :: (a: int, b: float) -> float, int {
+    }");
 
     let proc_header = units.pop().unwrap();
     let proc_header_id = proc_header.id;
@@ -49,4 +50,3 @@ fn typing_procedure_header_with_args_returns_correct_types() {
     ));
     assert_eq!(types[0].size, unresolved_type_size());
 }
-

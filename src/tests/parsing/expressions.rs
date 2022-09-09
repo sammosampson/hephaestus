@@ -32,12 +32,13 @@ fn parse_literal_expression_parses_correctly() {
                                     ),
                                     node(
                                         position(26, 2, 14),
-                                        literal_item(int_literal(1)),
+                                        literal_item(unsigned_int_literal(1)),
                                     ),
                                     node(
                                         position(30, 2, 18),
-                                        literal_item(int_literal(2)),
-                                    )
+                                        literal_item(unsigned_int_literal(2)),
+                                    ),
+                                    unresolved_resolvable_type()
                                 )
                             ),
                             unresolved_resolvable_type()
@@ -96,7 +97,8 @@ fn parse_variable_expression_parses_correctly() {
                                     node(
                                         position(40, 2, 14),
                                         identifier_item(string("b")),
-                                    )
+                                    ),
+                                    unresolved_resolvable_type()
                                 )
                             ),
                             unresolved_resolvable_type()

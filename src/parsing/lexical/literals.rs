@@ -1,14 +1,23 @@
 use std::num::*;
 use crate::parsing::*;
 
-type ParseNumberResult = Result<usize, ParseIntError>;
+type ParseUnsignedIntResult = Result<u64, ParseIntError>;
+type ParseFloatResult = Result<f64, ParseFloatError>;
 
-pub fn parse_number(from: &str) -> ParseNumberResult {
-    from.parse::<usize>()
+pub fn parse_unsigned_int(from: &str) -> ParseUnsignedIntResult {
+    from.parse::<u64>()
 }
 
-pub fn create_number_literal_token_item(number: usize) -> SourceTokenItem {
-    SourceTokenItem::Literal(int_literal(number))
+pub fn parse_float(from: &str) -> ParseFloatResult {
+    from.parse::<f64>()
+}
+
+pub fn create_unsigned_int_literal_token_item(number: u64) -> SourceTokenItem {
+    SourceTokenItem::Literal(unsigned_int_literal(number))
+}
+
+pub fn create_float_literal_token_item(number: f64) -> SourceTokenItem {
+    SourceTokenItem::Literal(float_literal(number))
 }
 
 pub fn create_string_literal_token_item(string: String) -> SourceTokenItem {

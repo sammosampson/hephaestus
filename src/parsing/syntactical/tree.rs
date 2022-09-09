@@ -48,6 +48,9 @@ pub enum AbstractSyntaxNodeItem {
         expr: AbstractSyntaxNode,
         type_id: ResolvableType
     },
+    Return {
+        args: AbstractSyntaxChildNodes
+    },
     Constant {
         name: String,
         value: AbstractSyntaxNode
@@ -61,6 +64,7 @@ pub enum AbstractSyntaxNodeItem {
         op: AbstractSyntaxNode,
         lhs: AbstractSyntaxNode,
         rhs: AbstractSyntaxNode,
+        type_id: ResolvableType,
     },
     Type(ResolvableType),
     Literal(Literal),
@@ -95,6 +99,9 @@ pub trait AbstractSyntaxProcedureHeaderNodeVisitor {
 }
 
 pub trait AbstractSyntaxProcedureBodyNodeVisitor {
+    fn visit_argument_declaration(&mut self, name: &mut String, type_id: &mut ResolvableType);
+    fn visit_return_type_declaration(&mut self, return_type: &mut ResolvableType);
+
     fn visit_procedure_call(
         &mut self,
         name: &mut String,
@@ -108,14 +115,24 @@ pub trait AbstractSyntaxProcedureBodyNodeVisitor {
         value: &mut AbstractSyntaxNode,
         type_id: &mut ResolvableType
     );
+
+    fn visit_return_statement(&mut self, args: &mut AbstractSyntaxChildNodes);
 }
 
-pub trait AbstractSyntaxProcedureCallNodeVisitor {
+pub trait AbstractSyntaxArgumentsNodeVisitor {
     fn visit_argument(&mut self, expr: &mut AbstractSyntaxNode, type_id: &mut ResolvableType);
 }
 
 pub trait AbstractSyntaxExpressionNodeVisitor {
     fn visit_literal(&mut self, literal: &mut Literal);
+    fn visit_identifier(&mut self, name: &mut String);
+    fn visit_expression(
+        &mut self,
+        op: &mut AbstractSyntaxNode,
+        lhs: &mut AbstractSyntaxNode,
+        rhs: &mut AbstractSyntaxNode,
+        type_id: &mut ResolvableType
+    );
     fn visit_procedure_call(
         &mut self,
         name: &mut String,
@@ -169,8 +186,28 @@ where TVistor : AbstractSyntaxProcedureHeaderNodeVisitor {
     }
 }
 
-pub fn apply_visitor_to_ast_procedure_body<TVistor>(statements: &mut AbstractSyntaxChildNodes, visitor: &mut TVistor) 
-where TVistor : AbstractSyntaxProcedureBodyNodeVisitor {
+pub fn apply_visitor_to_ast_procedure_body<TVistor>(
+    args: &mut AbstractSyntaxChildNodes,
+    return_types: &mut AbstractSyntaxChildNodes,
+    statements: &mut AbstractSyntaxChildNodes,
+    visitor: &mut TVistor
+) where TVistor : AbstractSyntaxProcedureBodyNodeVisitor {
+    for arg in args {
+        match arg.item_mut() {
+            AbstractSyntaxNodeItem::ArgumentDeclaration { name, type_id } => 
+                visitor.visit_argument_declaration(name, type_id),
+            item => handle_cannot_visit_node(item)
+        }
+    }
+
+    for return_type in return_types {
+        match return_type.item_mut() {
+            AbstractSyntaxNodeItem::Type(resolvable_type) => 
+                visitor.visit_return_type_declaration(resolvable_type),
+            item => handle_cannot_visit_node(item)
+        }
+    }
+    
     for statement in statements {
         match statement.item_mut() {
             AbstractSyntaxNodeItem::ProcedureCall { 
@@ -181,13 +218,15 @@ where TVistor : AbstractSyntaxProcedureBodyNodeVisitor {
                 visitor.visit_procedure_call(name, args, type_id),
             AbstractSyntaxNodeItem::Assignment { name, value, type_id } => 
                 visitor.visit_assignment(name, value, type_id),
+            AbstractSyntaxNodeItem::Return { args } => 
+                visitor.visit_return_statement(args),
             item => handle_cannot_visit_node(item)
         }
     }
 }
 
-pub fn apply_visitor_to_ast_procedure_call<TVistor>(args: &mut AbstractSyntaxChildNodes, visitor: &mut TVistor) 
-where TVistor : AbstractSyntaxProcedureCallNodeVisitor {
+pub fn apply_visitor_to_ast_args<TVistor>(args: &mut AbstractSyntaxChildNodes, visitor: &mut TVistor) 
+where TVistor : AbstractSyntaxArgumentsNodeVisitor {
     for arg in args {
         match arg.item_mut() {
             AbstractSyntaxNodeItem::Argument { expr, type_id } => 
@@ -201,6 +240,14 @@ pub fn apply_visitor_to_ast_expression<TVistor>(ast: &mut AbstractSyntaxNode, vi
 where TVistor : AbstractSyntaxExpressionNodeVisitor {
     match ast.item_mut() {
         AbstractSyntaxNodeItem::Literal(literal) => visitor.visit_literal(literal),
+        AbstractSyntaxNodeItem::Identifier(name) => visitor.visit_identifier(name),
+        AbstractSyntaxNodeItem::BinaryExpr { 
+            op, 
+            lhs, 
+            rhs, 
+            type_id 
+        } => visitor.visit_expression(op, lhs, rhs, type_id),
+
         AbstractSyntaxNodeItem::ProcedureCall {
             name, 
             args, 

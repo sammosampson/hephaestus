@@ -1,150 +1,112 @@
-
 use crate::typing::*;
-use crate::parsing::*;
 use crate::tests::parsing::*;
 use crate::tests::typing::*;
 
 #[test]
-fn typing_procedure_body_waits_for_external_procedure() {
-    let mut units = run_parse_file_return_only_units("SomeProcedure :: () {
-    SomeExternalProcedure(1);
-}");
-
-    let external_proc_type = create_procedure_definition_type(
-        "SomeExternalProcedure",
-        vec!(built_in_type_resolved_type_id(int_32_built_in_type())),
-        vec!()
-    );
-    
-    let external_proc_type_id = external_proc_type.id.clone();
-
-    let typing_repository = start_type_repository_actor();
-        
-    add_resolved_type(
-        &typing_repository, 
-        create_procedure_definition_type_with_no_args("SomeExternalProcedure")
-    );
-
-    add_resolved_type(&typing_repository, external_proc_type);
-    
-    add_resolved_type(
-        &typing_repository, 
-        create_procedure_definition_type_with_no_args("SomeOtherExternalProcedure")
-    );
+fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_correctly() {
+    let mut units = run_parse_file_return_only_units("SomeProcedure :: (a: int, b: float) -> float, int {
+        x := a;
+        y := b;
+        return 1.0, 2;
+    }");
 
     let _proc_header = units.pop().unwrap();
     let proc_body = units.pop().unwrap();
-
+    
     let (types, unit) = run_typing_on_unit(
-        typing_repository, 
+        start_type_repository_actor(), 
         proc_body
     );
 
     assert_eq!(types.len(), 0);
     assert_eq!(
-        unit.tree, 
+        unit.tree,
         node(
-            position(20, 1, 21),
+            position(50, 1, 51),
             procedure_body_item(
-                vec!(),
-                vec!(),
-                vec!(                       
-                    node(                    
-                        position(26, 2, 5),
-                        procedure_call_item(
-                            string("SomeExternalProcedure"),
-                            vec!(
-                                node(
-                                    position(48, 2, 27),                            
-                                    arg_item( 
-                                        node(
-                                            position(48, 2, 27),
-                                            literal_item(int_literal(1))
-                                        ),
-                                        resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
-                                    )
-                                ),
-                            ),
-                            resolved_resolvable_type(external_proc_type_id)
-                        )
-                    )
-                )
-            )
-        )
-    )
-}
-
-#[test]
-fn typing_procedure_body_waits_for_external_procedure_with_return_arg() {
-    let mut units = run_parse_file_return_only_units("SomeProcedure :: () {
-    x := SomeExternalProcedure(1);
-}");
-
-    let external_proc_type = create_procedure_definition_type(
-        "SomeExternalProcedure",
-        vec!(built_in_type_resolved_type_id(int_32_built_in_type())),
-        vec!(built_in_type_resolved_type_id(float_32_built_in_type()))
-    );
-    
-    let external_proc_type_id = external_proc_type.id.clone();
-
-    let typing_repository = start_type_repository_actor();
-        
-    add_resolved_type(
-        &typing_repository, 
-        create_procedure_definition_type_with_no_args("SomeExternalProcedure")
-    );
-    add_resolved_type(&typing_repository, external_proc_type);
-    add_resolved_type(
-        &typing_repository, 
-        create_procedure_definition_type_with_no_args("SomeOtherExternalProcedure")
-    );
-
-    let _proc_header = units.pop().unwrap();
-    let proc_body = units.pop().unwrap();
-
-    let (types, unit) = run_typing_on_unit(
-        typing_repository, 
-        proc_body
-    );
-
-    assert_eq!(types.len(), 0);
-    assert_eq!(
-        unit.tree, 
-        node(
-            position(20, 1, 21),
-            procedure_body_item(
-                vec!(),
-                vec!(),
-                vec!(                       
+                vec!(
                     node(
-                        position(26, 2, 5),
-                        assignment_item(
-                            string("x"),                     
-                            node(                    
-                                position(31, 2, 10),
-                                procedure_call_item(
-                                    string("SomeExternalProcedure"),
-                                    vec!(
-                                        node(
-                                            position(53, 2, 32),                            
-                                            arg_item( 
-                                                node(
-                                                    position(53, 2, 32),
-                                                    literal_item(int_literal(1))
-                                                ),
-                                                resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
-                                            )
-                                        ),
-                                    ),
-                                    resolved_resolvable_type(external_proc_type_id)
-                                )
-                            ),
+                        position(18, 1, 19),
+                        arg_declaration_item(
+                            string("a"),
+                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                        )
+                    ),
+                    node(
+                        position(26, 1, 27),
+                        arg_declaration_item(
+                            string("b"),
                             resolved_resolvable_type(built_in_type_resolved_type_id(float_32_built_in_type()))
                         )
                     )
+                ),
+                vec!(
+                    node(
+                        position(39, 1, 40),
+                        type_item(
+                            resolved_resolvable_type(built_in_type_resolved_type_id(float_32_built_in_type()))
+                        )
+                    ),
+                    node(
+                        position(46, 1, 47),
+                        type_item(
+                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                        )
+                    )
+                ),
+                vec!(
+                    node(
+                        position(60, 2, 9),
+                        assignment_item(
+                            string("x"), 
+                            node(
+                                position(65, 2, 14),
+                                identifier_item(string("a"))
+                            ),
+                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                        )
+                    ),
+                    node(
+                        position(76, 3, 9),
+                        assignment_item(
+                            string("y"), 
+                            node(
+                                position(81, 3, 14),
+                                identifier_item(string("b"))
+                            ),
+                            resolved_resolvable_type(built_in_type_resolved_type_id(float_32_built_in_type()))
+                        )
+                    ),
+                    node( 
+                        position(92, 4, 9),
+                        return_item( 
+                            vec!(
+                                node(
+                                    position(99, 4, 16),
+                                    arg_item(
+                                        node(
+                                            position(99, 4, 16),
+                                            literal_item(float_literal(1.0))
+                                        ),
+                                        resolved_resolvable_type(built_in_type_resolved_type_id(float_32_built_in_type()))
+                                    )
+                                ),
+                                node(
+                                    position(104, 4, 21),
+                                    arg_item(
+                                        node(
+                                            position(104, 4, 21),
+                                            literal_item(unsigned_int_literal(2))
+                                        ),
+                                        resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                                    )
+                                )
+                            )
+                        )
+                    ),   
                 )
             )
         )
-    )
+    );
 }
+

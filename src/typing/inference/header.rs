@@ -21,7 +21,7 @@ impl AbstractSyntaxProcedureHeaderNodeVisitor for ProcedureHeaderInferenceVisito
 }
 
 fn parse_built_in_arg_type(arg_type: &ResolvableType, type_ids: &mut ResolvedTypeIds) {
-    if let ResolvableType::Resolved(ResolvedTypeId::BuiltInType(built_in_type)) = arg_type {
-        type_ids.push(built_in_type_resolved_type_id(*built_in_type));
+    if let Some(built_in_type) = try_get_built_in_type_from_resolved_resolvable_type(arg_type) {
+        type_ids.push(built_in_type_resolved_type_id(built_in_type));
     }
 }

@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::typing::*;
 use crate::tests::parsing::*;
 
 #[test]
@@ -20,12 +21,13 @@ fn parse_run_directive_parses_correctly() {
                         ),
                         node(
                             position(5, 1, 6),
-                            literal_item(int_literal(1)),
+                            literal_item(unsigned_int_literal(1)),
                         ),
                         node(
                             position(9, 1, 10),
-                            literal_item(int_literal(2)),
-                        )
+                            literal_item(unsigned_int_literal(2)),
+                        ),
+                        unresolved_resolvable_type()
                     )
                 )  
             )

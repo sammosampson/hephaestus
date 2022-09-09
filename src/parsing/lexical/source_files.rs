@@ -22,6 +22,11 @@ pub fn peek_next_character(reader: &SourceFileCharacterReader) -> SourceFileChar
     get_next_character(&mut reader)
 }
 
+pub fn peek_next_two_characters(reader: &SourceFileCharacterReader) -> (SourceFileCharacter, SourceFileCharacter) {
+    let mut reader = reader.clone();
+    (get_next_character(&mut reader), get_next_character(&mut reader))
+}
+
 pub fn get_next_character(reader: &mut SourceFileCharacterReader) -> SourceFileCharacter {
     if let Some((_, value)) = reader.characters.next() {        
         if let Some(previous_position) = reader.cursor {            

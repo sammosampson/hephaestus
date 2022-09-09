@@ -191,14 +191,27 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
     }
 
     if is_character_alphanumeric(&next_character) {
-        let alphanumeric_string = read_up_until_non_alphanumeric(lexer);
+        let mut alphanumeric_string = read_up_until_non_alphanumeric(lexer);
 
-        if let Ok(number) = parse_number(&alphanumeric_string) {
+        let (next_char, next_char_after_that) = peek_next_two_characters(&mut lexer.reader);
+        if is_character(&next_char, SOURCE_SYMBOL_PERIOD) && is_character_alphanumeric(&next_char_after_that) {
+            eat_next_character(&mut lexer.reader);
+            alphanumeric_string.push(SOURCE_SYMBOL_PERIOD);
+            alphanumeric_string = alphanumeric_string + &read_up_until_non_alphanumeric(lexer);
+            if let Ok(number) = parse_float(&alphanumeric_string) {
+                return create_token(
+                    get_character_position(&next_character), 
+                    create_float_literal_token_item(number)
+                );
+            }
+        }
+
+        if let Ok(number) = parse_unsigned_int(&alphanumeric_string) {
             return create_token(
                 get_character_position(&next_character), 
-                create_number_literal_token_item(number)
+                create_unsigned_int_literal_token_item(number)
             );
-        }
+        }        
 
         if let Some(built_in_type) = parse_built_in_type(&alphanumeric_string) {
             return create_token(
@@ -233,7 +246,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
 fn read_up_until_non_alphanumeric(lexer: &mut Lexer) -> String {
     read_characters_up_until(
         &mut lexer.reader, 
-        |c| !is_character_alphanumeric(c)
+        |c| !is_character_alphanumeric(c) 
     )
 }
 

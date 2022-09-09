@@ -199,10 +199,50 @@ pub fn parse_procedure_body_statement(lexer: &mut Lexer) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
+        SourceTokenItem::Keyword(keyword) => parse_procedure_body_keyword(keyword, lexer, token.position),
         SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
         _ => create_error_node(unimplemented_error(), token.position),
+    }
+}
+
+fn parse_procedure_body_keyword(keyword: Keyword, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+    match keyword {
+        Keyword::Return => parse_return_statement(lexer, position),
+        _ => create_error_node(unimplemented_error(), position),
+    }
+}
+
+fn parse_return_statement(lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+    create_node(
+        return_item(parse_return_statement_args(lexer)),
+        position
+    )
+}
+
+fn parse_return_statement_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+    let mut args = vec!();
+
+    if is_line_terminiator(&peek_next_token(lexer).item) {
+        return vec!()
+    }
+
+    loop {
+        args.push(parse_procedure_call_arg(lexer));
+
+        let next_token = peek_next_token(lexer);
+        
+        if is_line_terminiator(&next_token.item) {
+            return args
+        }
+
+        if is_arg_separator(&next_token.item) {
+            eat_next_token(lexer);
+        } else {
+            args.push(create_error_node(expected_arg_separator_error(), next_token.position));  
+            return args;
+        }
     }
 }
 
@@ -227,20 +267,27 @@ pub fn procedure_body_item(
     }
 }
 
+pub fn return_item(
+    args: AbstractSyntaxChildNodes
+) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Return { args }
+}
+
+
 pub fn procedure_call_item(
     name: String,
-    arguments: AbstractSyntaxChildNodes,
+    args: AbstractSyntaxChildNodes,
     type_id: ResolvableType
 ) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureCall { name, args: arguments, type_id }
+    AbstractSyntaxNodeItem::ProcedureCall { name, args, type_id }
 }
 
-pub fn arg_declaration_item(name: String, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ArgumentDeclaration { name, type_id: arg_type }
+pub fn arg_declaration_item(name: String, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::ArgumentDeclaration { name, type_id }
 }
 
-pub fn arg_item(expr: AbstractSyntaxNode, arg_type: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Argument { expr, type_id: arg_type }
+pub fn arg_item(expr: AbstractSyntaxNode, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Argument { expr, type_id }
 }
 
 pub fn type_item(t: ResolvableType) -> AbstractSyntaxNodeItem {
