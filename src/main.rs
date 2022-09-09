@@ -3,6 +3,7 @@ mod tests;
 
 mod parsing;
 mod typing;
+mod bytecode;
 mod file_system;
 mod arguments;
 mod threading;
