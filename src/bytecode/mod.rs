@@ -3,15 +3,28 @@ use std::alloc::{self, Layout};
 #[test]
 fn vm() {
     let mem = create_virtual_memory(100000000);
-    let mut cpu = create_virtual_machine(vec!(), mem);
+    let mut cpu = create_virtual_machine(vec!(
+        Instruction::LII, Instruction::R(0), Instruction::RVAL(100),
+        Instruction::STI, Instruction::RVAL(0), Instruction::R(0),
+        Instruction::LII, Instruction::R(0), Instruction::RVAL(200),
+        Instruction::STI, Instruction::RVAL(1), Instruction::R(0),
+        Instruction::LII, Instruction::R(0), Instruction::RVAL(300),
+        Instruction::STI, Instruction::RVAL(2), Instruction::R(0),
+        Instruction::LDI, Instruction::R(0), Instruction::RVAL(2),
+        Instruction::LDI, Instruction::R(1), Instruction::RVAL(1),
+        Instruction::LDI, Instruction::R(2), Instruction::RVAL(0),
+        
+        Instruction::HLT
+
+    ), mem);
     run_virtual_machine(&mut cpu)
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Instruction {
     None,
     R(usize),
-    RVAL(f64),
+    RVAL(i64),
     F(usize),
     FVAL(f64),
     CLF,
@@ -31,6 +44,7 @@ pub enum Instruction {
 
 pub type InstructionMemory = Vec<Instruction>;
 
+#[derive(Debug)]
 pub struct VirtualMemory {
     base: *mut u8,
     size: usize,
@@ -49,8 +63,22 @@ fn create_virtual_memory(size: usize) -> VirtualMemory {
     }
 }
 
+fn set_memory(memory: &mut VirtualMemory, address: i64, value: i64) {
+    unsafe {
+        *(memory.base.add(address as usize) as *mut i64) = value;
+    }
+}
+
+fn load_memory(memory: &mut VirtualMemory, address: i64) -> i64 {
+    unsafe {
+        *(memory.base.add(address as usize) as *mut i64)
+    }
+}
+
+#[derive(Debug)]
 pub struct VirtualMachine {
     instruction_stream: InstructionMemory,
+    memory: VirtualMemory,
     
     instruction_pointer: Option<usize>,
     stack_pointer: usize,
@@ -67,10 +95,12 @@ pub struct VirtualMachine {
 }
 
 fn create_virtual_machine(instruction_stream: InstructionMemory, memory: VirtualMemory) -> VirtualMachine {
+    let mem_size = memory.size;
     VirtualMachine { 
         instruction_stream,
+        memory,
         instruction_pointer: None,
-        stack_pointer: memory.size - 1,
+        stack_pointer: mem_size - 1,
         registers: [0; 8],
         float_registers: [0.0; 8],
         instruction: Instruction::None,
@@ -110,6 +140,27 @@ fn get_instruction_pointer_offset(cpu: &VirtualMachine, offset: usize) -> usize 
     match cpu.instruction_pointer {
         Some(pointer) => pointer + offset,
         None => offset,
+    }
+}
+
+fn get_register_at(cpu: &VirtualMachine, pointer: usize) -> usize {
+    match cpu.instruction_stream[pointer] {
+        Instruction::R(register) => return register,
+        _ => panic!("requested register, but not register"),
+    }
+}
+
+fn get_float_register_at(cpu: &VirtualMachine, pointer: usize) -> usize {
+    match cpu.instruction_stream[pointer] {
+        Instruction::F(register) => return register,
+        _ => panic!("requested float register, but not float register"),
+    }
+}
+
+fn get_value_at(cpu: &VirtualMachine, pointer: usize) -> i64 {
+    match cpu.instruction_stream[pointer] {
+        Instruction::RVAL(value) => return value,
+        _ => panic!("requested value, but not value"),
     }
 }
 
@@ -155,21 +206,31 @@ fn execute(cpu: &mut VirtualMachine) {
 }
 
 fn mov(cpu: &mut VirtualMachine) {
-    cpu.registers[get_instruction_pointer_offset(cpu, 1)] =
-        cpu.registers[get_instruction_pointer_offset(cpu, 2)];
+    let register_1 = get_register_at(cpu, get_instruction_pointer_offset(cpu, 1));
+    let register_2 = get_register_at(cpu, get_instruction_pointer_offset(cpu, 2));
     
+    cpu.registers[register_1] = cpu.registers[register_2];
+     
     increment_instruction_pointer(cpu, 2);
 }
 
 fn movf(cpu: &mut VirtualMachine) {
-    cpu.float_registers[get_instruction_pointer_offset(cpu, 1)] = 
-        cpu.float_registers[get_instruction_pointer_offset(cpu, 2)];
+    let register_1 = get_float_register_at(cpu, get_instruction_pointer_offset(cpu, 1));
+    let register_2 = get_float_register_at(cpu, get_instruction_pointer_offset(cpu, 2));
     
+    cpu.float_registers[register_1] = cpu.float_registers[register_2];
+     
     increment_instruction_pointer(cpu, 2);
 }
 
 fn sti(cpu: &mut VirtualMachine) {
+    let address = get_value_at(cpu, get_instruction_pointer_offset(cpu, 1));
+    let register = get_register_at(cpu, get_instruction_pointer_offset(cpu, 2));
     
+    set_memory(&mut cpu.memory, address, cpu.registers[register]);
+    println!("STI address: {}, register: {}", address, register);
+
+    increment_instruction_pointer(cpu, 2);
 }
 
 fn stf(cpu: &mut VirtualMachine) {
@@ -177,7 +238,15 @@ fn stf(cpu: &mut VirtualMachine) {
 }
 
 fn ldi(cpu: &mut VirtualMachine) {
-    todo!()
+    let register = get_register_at(cpu, get_instruction_pointer_offset(cpu, 1));
+    let address = get_value_at(cpu, get_instruction_pointer_offset(cpu, 2));
+    
+    cpu.registers[register] = load_memory(&mut cpu.memory, address);
+    println!("LDI register: {}, address: {}", register, address);
+
+    increment_instruction_pointer(cpu, 2);
+    
+    dbg!(cpu);
 }
 
 fn ldf(cpu: &mut VirtualMachine) {
@@ -185,7 +254,13 @@ fn ldf(cpu: &mut VirtualMachine) {
 }
 
 fn lii(cpu: &mut VirtualMachine) {
-    todo!()
+    let register = get_register_at(cpu, get_instruction_pointer_offset(cpu, 1));
+    let literal_value = get_value_at(cpu, get_instruction_pointer_offset(cpu, 2));
+
+    cpu.registers[register] = literal_value;
+    println!("LII register: {}, literal: {}", register, literal_value);
+    
+    increment_instruction_pointer(cpu, 2);
 }
 
 fn lif(cpu: &mut VirtualMachine) {
