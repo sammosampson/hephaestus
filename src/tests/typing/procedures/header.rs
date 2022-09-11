@@ -15,7 +15,7 @@ fn typing_procedure_header_returns_correct_types() {
     );
     
     assert_eq!(types.len(), 1);
-    assert_eq!(types[0].id, user_defined_resolved_type_id(proc_header_id));
+    assert_eq!(types[0].id, user_defined_runtime_type_id(proc_header_id));
     assert_eq!(types[0].name, "SomeProcedure".to_string());
     assert_eq!(types[0].item, procedure_definition_type_item(vec!(), vec!()));
     assert_eq!(types[0].size, unresolved_type_size());
@@ -36,16 +36,16 @@ fn typing_procedure_header_with_args_returns_correct_types() {
     );
 
     assert_eq!(types.len(), 1);
-    assert_eq!(types[0].id, user_defined_resolved_type_id(proc_header_id));
+    assert_eq!(types[0].id, user_defined_runtime_type_id(proc_header_id));
     assert_eq!(types[0].name, string("SomeProcedure"));
     assert_eq!(types[0].item, procedure_definition_type_item( 
         vec!(
-            built_in_type_resolved_type_id(int_32_built_in_type()),
-            built_in_type_resolved_type_id(float_32_built_in_type()),
+            built_in_type_runtime_type_id(int_32_built_in_type()),
+            built_in_type_runtime_type_id(float_32_built_in_type()),
         ), 
         vec!(
-            built_in_type_resolved_type_id(float_32_built_in_type()),
-            built_in_type_resolved_type_id(int_32_built_in_type()),
+            built_in_type_runtime_type_id(float_32_built_in_type()),
+            built_in_type_runtime_type_id(int_32_built_in_type()),
         )
     ));
     assert_eq!(types[0].size, unresolved_type_size());

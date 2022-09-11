@@ -33,7 +33,7 @@ fn typing_procedure_body_types_variable_int_literal_assignment() {
                                 position(31, 2, 10),
                                 literal_item(unsigned_int_literal(1))
                             ),
-                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
                         )
                     )
                 )
@@ -82,10 +82,10 @@ fn typing_procedure_body_types_variable_number_expression_assignment() {
                                         position(35, 2, 14),
                                         literal_item(unsigned_int_literal(2)),
                                     ),
-                                    resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                                    resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
                                 )
                             ),
-                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type()))
+                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
                         )
                     )
                 )

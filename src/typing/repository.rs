@@ -6,10 +6,10 @@ use super::*;
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FindTypeCriteria { 
     name: String,
-    args: ResolvedTypeIds
+    args: RuntimeTypeIds
 }
 
-pub fn create_find_type_criteria(name: String, args: ResolvedTypeIds) -> FindTypeCriteria {
+pub fn create_find_type_criteria(name: String, args: RuntimeTypeIds) -> FindTypeCriteria {
     FindTypeCriteria { name, args }
 }
 

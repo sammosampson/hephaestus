@@ -41,7 +41,7 @@ pub fn add_resolved_type(typing_repository: &CompilationActorHandle, resolved_ty
     );
 }
 
-pub fn create_procedure_definition_type(name: &str, arg_types: ResolvedTypeIds, return_types: ResolvedTypeIds) -> ResolvedType {
+pub fn create_procedure_definition_type(name: &str, arg_types: RuntimeTypeIds, return_types: RuntimeTypeIds) -> ResolvedType {
     let other_proc_type = create_type(
         create_compilation_unit_id(), 
         name.to_string(),

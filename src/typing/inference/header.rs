@@ -2,8 +2,8 @@ use crate::parsing::*;
 use crate::typing::*;
 
 pub struct ProcedureHeaderInferenceVisitor {
-    pub arg_types: ResolvedTypeIds,
-    pub return_types: ResolvedTypeIds
+    pub arg_types: RuntimeTypeIds,
+    pub return_types: RuntimeTypeIds
 }
 
 pub fn create_procedure_header_visitor() -> ProcedureHeaderInferenceVisitor {
@@ -20,8 +20,8 @@ impl AbstractSyntaxProcedureHeaderNodeVisitor for ProcedureHeaderInferenceVisito
     }
 }
 
-fn parse_built_in_arg_type(arg_type: &ResolvableType, type_ids: &mut ResolvedTypeIds) {
+fn parse_built_in_arg_type(arg_type: &ResolvableType, type_ids: &mut RuntimeTypeIds) {
     if let Some(built_in_type) = try_get_built_in_type_from_resolved_resolvable_type(arg_type) {
-        type_ids.push(built_in_type_resolved_type_id(built_in_type));
+        type_ids.push(built_in_type_runtime_type_id(built_in_type));
     }
 }

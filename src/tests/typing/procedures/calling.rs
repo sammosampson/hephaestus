@@ -5,7 +5,7 @@ use crate::tests::parsing::*;
 use crate::tests::typing::*;
 
 
-fn create_external_procedure(args: ResolvedTypeIds, returns: ResolvedTypeIds) -> ResolvedType {
+fn create_external_procedure(args: RuntimeTypeIds, returns: RuntimeTypeIds) -> ResolvedType {
     create_procedure_definition_type("SomeExternalProcedure", args, returns)
 }
 
@@ -15,15 +15,15 @@ fn create_external_procedure_with_no_args_type() -> ResolvedType {
 
 fn create_external_procedure_with_int_arg_type() -> ResolvedType {
     create_external_procedure(
-        vec!(built_in_type_resolved_type_id(int_32_built_in_type())),
+        vec!(built_in_type_runtime_type_id(int_32_built_in_type())),
         vec!()
     )
 }
 
 fn create_external_procedure_with_int_arg_and_float_return_type() -> ResolvedType {
     create_external_procedure(
-        vec!(built_in_type_resolved_type_id(int_32_built_in_type())),        
-        vec!(built_in_type_resolved_type_id(float_32_built_in_type()))
+        vec!(built_in_type_runtime_type_id(int_32_built_in_type())),        
+        vec!(built_in_type_runtime_type_id(float_32_built_in_type()))
     )
 }
 
@@ -72,7 +72,7 @@ fn typing_procedure_body_waits_for_external_procedure() {
                                             position(48, 2, 27),
                                             literal_item(unsigned_int_literal(1))
                                         ),
-                                        resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
+                                        resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
                                     )
                                 ),
                             ),
@@ -131,14 +131,14 @@ fn typing_procedure_body_waits_for_external_procedure_with_return_arg() {
                                                     position(53, 2, 32),
                                                     literal_item(unsigned_int_literal(1))
                                                 ),
-                                                resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
+                                                resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
                                             )
                                         ),
                                     ),
                                     resolved_resolvable_type(external_proc_type_id)
                                 )
                             ),
-                            resolved_resolvable_type(built_in_type_resolved_type_id(float_32_built_in_type()))
+                            resolved_resolvable_type(built_in_type_runtime_type_id(float_32_built_in_type()))
                         )
                     )
                 )
@@ -185,7 +185,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                 position(31, 2, 10),
                                 literal_item(unsigned_int_literal(1))
                             ),
-                            resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
+                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
                         )
                     ),
                     node(
@@ -200,7 +200,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                             position(61, 3, 27),  
                                             identifier_item(string("a"))
                                         ),
-                                        resolved_resolvable_type(built_in_type_resolved_type_id(int_32_built_in_type())) 
+                                        resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
                                     )
                                 ),
                             ),

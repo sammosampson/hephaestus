@@ -5,14 +5,14 @@ use crate::parsing::*;
 use crate::compilation::*;
 use crate::typing::*;
 
-pub type LocalTypeMap = HashMap<String, ResolvedTypeId>;
-pub type LocalTypes = Vec<ResolvedTypeId>;
+pub type LocalTypeMap = HashMap<String, RuntimeTypeId>;
+pub type LocalTypes = Vec<RuntimeTypeId>;
 
-fn add_local_type_to_map(map: &mut LocalTypeMap, identifier: String, type_id: ResolvedTypeId) {
+fn add_local_type_to_map(map: &mut LocalTypeMap, identifier: String, type_id: RuntimeTypeId) {
     map.insert(identifier, type_id);
 }
 
-fn get_type_for_local_identifier<'a>(map: &'a LocalTypeMap, identifier: &str) -> Option<&'a ResolvedTypeId> {
+fn get_type_for_local_identifier<'a>(map: &'a LocalTypeMap, identifier: &str) -> Option<&'a RuntimeTypeId> {
     map.get(identifier)
 }
 
@@ -45,14 +45,14 @@ impl <'a> AbstractSyntaxProcedureBodyNodeVisitor for ProcedureBodyInferenceVisit
             add_local_type_to_map(
                 &mut self.local_type_map,
                 name.clone(),
-                built_in_type_resolved_type_id(built_in_type)
+                built_in_type_runtime_type_id(built_in_type)
             );
         }
     }
 
     fn visit_return_type_declaration(&mut self, return_type: &mut ResolvableType) {      
         if let Some(built_in_type) = try_get_built_in_type_from_resolved_resolvable_type(return_type) {
-            self.local_return_types.push(built_in_type_resolved_type_id(built_in_type));  
+            self.local_return_types.push(built_in_type_runtime_type_id(built_in_type));  
         }
     }
 
@@ -104,7 +104,7 @@ fn visit_procedure_call_return_first_return_type(
     args: &mut AbstractSyntaxChildNodes,
     name: &mut String, 
     type_id: &mut ResolvableType
-) -> ResolvedTypeIds {
+) -> RuntimeTypeIds {
     let mut visitor = create_args_visitor(ctx, type_repository, local_type_map);
     apply_visitor_to_ast_args(args, &mut visitor);
 
@@ -128,7 +128,7 @@ struct ArgsInferenceVisitor <'a> {
     ctx: &'a CompilationMessageContext,
     type_repository: &'a CompilationActorHandle,
     local_type_map: &'a LocalTypeMap,
-    resolved_arg_types: ResolvedTypeIds
+    resolved_arg_types: RuntimeTypeIds
 }
 
 fn create_args_visitor<'a>(
@@ -164,7 +164,7 @@ pub struct ExpressionInferenceVisitor<'a> {
     ctx: &'a CompilationMessageContext,
     type_repository: &'a CompilationActorHandle,
     local_type_map: &'a LocalTypeMap,
-    resolved_type: ResolvedTypeId
+    resolved_type: RuntimeTypeId
 }
 
 pub fn create_expression_visitor<'a>(
@@ -183,8 +183,8 @@ pub fn create_expression_visitor<'a>(
 impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a> {
     fn visit_literal(&mut self, literal: &mut Literal) {
         match literal {
-            Literal::UnsignedInt(_value) => self.resolved_type = built_in_type_resolved_type_id(int_32_built_in_type()),
-            Literal::Float(_value) => self.resolved_type = built_in_type_resolved_type_id(float_32_built_in_type()),
+            Literal::UnsignedInt(_value) => self.resolved_type = built_in_type_runtime_type_id(int_32_built_in_type()),
+            Literal::Float(_value) => self.resolved_type = built_in_type_runtime_type_id(float_32_built_in_type()),
             item => todo!("typing for literal: {:?}", item),
         }
     }
