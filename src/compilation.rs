@@ -20,6 +20,7 @@ pub enum CompilationMessage {
     AddResolvedType(RuntimeTypePointer),
     AssembleByteCode{ unit: CompilationUnit, compiler: CompilationActorHandle },
     ByteCodeAssembled{ code: IntermediateRepresentation },
+    RunByteCode{ code: ByteCodeInstructionStream },
     CompilationComplete
 }
 

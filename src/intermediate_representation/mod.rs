@@ -30,7 +30,7 @@ pub enum ByteCodeInstruction {
     PSHF, POPF,
     ADD, SUB, MUL, DIV,
     FADD, FSUB, FMUL, FDIV,
-    JNZ, JEZ, JGZ, JLZ,
+    JNZ, JEZ, JGZ, JLZ, JMP,
     SHL, SHR,
     BAND, BOR, BNOT, BXOR,
     LAND, LOR, LNOT,
