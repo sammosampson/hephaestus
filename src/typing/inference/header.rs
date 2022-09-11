@@ -2,8 +2,8 @@ use crate::parsing::*;
 use crate::typing::*;
 
 pub struct ProcedureHeaderInferenceVisitor {
-    pub arg_types: RuntimeTypeIds,
-    pub return_types: RuntimeTypeIds
+    pub arg_types: RuntimeTypePointers,
+    pub return_types: RuntimeTypePointers
 }
 
 pub fn create_procedure_header_visitor() -> ProcedureHeaderInferenceVisitor {
@@ -12,16 +12,16 @@ pub fn create_procedure_header_visitor() -> ProcedureHeaderInferenceVisitor {
 
 impl AbstractSyntaxProcedureHeaderNodeVisitor for ProcedureHeaderInferenceVisitor {
     fn visit_argument_declaration(&mut self, _name: &mut String, arg_type: &mut ResolvableType) {
-        parse_built_in_arg_type(arg_type, &mut self.arg_types);
+        try_parse_resolved_runtime_type_pointer(arg_type, &mut self.arg_types);
     }
 
     fn visit_return_type_declaration(&mut self, return_type: &mut ResolvableType) {
-        parse_built_in_arg_type(return_type, &mut self.return_types);
+        try_parse_resolved_runtime_type_pointer(return_type, &mut self.return_types);
     }
 }
 
-fn parse_built_in_arg_type(arg_type: &ResolvableType, type_ids: &mut RuntimeTypeIds) {
-    if let Some(built_in_type) = try_get_built_in_type_from_resolved_resolvable_type(arg_type) {
-        type_ids.push(built_in_type_runtime_type_id(built_in_type));
+fn try_parse_resolved_runtime_type_pointer(arg_type: &ResolvableType, type_ids: &mut RuntimeTypePointers) {
+    if let Some(resolved_runtime_type_pointer) = try_get_resolved_runtime_type_pointer(arg_type) {
+        type_ids.push(resolved_runtime_type_pointer);
     }
 }

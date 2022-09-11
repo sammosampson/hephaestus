@@ -39,7 +39,7 @@ pub fn perform_typing(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     unit: &mut CompilationUnit
-) -> ResolvedTypes {
+) -> RuntimeTypePointers {
     let mut visitor = create_root_visitor(ctx, type_repository, unit.id);
     apply_visitor_to_ast_root(&mut unit.tree, &mut visitor);
     visitor.resolved_types
@@ -49,7 +49,7 @@ pub struct RootInferenceVisitor<'a> {
     ctx: &'a CompilationMessageContext,
     type_repository: &'a CompilationActorHandle,
     unit_id: CompilationUnitId,
-    resolved_types: ResolvedTypes
+    resolved_types: RuntimeTypePointers
 }
 
 fn create_root_visitor<'a>(
@@ -84,12 +84,13 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
         apply_visitor_to_ast_procedure_header(args, return_types, &mut visitor);        
 
         let resolved_type = create_type(
-            self.unit_id,
+            user_defined_runtime_type_id(self.unit_id),
             name.clone(),
-            procedure_definition_type_item(visitor.arg_types, visitor.return_types)
+            procedure_definition_type_item(visitor.arg_types, visitor.return_types),
+            not_required_type_size()
         );
         
-        self.resolved_types.push(resolved_type);
+        self.resolved_types.push(create_shareable(resolved_type));
     }
 
     fn visit_procedure_body(

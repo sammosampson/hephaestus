@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::threading::*;
 use crate::typing::*;
 use crate::tests::parsing::*;
 
@@ -21,13 +22,13 @@ fn parse_procedure_body_parses_correctly() {
                     node( 
                         position(23, 1, 24),
                         type_item(
-                            resolved_resolvable_type(built_in_type_runtime_type_id(float_32_built_in_type()))
+                            resolved_resolvable_type(create_shareable(float_32_runtime_type()))
                         )
                     ),
                     node( 
                         position(30, 1, 31),
                         type_item(
-                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
+                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
                         )
                     ),
                 ),

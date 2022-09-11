@@ -1,4 +1,5 @@
 
+use crate::threading::*;
 use crate::typing::*;
 use crate::parsing::*;
 use crate::tests::parsing::*;
@@ -33,7 +34,7 @@ fn typing_procedure_body_types_variable_int_literal_assignment() {
                                 position(31, 2, 10),
                                 literal_item(unsigned_int_literal(1))
                             ),
-                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
+                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
                         )
                     )
                 )
@@ -82,10 +83,10 @@ fn typing_procedure_body_types_variable_number_expression_assignment() {
                                         position(35, 2, 14),
                                         literal_item(unsigned_int_literal(2)),
                                     ),
-                                    resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
+                                    resolved_resolvable_type(create_shareable(int_32_runtime_type()))
                                 )
                             ),
-                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type()))
+                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
                         )
                     )
                 )

@@ -1,14 +1,19 @@
 use crate::parsing::*;
+use crate::threading::create_shareable;
 use crate::typing::*;
 
 type TypeOption = Option<ResolvableType>;
 
 pub fn try_get_type(item: &SourceTokenItem) -> TypeOption {
     match item {
-        SourceTokenItem::Type(t) => Some(resolved_resolvable_type(built_in_type_runtime_type_id(*t))),
+        SourceTokenItem::Type(t) => Some(resolved_resolvable_type(create_shareable(to_runtime_type(*t)))),
         SourceTokenItem::Identifier(name) => Some(unresolved_named_resolvable_type(name.clone())),
         _ => None
     }
+}
+
+fn to_runtime_type(from: BuiltInType) -> RuntimeType {
+    from.into()
 }
 
 type BuiltInTypeOption = Option<BuiltInType>;

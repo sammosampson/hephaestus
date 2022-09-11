@@ -3,11 +3,14 @@ mod inference;
 pub use repository::*;
 pub use inference::*;
 
-use crate::parsing::*;
+use crate::{
+    parsing::*,
+    threading::*
+};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ResolvableType {
-    Resolved(RuntimeTypeId),
+    Resolved(RuntimeTypePointer),
     UnresolvedNamed(String),
     Unresolved
 }
@@ -19,22 +22,20 @@ pub fn unresolved_resolvable_type() -> ResolvableType {
 pub fn unresolved_named_resolvable_type(name: String) -> ResolvableType {
     ResolvableType::UnresolvedNamed(name)
 }
-pub fn resolved_resolvable_type(type_id: RuntimeTypeId) -> ResolvableType {
-    ResolvableType::Resolved(type_id)
+
+pub fn resolved_resolvable_type(type_pointer: RuntimeTypePointer) -> ResolvableType {
+    ResolvableType::Resolved(type_pointer)
 }
 
-pub fn try_get_built_in_type_from_resolved_resolvable_type(resolvable_type: &ResolvableType) -> Option<BuiltInType> {
-    if let ResolvableType::Resolved(RuntimeTypeId::BuiltInType(built_in_type)) = resolvable_type {
-       return Some(*built_in_type);
+pub fn try_get_resolved_runtime_type_pointer(resolvable_type: &ResolvableType) -> Option<RuntimeTypePointer> {
+    if let ResolvableType::Resolved(pointer) = resolvable_type {
+       return Some(pointer.clone());
     }
     None
 }
 
-pub type ResolvedTypes = Vec<ResolvedType>;
-
 #[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub enum RuntimeTypeId {
-    NotResolved,
     BuiltInType(BuiltInType),
     UserDefined(CompilationUnitId)
 }
@@ -46,12 +47,6 @@ pub fn built_in_type_runtime_type_id(built_in_type: BuiltInType) -> RuntimeTypeI
 pub fn user_defined_runtime_type_id(unit_id: CompilationUnitId) -> RuntimeTypeId {
     RuntimeTypeId::UserDefined(unit_id)
 }
-
-pub fn not_resolved_type_id() -> RuntimeTypeId {
-    RuntimeTypeId::NotResolved
-}
-
-pub type RuntimeTypeIds = Vec<RuntimeTypeId>;
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum BuiltInType {
@@ -73,44 +68,104 @@ pub fn float_32_built_in_type() -> BuiltInType {
 }
 
 
-#[derive(PartialEq, Debug, Clone)]
-pub struct ResolvedType {
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+pub struct RuntimeType {
     pub id: RuntimeTypeId,
     pub name: String,
-    pub item: TypeItem,
+    pub item: RuntimeTypeItem,
     pub size: TypeSize
 }
 
-pub fn create_type(id: CompilationUnitId, name: String, item: TypeItem) -> ResolvedType {
-    ResolvedType {
-        id: user_defined_runtime_type_id(id),
+pub type RuntimeTypePointer = Shareable<RuntimeType>;
+pub type RuntimeTypePointers = Vec<RuntimeTypePointer>;
+
+pub fn create_type(id: RuntimeTypeId, name: String, item: RuntimeTypeItem, size: TypeSize) -> RuntimeType {
+    RuntimeType {
+        id: id,
         name,
         item,
-        size: unresolved_type_size()
+        size
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum TypeItem {
+impl From<BuiltInType> for RuntimeType {
+    fn from(from: BuiltInType) -> Self {
+        match from {
+            BuiltInType::Int32 => int_32_runtime_type(),
+            BuiltInType::Float32 => float_32_runtime_type(),
+            BuiltInType::Void => void_runtime_type(),
+        }
+    }
+}
+
+pub fn int_32_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(int_32_built_in_type()),
+        "i32".to_string(),
+        integer_type_item(),
+        resolved_type_size(4)
+    )
+}
+
+pub fn float_32_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(float_32_built_in_type()),
+        "f32".to_string(),
+        float_type_item(),
+        resolved_type_size(4)
+    )
+}
+
+pub fn void_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(void_built_in_type()),
+        "void".to_string(),
+        void_type_item(),
+        not_required_type_size()
+    )
+}
+
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+pub enum RuntimeTypeItem {
     None,
-    ProcedureDefinition { arg_types: RuntimeTypeIds, return_types: RuntimeTypeIds },
+    ProcedureDefinition { arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers },
+    Int,
+    Float,
+    Void
 }
 
-impl Default for TypeItem {
+impl Default for RuntimeTypeItem {
     fn default() -> Self {
-        TypeItem::None
+        RuntimeTypeItem::None
     }
 }
 
-pub fn procedure_definition_type_item(arg_types: RuntimeTypeIds, return_types: RuntimeTypeIds) -> TypeItem {
-    TypeItem::ProcedureDefinition { arg_types, return_types }
+pub fn procedure_definition_type_item(arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers) -> RuntimeTypeItem {
+    RuntimeTypeItem::ProcedureDefinition { arg_types, return_types }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+fn integer_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::Int
+}
+
+fn float_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::Float
+}
+
+fn void_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::Void
+}
+
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum TypeSize {
-    Unresolved,
+    NotRequired,
+    Resolved { size_in_bytes: usize },
 }
 
-pub fn unresolved_type_size() -> TypeSize {
-    TypeSize::Unresolved
+pub fn resolved_type_size(size_in_bytes: usize) -> TypeSize {
+    TypeSize::Resolved { size_in_bytes }
+}
+
+pub fn not_required_type_size() -> TypeSize {
+    TypeSize::NotRequired
 }

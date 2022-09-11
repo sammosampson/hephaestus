@@ -1,33 +1,34 @@
 
+use crate::threading::*;
 use crate::typing::*;
 use crate::parsing::*;
 use crate::tests::parsing::*;
 use crate::tests::typing::*;
 
 
-fn create_external_procedure(args: RuntimeTypeIds, returns: RuntimeTypeIds) -> ResolvedType {
+fn create_external_procedure(args: RuntimeTypePointers, returns: RuntimeTypePointers) -> RuntimeType {
     create_procedure_definition_type("SomeExternalProcedure", args, returns)
 }
 
-fn create_external_procedure_with_no_args_type() -> ResolvedType {
+fn create_external_procedure_with_no_args_type() -> RuntimeType {
     create_procedure_definition_type_with_no_args("SomeExternalProcedure")
 }
 
-fn create_external_procedure_with_int_arg_type() -> ResolvedType {
+fn create_external_procedure_with_int_arg_type() -> RuntimeType {
     create_external_procedure(
-        vec!(built_in_type_runtime_type_id(int_32_built_in_type())),
+        vec!(create_shareable(int_32_runtime_type())),
         vec!()
     )
 }
 
-fn create_external_procedure_with_int_arg_and_float_return_type() -> ResolvedType {
+fn create_external_procedure_with_int_arg_and_float_return_type() -> RuntimeType {
     create_external_procedure(
-        vec!(built_in_type_runtime_type_id(int_32_built_in_type())),        
-        vec!(built_in_type_runtime_type_id(float_32_built_in_type()))
+        vec!(create_shareable(int_32_runtime_type())),        
+        vec!(create_shareable(float_32_runtime_type()))
     )
 }
 
-fn create_some_other_external_procedure_with_no_args_type() -> ResolvedType {
+fn create_some_other_external_procedure_with_no_args_type() -> RuntimeType {
     create_procedure_definition_type_with_no_args("SomeOtherExternalProcedure")
 }
 
@@ -40,10 +41,9 @@ fn typing_procedure_body_waits_for_external_procedure() {
     let typing_repository = start_type_repository_actor();
 
     let external_proc_type = create_external_procedure_with_int_arg_type();
-    let external_proc_type_id = external_proc_type.id.clone();
     
     add_resolved_type(&typing_repository, create_external_procedure_with_no_args_type());
-    add_resolved_type(&typing_repository, external_proc_type);
+    add_resolved_type(&typing_repository, external_proc_type.clone());
     add_resolved_type(&typing_repository, create_some_other_external_procedure_with_no_args_type());
 
     let _proc_header = units.pop().unwrap();
@@ -72,11 +72,11 @@ fn typing_procedure_body_waits_for_external_procedure() {
                                             position(48, 2, 27),
                                             literal_item(unsigned_int_literal(1))
                                         ),
-                                        resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
+                                        resolved_resolvable_type(create_shareable(int_32_runtime_type())) 
                                     )
                                 ),
                             ),
-                            resolved_resolvable_type(external_proc_type_id)
+                            resolved_resolvable_type(create_shareable(external_proc_type))
                         )
                     )
                 )
@@ -94,10 +94,9 @@ fn typing_procedure_body_waits_for_external_procedure_with_return_arg() {
     let typing_repository = start_type_repository_actor();
         
     let external_proc_type = create_external_procedure_with_int_arg_and_float_return_type();
-    let external_proc_type_id = external_proc_type.id.clone();
-
+    
     add_resolved_type(&typing_repository, create_external_procedure_with_no_args_type());
-    add_resolved_type(&typing_repository, external_proc_type);
+    add_resolved_type(&typing_repository, external_proc_type.clone());
     add_resolved_type(&typing_repository, create_some_other_external_procedure_with_no_args_type());
 
 
@@ -131,14 +130,14 @@ fn typing_procedure_body_waits_for_external_procedure_with_return_arg() {
                                                     position(53, 2, 32),
                                                     literal_item(unsigned_int_literal(1))
                                                 ),
-                                                resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
+                                                resolved_resolvable_type(create_shareable(int_32_runtime_type())) 
                                             )
                                         ),
                                     ),
-                                    resolved_resolvable_type(external_proc_type_id)
+                                    resolved_resolvable_type(create_shareable(external_proc_type))
                                 )
                             ),
-                            resolved_resolvable_type(built_in_type_runtime_type_id(float_32_built_in_type()))
+                            resolved_resolvable_type(create_shareable(float_32_runtime_type())) 
                         )
                     )
                 )
@@ -157,10 +156,9 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
     let typing_repository = start_type_repository_actor();
         
     let external_proc_type = create_external_procedure_with_int_arg_type();
-    let external_proc_type_id = external_proc_type.id.clone();
 
     add_resolved_type(&typing_repository, create_external_procedure_with_no_args_type());
-    add_resolved_type(&typing_repository, external_proc_type);
+    add_resolved_type(&typing_repository, external_proc_type.clone());
     add_resolved_type(&typing_repository, create_some_other_external_procedure_with_no_args_type());
 
     let _proc_header = units.pop().unwrap();
@@ -185,7 +183,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                 position(31, 2, 10),
                                 literal_item(unsigned_int_literal(1))
                             ),
-                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
+                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
                         )
                     ),
                     node(
@@ -200,11 +198,11 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                             position(61, 3, 27),  
                                             identifier_item(string("a"))
                                         ),
-                                        resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())) 
+                                        resolved_resolvable_type(create_shareable(int_32_runtime_type())) 
                                     )
                                 ),
                             ),
-                            resolved_resolvable_type(external_proc_type_id)                                
+                            resolved_resolvable_type(create_shareable(external_proc_type))                               
                         )
                     )
                 )

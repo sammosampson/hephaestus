@@ -11,10 +11,10 @@ pub enum CompilationMessage {
     ParseFile(String, CompilationActorHandle),
     FileParsed(FileParseResult),
     PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
-    UnitTyped(ResolvedTypes, CompilationUnit),
+    UnitTyped(RuntimeTypePointers, CompilationUnit),
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
-    TypeFound(ResolvedType),
-    AddResolvedType(ResolvedType),
+    TypeFound(RuntimeTypePointer),
+    AddResolvedType(RuntimeTypePointer),
 }
 
 pub type CompilationActorHandle = ActorHandle<CompilationMessage>;
@@ -40,19 +40,19 @@ pub fn create_file_parsed_event(parse_result: FileParseResult) -> CompilationMes
     CompilationMessage::FileParsed(parse_result)
 }
 
-pub fn create_unit_typed_event(resolved_types: ResolvedTypes, unit: CompilationUnit) -> CompilationMessage {
+pub fn create_unit_typed_event(resolved_types: RuntimeTypePointers, unit: CompilationUnit) -> CompilationMessage {
     CompilationMessage::UnitTyped(resolved_types, unit)
 }
 
-pub fn create_type_found_event(resolved_type: ResolvedType) -> CompilationMessage {
+pub fn create_type_found_event(resolved_type: RuntimeTypePointer) -> CompilationMessage {
     CompilationMessage::TypeFound(resolved_type)
 }
 
-pub fn create_add_resolved_type_command(resolved_type: ResolvedType) -> CompilationMessage {
+pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> CompilationMessage {
     CompilationMessage::AddResolvedType(resolved_type)
 }
 
-pub fn try_get_type_found_compilation_message(message: CompilationMessage) -> Option<ResolvedType> {
+pub fn try_get_type_found_compilation_message(message: CompilationMessage) -> Option<RuntimeTypePointer> {
     if let CompilationMessage::TypeFound(resolved_type) = message {
        return Some(resolved_type);
     }
@@ -114,7 +114,7 @@ fn handle_file_parsed(compiler: &CompilerActor, parse_result: FileParseResult, c
     }
 }
 
-fn handle_unit_typed(compiler: &CompilerActor, resolved_types: ResolvedTypes) -> AfterReceiveAction {
+fn handle_unit_typed(compiler: &CompilerActor, resolved_types: RuntimeTypePointers) -> AfterReceiveAction {
     for resolved_type in resolved_types {
         send_message_to_actor(&compiler.type_repository, create_add_resolved_type_command(resolved_type));
     }

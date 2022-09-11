@@ -21,7 +21,7 @@ fn create_lockable<T>(to_wrap: T) -> Lockable<T> {
     Mutex::new(to_wrap)
 }
 
-pub fn create_sharable<T>(to_wrap: T) -> Shareable<T> {
+pub fn create_shareable<T>(to_wrap: T) -> Shareable<T> {
     Arc::new(to_wrap)
 }
 
@@ -30,7 +30,7 @@ pub fn clone_shareable<T>(sender_shared: &Shareable<T>) -> Shareable<T> {
 }
 
 pub fn create_concurrent<T>(to_wrap: T) -> Concurrent<T> {
-    create_sharable(create_lockable(to_wrap))
+    create_shareable(create_lockable(to_wrap))
 }
 
 fn send<T>(sender: &Sender<T>, to_send: T) {
@@ -52,7 +52,7 @@ pub fn get_concurrent_sender<T>(sender: Sender<T>) -> ConcurrentSender<T> {
 }
 
 pub fn create_concurrent_bool() -> ConcurrentBool {
-    create_sharable(AtomicBool::new(false))
+    create_shareable(AtomicBool::new(false))
 }
 
 pub fn compare_and_exchange_concurrent_bool_value(to_compare_and_exchange: &ConcurrentBool, current: bool, new: bool) -> Result<bool, bool> {
@@ -172,7 +172,7 @@ fn create_workers<T: ParallelisableClone>(number_of_workers: u8, worker_free_not
         workers.push(create_worker(worker_free_notifier.clone()));
     }
 
-    create_sharable(workers)
+    create_shareable(workers)
 }
 
 fn create_worker<T: ParallelisableClone>(worker_free_notifier: Notifier) -> Worker<T> {

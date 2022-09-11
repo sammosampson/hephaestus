@@ -6,14 +6,14 @@ use super::*;
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FindTypeCriteria { 
     name: String,
-    args: RuntimeTypeIds
+    args: RuntimeTypePointers
 }
 
-pub fn create_find_type_criteria(name: String, args: RuntimeTypeIds) -> FindTypeCriteria {
+pub fn create_find_type_criteria(name: String, args: RuntimeTypePointers) -> FindTypeCriteria {
     FindTypeCriteria { name, args }
 }
 
-pub fn find_type(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> ResolvedType {
+pub fn find_type(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> RuntimeTypePointer {
     send_find_type_request(type_repository, criteria, ctx);  
     await_type_found_response(ctx)
 }
@@ -22,7 +22,7 @@ fn send_find_type_request(type_repository: &ActorHandle<CompilationMessage>, cri
     send_message_to_actor(type_repository, create_find_type_request(criteria, create_self_handle(ctx)))
 }
 
-fn await_type_found_response(ctx: &ActorContext<CompilationMessage>) -> ResolvedType {
+fn await_type_found_response(ctx: &ActorContext<CompilationMessage>) -> RuntimeTypePointer {
     let mut result = None;
     
     await_message(ctx, |message| {
@@ -41,15 +41,22 @@ fn await_type_found_response(ctx: &ActorContext<CompilationMessage>) -> Resolved
     todo!("wait and send back type when it exists")
 }
 
+type RuntimeTypeMap = HashMap<FindTypeCriteria, RuntimeTypePointer>;
+
 pub struct TypeRepositoryActor { 
-    type_map: HashMap<FindTypeCriteria, ResolvedType> 
+    type_map: RuntimeTypeMap 
+}
+
+fn create_type_map() -> RuntimeTypeMap {
+    HashMap::default()
 }
 
 pub fn create_type_repository_actor() -> TypeRepositoryActor {
     TypeRepositoryActor { 
-        type_map: HashMap::default()
+        type_map: create_type_map()
     }
 }
+
 
 impl Actor<CompilationMessage> for TypeRepositoryActor {
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
@@ -73,9 +80,9 @@ fn handle_find_type(repository: &mut TypeRepositoryActor, criteria: FindTypeCrit
     continue_listening_after_receive()
 }
 
-fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type: ResolvedType) -> AfterReceiveAction {
+fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type: RuntimeTypePointer) -> AfterReceiveAction {
     let criteria = match &resolved_type.item {
-        TypeItem::ProcedureDefinition { arg_types, .. } => 
+        RuntimeTypeItem::ProcedureDefinition { arg_types, .. } => 
             create_find_type_criteria(resolved_type.name.clone(), arg_types.clone()),
         _ => todo!("add other types")
     };

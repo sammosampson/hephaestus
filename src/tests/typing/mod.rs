@@ -1,12 +1,13 @@
 mod procedures;
 mod expressions;
 use crate::parsing::*;
+use crate::threading::*;
 use crate::typing::*;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::tests::acting::*;
 
-pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: CompilationUnit) -> (ResolvedTypes, CompilationUnit) {
+pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: CompilationUnit) -> (RuntimeTypePointers, CompilationUnit) {
     let (
         message_receiver_handle, 
         message_receiver
@@ -34,23 +35,24 @@ pub fn start_type_repository_actor() -> CompilationActorHandle {
     handle
 }
 
-pub fn add_resolved_type(typing_repository: &CompilationActorHandle, resolved_type: ResolvedType) {
+pub fn add_resolved_type(typing_repository: &CompilationActorHandle, resolved_type: RuntimeType) {
     send_message_to_actor(
         typing_repository, 
-        create_add_resolved_type_command(resolved_type)
+        create_add_resolved_type_command(create_shareable(resolved_type))
     );
 }
 
-pub fn create_procedure_definition_type(name: &str, arg_types: RuntimeTypeIds, return_types: RuntimeTypeIds) -> ResolvedType {
+pub fn create_procedure_definition_type(name: &str, arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers) -> RuntimeType {
     let other_proc_type = create_type(
-        create_compilation_unit_id(), 
+        user_defined_runtime_type_id(create_compilation_unit_id()), 
         name.to_string(),
-        procedure_definition_type_item(arg_types, return_types)
+        procedure_definition_type_item(arg_types, return_types),
+        not_required_type_size()
     );
     other_proc_type
 }
 
-pub fn create_procedure_definition_type_with_no_args(name: &str) -> ResolvedType {
+pub fn create_procedure_definition_type_with_no_args(name: &str) -> RuntimeType {
     create_procedure_definition_type(
         name,
         vec!(), 

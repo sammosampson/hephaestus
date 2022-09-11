@@ -1,7 +1,8 @@
 use crate::{
     parsing::*,
     typing::*,
-    tests::parsing::*, 
+    tests::parsing::*,
+    threading::*, 
 };
 
 #[test]
@@ -66,14 +67,14 @@ fn parse_variable_expression_parses_correctly() {
                         position(9, 1, 10),
                         arg_declaration_item( 
                             string("a"),
-                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())),
+                            resolved_resolvable_type(create_shareable(int_32_runtime_type())),
                         )
                     ),
                     node(
                         position(17, 1, 18),
                         arg_declaration_item( 
                             string("b"),
-                            resolved_resolvable_type(built_in_type_runtime_type_id(int_32_built_in_type())),
+                            resolved_resolvable_type(create_shareable(int_32_runtime_type())),
                         )
                     )
                 ),
