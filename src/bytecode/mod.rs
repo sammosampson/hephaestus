@@ -1,24 +1,56 @@
 use std::alloc::{self, Layout};
 
-#[test]
-fn vm() {
-    let mem = create_virtual_memory(100000000);
-    let mut cpu = create_virtual_machine(vec!(
-        Instruction::LII, Instruction::R(0), Instruction::RVAL(100),
-        Instruction::STI, Instruction::RVAL(0), Instruction::R(0),
-        Instruction::LII, Instruction::R(0), Instruction::RVAL(200),
-        Instruction::STI, Instruction::RVAL(1), Instruction::R(0),
-        Instruction::LII, Instruction::R(0), Instruction::RVAL(300),
-        Instruction::STI, Instruction::RVAL(2), Instruction::R(0),
-        Instruction::LDI, Instruction::R(0), Instruction::RVAL(2),
-        Instruction::LDI, Instruction::R(1), Instruction::RVAL(1),
-        Instruction::LDI, Instruction::R(2), Instruction::RVAL(0),
-        
-        Instruction::HLT
+use crate::{
+    acting::*,
+    compilation::*,
+    parsing::*
+};
 
-    ), mem);
-    run_virtual_machine(&mut cpu)
+pub struct IntemediateRepresentationActor;
+
+pub fn create_intemediate_representation_actor() -> IntemediateRepresentationActor {
+    IntemediateRepresentationActor
 }
+
+impl Actor<CompilationMessage> for IntemediateRepresentationActor {
+    fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+        match message {
+            CompilationMessage::AssembleByteCode { unit } => assemble_bytecode(unit, ctx),
+            _ => continue_listening_after_receive()
+        }
+    }
+}
+
+fn assemble_bytecode(unit: CompilationUnit, ctx: &CompilationMessageContext) -> AfterReceiveAction {
+    shutdown_after_receive()
+}
+
+pub struct RootByteCodeAssemblyAstNodeVisitor;
+
+impl AbstractSyntaxRootNodeVisitor for RootByteCodeAssemblyAstNodeVisitor {
+    fn visit_run(&mut self, _expr: &mut AbstractSyntaxNode) {
+    }
+
+    fn visit_procedure_header(
+        &mut self,
+        name: &mut String,
+        args: &mut AbstractSyntaxChildNodes,
+        return_types: &mut AbstractSyntaxChildNodes,
+        body: &mut CompilationUnitReference
+    ) {
+        todo!()
+    }
+
+    fn visit_procedure_body(
+        &mut self, 
+        args: &mut AbstractSyntaxChildNodes,
+        return_types: &mut AbstractSyntaxChildNodes,
+        statements: &mut AbstractSyntaxChildNodes
+    ) {
+        todo!()
+    }
+}
+
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Instruction {
@@ -139,7 +171,7 @@ fn increment_instruction_pointer(cpu: &mut VirtualMachine, offset: usize) {
 fn get_instruction_pointer_offset(cpu: &VirtualMachine, offset: usize) -> usize {
     match cpu.instruction_pointer {
         Some(pointer) => pointer + offset,
-        None => offset,
+        None => 0,
     }
 }
 

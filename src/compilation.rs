@@ -2,7 +2,8 @@ use crate::{
     parsing::*,
     typing::*,
     acting::*,
-    file_system::*
+    file_system::*,
+    bytecode::*
 };
 
 #[derive(Clone)]
@@ -15,6 +16,7 @@ pub enum CompilationMessage {
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     AddResolvedType(RuntimeTypePointer),
+    AssembleByteCode{ unit: CompilationUnit }
 }
 
 pub type CompilationActorHandle = ActorHandle<CompilationMessage>;
@@ -52,6 +54,10 @@ pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> Co
     CompilationMessage::AddResolvedType(resolved_type)
 }
 
+pub fn create_assemble_bytecode_command(unit: CompilationUnit) -> CompilationMessage {
+    CompilationMessage::AssembleByteCode { unit }
+}
+
 pub fn try_get_type_found_compilation_message(message: CompilationMessage) -> Option<RuntimeTypePointer> {
     if let CompilationMessage::TypeFound(resolved_type) = message {
        return Some(resolved_type);
@@ -79,13 +85,15 @@ fn create_compiler_actor(type_repository: ActorHandle<CompilationMessage>) -> Co
     CompilerActor { type_repository }
 }
 
-
 impl Actor<CompilationMessage> for CompilerActor {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::Compile(file_name) => handle_compile(file_name, ctx),
-            CompilationMessage::FileParsed(parse_result) => handle_file_parsed(&self, parse_result, ctx),
-            CompilationMessage::UnitTyped(resolved_types, _unit) => handle_unit_typed(&self, resolved_types),
+            CompilationMessage::Compile(file_name) =>
+                handle_compile(file_name, ctx),
+            CompilationMessage::FileParsed(parse_result) =>
+                handle_file_parsed(&self, parse_result, ctx),
+            CompilationMessage::UnitTyped(resolved_types, unit) => 
+                handle_unit_typed(&self, unit, resolved_types, ctx),
             _ => continue_listening_after_receive()
         }
     }
@@ -114,10 +122,23 @@ fn handle_file_parsed(compiler: &CompilerActor, parse_result: FileParseResult, c
     }
 }
 
-fn handle_unit_typed(compiler: &CompilerActor, resolved_types: RuntimeTypePointers) -> AfterReceiveAction {
+fn handle_unit_typed(
+    compiler: &CompilerActor, 
+    unit: CompilationUnit,
+    resolved_types: RuntimeTypePointers,
+    ctx: &CompilationMessageContext
+) -> AfterReceiveAction {
     for resolved_type in resolved_types {
         send_message_to_actor(&compiler.type_repository, create_add_resolved_type_command(resolved_type));
     }
+    
+    let (intemediate_representation_handle, ..) = start_actor(
+        ctx, 
+        create_intemediate_representation_actor()
+    );
+
+    send_message_to_actor(&intemediate_representation_handle, create_assemble_bytecode_command(unit));
+
     continue_listening_after_receive()
 }
 
