@@ -23,7 +23,7 @@ pub fn position(absolute: usize, line: usize, col: usize) -> SourceFilePosition 
 
 pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<CompilationUnit>) {
     let mut reader = create_mock_file_reader();
-    add_mock_file(&mut reader, file_path.to_string(), content.to_string());
+    add_mock_file(&mut reader, file_path, content);
 
     let (message_receiver_handle, message_receiver) = create_test_message_receiver_actor();
     
