@@ -1,5 +1,8 @@
-use std::alloc::{self, Layout};
-use crate::intermediate_representation::*;
+use std::alloc::*;
+use crate::{
+    intermediate_representation::*,
+    running::*
+};
 
 #[derive(Debug)]
 pub struct VirtualMemory {
@@ -10,7 +13,7 @@ pub struct VirtualMemory {
 fn create_virtual_memory(size: usize) -> VirtualMemory {
     unsafe {
         VirtualMemory {
-            base: alloc::alloc(Layout::array::<u64>(size).unwrap()),
+            base: alloc(Layout::array::<u64>(size).unwrap()),
             size
         }
     }
@@ -80,7 +83,8 @@ fn load_float_memory(address: i64) -> f64 {
 
 #[derive(Debug)]
 pub struct VirtualMachine {
-    instruction_stream: ByteCodeInstructionStream,
+    code: RunnableCompileTimeCode,
+    current_instruction_stream: Shareable<ByteCodeInstructionStream>,
     stack_memory: VirtualMemory,
     
     instruction_pointer: Option<usize>,
@@ -95,11 +99,13 @@ pub struct VirtualMachine {
     greater_than_zero: bool
 }
 
-fn create_virtual_machine(instruction_stream: ByteCodeInstructionStream) -> VirtualMachine {
+pub fn create_virtual_machine(code: RunnableCompileTimeCode) -> VirtualMachine {
     let stack_memory = create_virtual_memory(100000000);
     let stack_memory_size = stack_memory.size;
+    let current_instruction_stream = get_code_block_to_run(&code);
     VirtualMachine { 
-        instruction_stream,
+        code,
+        current_instruction_stream,
         stack_memory,
         instruction_pointer: None,
         stack_pointer: stack_memory_size - 1,
@@ -112,7 +118,7 @@ fn create_virtual_machine(instruction_stream: ByteCodeInstructionStream) -> Virt
     }
 }
 
-fn run_virtual_machine(cpu: &mut VirtualMachine) {
+pub fn run_virtual_machine(cpu: &mut VirtualMachine) {
     while cpu.instruction != ByteCodeInstruction::HLT {
         fetch(cpu);
         execute(cpu);
@@ -128,7 +134,7 @@ fn fetch(cpu: &mut VirtualMachine) {
 
 fn set_instruction_at_pointer(cpu: &mut VirtualMachine) {
     if let Some(pointer) = cpu.instruction_pointer {
-        cpu.instruction = cpu.instruction_stream[pointer];
+        cpu.instruction = cpu.current_instruction_stream[pointer];
     }
 }
 
@@ -145,7 +151,7 @@ fn get_instruction_pointer_offset(cpu: &VirtualMachine, offset: usize) -> usize 
 }
 
 fn get_register_at(cpu: &VirtualMachine, pointer: usize) -> usize {
-    match cpu.instruction_stream[pointer] {
+    match cpu.current_instruction_stream[pointer] {
         ByteCodeInstruction::R(register) => return register,
         _ => panic!("requested register, but not register"),
     }
@@ -156,7 +162,7 @@ fn get_register_at_instruction_pointer_offset(cpu: &VirtualMachine, offset: usiz
 }
 
 fn get_float_register_at(cpu: &VirtualMachine, pointer: usize) -> usize {
-    match cpu.instruction_stream[pointer] {
+    match cpu.current_instruction_stream[pointer] {
         ByteCodeInstruction::F(register) => return register,
         _ => panic!("requested float register, but not float register"),
     }
@@ -167,7 +173,7 @@ fn get_float_register_at_instruction_pointer_offset(cpu: &VirtualMachine, offset
 }
 
 fn get_value_at(cpu: &VirtualMachine, pointer: usize) -> i64 {
-    match cpu.instruction_stream[pointer] {
+    match cpu.current_instruction_stream[pointer] {
         ByteCodeInstruction::RVAL(value) => return value,
         _ => panic!("requested value, but not value"),
     }
@@ -178,7 +184,7 @@ fn get_value_at_instruction_pointer_offset(cpu: &VirtualMachine, offset: usize) 
 }
 
 fn get_float_value_at(cpu: &VirtualMachine, pointer: usize) -> f64 {
-    match cpu.instruction_stream[pointer] {
+    match cpu.current_instruction_stream[pointer] {
         ByteCodeInstruction::FVAL(value) => return value,
         _ => panic!("requested value, but not value"),
     }
@@ -216,6 +222,7 @@ fn execute(cpu: &mut VirtualMachine) {
         ByteCodeInstruction::JGZ => jgz(cpu),
         ByteCodeInstruction::JLZ => jlz(cpu),
         ByteCodeInstruction::JMP => jmp(cpu),
+        ByteCodeInstruction::CALL(id) => call(cpu, id),
         ByteCodeInstruction::SHL => shl(cpu),
         ByteCodeInstruction::SHR => shr(cpu),
         ByteCodeInstruction::BAND => band(cpu),
@@ -491,6 +498,14 @@ fn jmp(cpu: &mut VirtualMachine) {
     cpu.instruction_pointer = Some(jump_to as usize);
 
     println!("JMP jump to: {}", jump_to);
+}
+
+fn call(cpu: &mut VirtualMachine, id: CompilationUnitId) {
+    let jump_to = get_value_at_instruction_pointer_offset(cpu, 1);
+
+    cpu.instruction_pointer = Some(jump_to as usize);
+
+    println!("CALL id: {:?}", id);
 }
 
 fn shl(cpu: &mut VirtualMachine) {

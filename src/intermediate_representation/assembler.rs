@@ -28,7 +28,7 @@ fn assemble_bytecode(unit: &mut CompilationUnit, compiler: &CompilationActorHand
 
     send_message_to_actor(
         compiler, 
-        create_bytecode_assembled_event(create_intermediate_representation(unit.id, visitor.generated_code)));
+        create_byte_code_assembled_event(create_intermediate_representation(unit.id, visitor.generated_code)));
 
     shutdown_after_receive()
 }

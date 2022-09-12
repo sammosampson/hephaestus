@@ -5,7 +5,8 @@ use crate::{
     typing::*,
     acting::*,
     file_system::*,
-    intermediate_representation::*
+    intermediate_representation::*,
+    running::*
 };
 
 #[derive(Clone)]
@@ -18,9 +19,10 @@ pub enum CompilationMessage {
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     AddResolvedType(RuntimeTypePointer),
-    AssembleByteCode{ unit: CompilationUnit, compiler: CompilationActorHandle },
-    ByteCodeAssembled{ code: IntermediateRepresentation },
-    RunByteCode{ code: ByteCodeInstructionStream },
+    AssembleByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
+    ByteCodeAssembled { code: IntermediateRepresentation },
+    RunByteCode { code: RunnableCompileTimeCode, compiler: CompilationActorHandle },
+    ByteCodeRan { id: CompilationUnitId },
     CompilationComplete
 }
 
@@ -74,12 +76,20 @@ pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> Co
     CompilationMessage::AddResolvedType(resolved_type)
 }
 
-pub fn create_assemble_bytecode_command(unit: CompilationUnit, compiler: CompilationActorHandle) -> CompilationMessage {
+pub fn create_assemble_byte_code_command(unit: CompilationUnit, compiler: CompilationActorHandle) -> CompilationMessage {
     CompilationMessage::AssembleByteCode { unit, compiler }
 }
 
-pub fn create_bytecode_assembled_event(code: IntermediateRepresentation) -> CompilationMessage {
+pub fn create_byte_code_assembled_event(code: IntermediateRepresentation) -> CompilationMessage {
     CompilationMessage::ByteCodeAssembled { code }
+}
+
+pub fn create_run_byte_code_command(code: RunnableCompileTimeCode, compiler: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::RunByteCode { code, compiler }
+}
+
+pub fn create_byte_code_ran_event(id: CompilationUnitId) -> CompilationMessage {
+    CompilationMessage::ByteCodeRan { id }
 }
 
 fn create_compilation_complete_event() -> CompilationMessage {
@@ -219,7 +229,7 @@ fn handle_unit_typed<TReader: FileRead, TMessageWireTap: WireTapCompilationMessa
 
     send_message_to_actor(
         &intemediate_representation_handle, 
-        create_assemble_bytecode_command(unit, compiler_handle)
+        create_assemble_byte_code_command(unit, compiler_handle)
     );
 
     continue_listening_after_receive()

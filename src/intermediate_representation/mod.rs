@@ -31,6 +31,7 @@ pub enum ByteCodeInstruction {
     ADD, SUB, MUL, DIV,
     FADD, FSUB, FMUL, FDIV,
     JNZ, JEZ, JGZ, JLZ, JMP,
+    CALL(CompilationUnitId),
     SHL, SHR,
     BAND, BOR, BNOT, BXOR,
     LAND, LOR, LNOT,
