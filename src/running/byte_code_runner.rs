@@ -21,10 +21,11 @@ impl Actor<CompilationMessage> for ByteCodeRunnerActor {
 }
 
 fn run_byte_code(code: RunnableCompileTimeCode, compiler: &CompilationActorHandle) -> AfterReceiveAction {
+    let id = code.to_run_id;
     let mut vm = create_virtual_machine(code);
     run_virtual_machine(&mut vm);
 
-    send_message_to_actor(compiler, create_byte_code_ran_event(code.to_run_id));
+    send_message_to_actor(compiler, create_byte_code_ran_event(id));
     
     shutdown_after_receive()
 }
