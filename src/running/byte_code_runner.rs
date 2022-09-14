@@ -4,26 +4,34 @@ use crate::{
     running::*
 };
 
-pub struct ByteCodeRunnerActor;
-
-pub fn create_byte_code_runner_actor() -> ByteCodeRunnerActor {
-    ByteCodeRunnerActor
+pub struct ByteCodeRunnerActor<T: Interpret> {
+    interpreter: T
 }
 
-impl Actor<CompilationMessage> for ByteCodeRunnerActor {
+pub fn create_byte_code_runner_actor<T: Interpret>(interpreter: T) -> ByteCodeRunnerActor<T> {
+    ByteCodeRunnerActor {
+        interpreter
+    }
+}
+
+impl<T: Interpret> Actor<CompilationMessage> for ByteCodeRunnerActor<T> {
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::RunByteCode { code, compiler } =>
-                run_byte_code(code, &compiler),
+                run_byte_code(code, &compiler, &mut self.interpreter),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn run_byte_code(code: RunnableCompileTimeCode, compiler: &CompilationActorHandle) -> AfterReceiveAction {
+fn run_byte_code<T: Interpret>(
+    code: RunnableCompileTimeCode,
+    compiler: &CompilationActorHandle,
+    interpreter: &mut T
+) -> AfterReceiveAction {
     let id = code.to_run_id;
-    let mut vm = create_virtual_machine(code);
-    run_virtual_machine(&mut vm);
+    
+    interpreter.interpret(code);
 
     send_message_to_actor(compiler, create_byte_code_ran_event(id));
     

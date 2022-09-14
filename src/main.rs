@@ -18,6 +18,7 @@ fn main() {
             compilation::compile(
                 file_name, 
                 file_system::create_file_reader(), 
+                running::create_interpreter(),
                 compilation::create_null_message_wire_tap()
             );
         },
