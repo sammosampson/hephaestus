@@ -101,6 +101,4 @@ loop {
 wait semaphore handler will halt executiion in a pipe until released by message
 */
 
-//https://www.youtube.com/watch?v=KCWVusIztlY&t=3945s 46:30 for bytecode example
-
 //cargo run C:\work\other\rust-hephaestus\examples\calc.hep
