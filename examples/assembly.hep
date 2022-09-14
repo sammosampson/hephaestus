@@ -1,0 +1,106 @@
+/*
+-------------------------------
+REGISTERS:
+-------------------------------
+
+GEN PURPOSE
+---------
+RAX  R0     
+EAX  R0D  
+AX   R0W
+AL   R0B
+
+RBX  R1     
+EBX  R1D
+BX   R1W    HAVE TO PUSH AND POP AT EOF AS USED BY C IF CALLING FROM C
+BL   R1B
+
+RCX  R2     
+ECX  R2D
+CX   R2W    OFTEN USED IN LOOPS
+CL   R2B
+
+RDX  R3 
+EDX  R3D
+DX   R3W
+DL   R3B
+
+RSI  R4 
+ESI  R4D
+SI   R4W     SOURCE INDEX REGISTER (was used in string comp)
+SIL  R4B
+
+RDI  R5
+EDI  R5D
+DI   R5W     DEST INDEX REGISTER (was used in string comp)
+DIL  R5B
+---------
+
+NON GEN PURP
+---------
+
+RSP  R6
+ESP  R6D
+SP   R6W     STACK POINTER
+SPL  R6B
+
+RBP  R7 
+EBP  R7D
+BP   R7W     BASE POINTER
+BPL  R7B
+
+R8 - R15 SAME PATTERN
+
+
+
+DATA TYPES
+INTS:
+BYTE WORD DWORD QWORD
+
+FLOATS
+REAL4 REAL8 REAL10
+
+SIMD
+XMMWORD YMMWORD ZMMWORD
+
+OPS ON DATA TYPES:
+IDIV IMUL FOR SIGNED INTS
+DIV MUL FOR UNSIGNED
+ADD AND SUB DONT HAVE THIS AS THE BITS ARE THE SAME
+
+-------------------------------
+HELLO WORLD:
+-------------------------------
+BITS 64
+DEFAULT REL
+
+GLOBAL main
+
+EXTERN WriteFile
+EXTERN GetStdHandle
+
+STD_OUTPUT_HANDLE   EQU -11
+
+SECTION .data
+
+ l1  db "Hello world!", 13, 10, 0
+ l2  dd $-l1
+
+SECTION .text
+
+main:
+ sub rsp, 30h
+
+ mov ecx, STD_OUTPUT_HANDLE
+ call GetStdHandle
+ 
+ mov ecx, eax
+ lea rdx, [l1]
+ mov r8d, DWORD [l2]
+ xor r9, r9
+ mov QWORD [rsp+20h], r9
+ call WriteFile
+
+ add rsp, 30h
+ ret  
+*/
