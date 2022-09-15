@@ -4,7 +4,7 @@ use crate::parsing::*;
 pub enum ParseError {
     ExpectedFileName,
     ExpectedLibraryName,
-    ExpectedOpenBrace,
+    ExpectedForeignLibraryIdentifier,
     ExpectedArgName,
     ExpectedArgInitialise,
     ExpectedArgSeparator,
@@ -31,8 +31,8 @@ pub fn expected_operator_error() -> ParseError {
     ParseError::ExpectedOperator
 }
 
-pub fn expected_open_brace_error() -> ParseError {
-    ParseError::ExpectedOpenBrace
+pub fn expected_foreign_library_identifier_error() -> ParseError {
+    ParseError::ExpectedForeignLibraryIdentifier
 }
 
 pub fn expected_arg_name_error() -> ParseError {

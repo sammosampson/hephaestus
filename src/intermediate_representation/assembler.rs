@@ -50,7 +50,7 @@ impl AbstractSyntaxRootNodeVisitor for RootAssemblyAstNodeVisitor {
         _name: &mut String,
         _args: &mut AbstractSyntaxChildNodes,
         _return_types: &mut AbstractSyntaxChildNodes,
-        _body: &mut CompilationUnitReference
+        _body: &mut ProcedureBodyReference
     ) {
     }
 

@@ -1,6 +1,25 @@
 use crate::parsing::*;
 use crate::typing::*;
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum ProcedureBodyReference {
+    Unknown,
+    Local(CompilationUnitId),
+    Foerign(AbstractSyntaxNode)
+}
+
+pub fn unknown_procedure_body_reference() -> ProcedureBodyReference {
+    ProcedureBodyReference::Unknown
+}
+
+pub fn local_procedure_body_reference(id: CompilationUnitId) -> ProcedureBodyReference {
+    ProcedureBodyReference::Local(id)
+}
+
+pub fn foreign_procedure_body_reference(foreign_system_library: AbstractSyntaxNode) -> ProcedureBodyReference {
+    ProcedureBodyReference::Foerign(foreign_system_library)
+}
+
 pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
     let arguments = parse_procedure_call_args(lexer);
     
@@ -63,9 +82,19 @@ pub fn parse_procedure_header(name: String, lexer: &mut Lexer, position: SourceF
     eat_next_token(lexer);
 
     let return_types = parse_procedure_return_types(lexer);
-    let body = create_unit(parse_procedure_body(lexer, args.clone(), return_types.clone()));
-    let body_ref = body.id;
-    units.push(body);
+
+    let mut body_ref = unknown_procedure_body_reference();
+
+    if is_open_brace(&peek_next_token(lexer).item) {
+        let body = create_unit(parse_procedure_body(lexer, args.clone(), return_types.clone()));
+        body_ref = local_procedure_body_reference(body.id);
+        units.push(body);
+    }
+
+    if is_foreign_directive(&peek_next_token(lexer).item) {
+        let foreign_library_identifier = parse_foreign_library_identifier(lexer);
+        body_ref = foreign_procedure_body_reference(foreign_library_identifier);        
+    }
 
     create_node(procedure_header_item(name, args, return_types, body_ref), position)
 }
@@ -142,6 +171,10 @@ fn parse_procedure_return_types(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
             return returns
         }
 
+        if is_foreign_directive(&next_token.item) {
+            return returns
+        }
+
         if is_arg_separator(&next_token.item) {
             eat_next_token(lexer);
         } else {
@@ -171,9 +204,7 @@ fn parse_procedure_body(
     args: AbstractSyntaxChildNodes,
     return_types: AbstractSyntaxChildNodes
 ) -> AbstractSyntaxNode {
-    if !is_open_brace(&peek_next_token(lexer).item) {
-        return create_error_node(expected_open_brace_error(), get_next_token(lexer).position);
-    }
+    assert!(is_open_brace(&peek_next_token(lexer).item));
 
     let brace = get_next_token(lexer);
     let statements = parse_procedure_body_statements(lexer);
@@ -182,6 +213,19 @@ fn parse_procedure_body(
     eat_next_token(lexer);
 
     create_node(procedure_body_item(args, return_types, statements), brace.position)
+}
+
+fn parse_foreign_library_identifier(lexer: &mut Lexer) -> AbstractSyntaxNode {
+    assert!(is_foreign_directive(&peek_next_token(lexer).item));
+    eat_next_token(lexer);
+        
+    let token = peek_next_token(lexer);
+        
+    if let Some(foreign_library) = try_get_identifier(token.item) {
+        eat_next_token(lexer);
+        return create_node(identifier_item(foreign_library), token.position)
+    }
+    create_error_node(expected_foreign_library_identifier_error(), token.position)
 }
 
 fn parse_procedure_body_statements(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
@@ -259,9 +303,9 @@ pub fn procedure_header_item(
     name: String,
     args: AbstractSyntaxChildNodes,
     return_types: AbstractSyntaxChildNodes,
-    body_ref: CompilationUnitId
+    body: ProcedureBodyReference
 ) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_types, body: CompilationUnitReference::Resolved(body_ref) }
+    AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_types, body }
 }
 
 pub fn procedure_body_item(

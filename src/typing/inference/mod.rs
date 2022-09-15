@@ -78,7 +78,7 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
         name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
         return_types: &mut AbstractSyntaxChildNodes,
-        _body: &mut CompilationUnitReference
+        _body: &mut ProcedureBodyReference
     ) {
         let mut visitor = create_procedure_header_visitor();
         apply_visitor_to_ast_procedure_header(args, return_types, &mut visitor);        

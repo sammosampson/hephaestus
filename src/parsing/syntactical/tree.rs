@@ -29,7 +29,7 @@ pub enum AbstractSyntaxNodeItem {
         name: String,
         args: AbstractSyntaxChildNodes,
         return_types: AbstractSyntaxChildNodes,
-        body: CompilationUnitReference
+        body: ProcedureBodyReference
     },
     ProcedureBody { 
         args: AbstractSyntaxChildNodes,
@@ -83,7 +83,7 @@ pub trait AbstractSyntaxRootNodeVisitor {
         name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
         return_types: &mut AbstractSyntaxChildNodes,
-        body: &mut CompilationUnitReference
+        body: &mut ProcedureBodyReference
     );
 
     fn visit_procedure_body(

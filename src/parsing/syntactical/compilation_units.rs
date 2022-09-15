@@ -26,9 +26,3 @@ pub fn create_unit(tree: AbstractSyntaxNode) -> CompilationUnit {
 }
 
 pub type CompilationUnits = Vec<CompilationUnit>;
-
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum CompilationUnitReference {
-    Resolved(CompilationUnitId),
-}
