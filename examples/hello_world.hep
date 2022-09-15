@@ -9,8 +9,8 @@ print :: (to_print: *void) {
     WriteFile(handle, to_print, 13);
 }
 
-hello_world :: () {
+main :: () {
     print("hello world\n");
 }
 
-#run hello_world()
+//#run main()

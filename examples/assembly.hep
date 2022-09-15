@@ -68,6 +68,23 @@ IDIV IMUL FOR SIGNED INTS
 DIV MUL FOR UNSIGNED
 ADD AND SUB DONT HAVE THIS AS THE BITS ARE THE SAME
 
+NOTES
+rbp is the frame pointer on x86_64. In your generated code:
+
+pushq   %rbp
+movq    %rsp, %rbp
+subq    $16, %rsp
+
+it gets a snapshot of the stack pointer (rsp) so that when adjustments are made to rsp
+(i.e. reserving space for local variables or pushing values on to the stack),
+local variables and function parameters are still accessible from a constant offset from rbp.
+
+The base pointer rbp (and its predecessor ebp on x86), being a stable "anchor"
+ to the beginning of the stack frame throughout the execution of a function, 
+ is very convenient for manual assembly coding and for debugging [5]. 
+ However, some time ago it was noticed that compiler-generated code doesn't really need it (the compiler can easily keep track of offsets from rsp), and the DWARF debugging format provides means 
+ (CFI) to access stack frames without the base pointer.
+
 -------------------------------
 HELLO WORLD:
 -------------------------------
@@ -104,3 +121,5 @@ main:
  add rsp, 30h
  ret  
 */
+//nasm -fwin64 hello.asm -o hello.obj
+//link /MACHINE:X64 /SUBSYSTEM:CONSOLE /OUT:hello.exe /NODEFAULTLIB /ENTRY:main "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\kernel32.lib" hello.obj
