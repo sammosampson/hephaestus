@@ -102,8 +102,12 @@ fn parse_procedure_arg(lexer: &mut Lexer) -> AbstractSyntaxNode {
         
         if is_initialise_assignment(&peek_next_token(lexer).item) {
             eat_next_token(lexer);
-        
-            if let Some(arg_type) = try_get_type(&peek_next_token(lexer).item) {
+
+            let is_pointer = is_pointer(&peek_next_token(lexer).item);
+            if is_pointer {
+                eat_next_token(lexer);
+            }
+            if let Some(arg_type) = try_get_type(&peek_next_token(lexer).item, is_pointer) {
                 eat_next_token(lexer);
                 return create_node(arg_declaration_item(name, arg_type), name_token.position)
             }
@@ -148,9 +152,14 @@ fn parse_procedure_return_types(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
 }
 
 fn parse_procedure_return_type(lexer: &mut Lexer) -> AbstractSyntaxNode {
-    let next_token = get_next_token(lexer);
+    let is_pointer = is_pointer(&peek_next_token(lexer).item);
+    if is_pointer {
+        eat_next_token(lexer);
+    }
 
-    if let Some(return_type) = try_get_type(&next_token.item) {
+    let next_token = get_next_token(lexer);
+    
+    if let Some(return_type) = try_get_type(&next_token.item, is_pointer) {
         return create_node(type_item(return_type), next_token.position);
     }
     

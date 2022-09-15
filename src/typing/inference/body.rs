@@ -185,7 +185,7 @@ pub fn create_expression_visitor<'a>(
 impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a> {
     fn visit_literal(&mut self, literal: &mut Literal) {
         match literal {
-            Literal::UnsignedInt(_value) => self.resolved_type = Some(create_shareable(int_32_runtime_type())),
+            Literal::UnsignedInt(_value) => self.resolved_type = Some(create_shareable(signed_int_32_runtime_type())),
             Literal::Float(_value) => self.resolved_type = Some(create_shareable(float_32_runtime_type())),
             item => todo!("typing for literal: {:?}", item),
         }

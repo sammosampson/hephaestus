@@ -3,12 +3,14 @@ use crate::parsing::*;
 #[derive(PartialEq, Debug, Clone)]
 pub enum ParseError {
     ExpectedFileName,
+    ExpectedLibraryName,
     ExpectedOpenBrace,
     ExpectedArgName,
     ExpectedArgInitialise,
     ExpectedArgSeparator,
     ExpectedOperator,
     ExpectedType,
+    UnexpectedDirective,
     TokenisationError(SourceTokenError),
     Unimplemented
 }
@@ -51,4 +53,12 @@ pub fn expected_type_error() -> ParseError {
 
 pub fn expected_file_name_error() -> ParseError {
     ParseError::ExpectedFileName
+}
+
+pub fn expected_library_name_error() -> ParseError {
+    ParseError::ExpectedLibraryName
+}
+
+pub fn unexpected_directive_error() -> ParseError {
+    ParseError::UnexpectedDirective
 }

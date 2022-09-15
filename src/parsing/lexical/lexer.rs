@@ -1,6 +1,7 @@
 use crate::parsing::*;
 
 const SOURCE_SYMBOL_DIRECTIVE: char = '#';
+const SOURCE_SYMBOL_ASTERISK: char = '*';
 const SOURCE_SYMBOL_SEMICOLON: char = ';';
 const SOURCE_SYMBOL_COMMA: char = ',';
 const SOURCE_SYMBOL_COLON: char = ':';
@@ -51,6 +52,21 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
     
     let next_character = peek_next_character(&lexer.reader);
     
+    if is_character(&next_character, SOURCE_SYMBOL_ASTERISK) {
+        eat_next_character(&mut lexer.reader);
+        if is_character_whitespace(&peek_next_character(&mut lexer.reader)) {
+            return create_token(
+                get_character_position(&next_character), 
+                create_operator_token_item(multiply_operator())
+            );    
+        }
+        return create_token(
+            get_character_position(&next_character), 
+            create_pointer_token_item()
+        );    
+
+    }
+
     if is_character(&next_character, SOURCE_SYMBOL_SEMICOLON) {
         eat_next_character(&mut lexer.reader);
         return create_token(
@@ -246,7 +262,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
 fn read_up_until_non_alphanumeric(lexer: &mut Lexer) -> String {
     read_characters_up_until(
         &mut lexer.reader, 
-        |c| !is_character_alphanumeric(c) 
+        |c| !is_character_alphanumeric(c) && !is_character(c, '_')
     )
 }
 

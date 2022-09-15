@@ -32,7 +32,7 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::GoesTo));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Int32));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
        
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Open)));
@@ -107,7 +107,7 @@ fn compound_get_for_function_declaration_two_args() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Int32));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
@@ -137,6 +137,26 @@ fn compound_get_for_function_declaration_two_args() {
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Close)));
 
 }
+
+
+
+#[test]
+fn compound_get_for_function_declaration_pointer_args() {
+    let mut lexer = lex("SomeFunction :: (a: *int) { }");
+
+    eat_next_token(&mut lexer);
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
+}
+
 
 #[test]
 fn compound_get_for_function_call() {

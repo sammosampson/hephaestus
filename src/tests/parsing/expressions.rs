@@ -67,14 +67,14 @@ fn parse_variable_expression_parses_correctly() {
                         position(9, 1, 10),
                         arg_declaration_item( 
                             string("a"),
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type())),
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())),
                         )
                     ),
                     node(
                         position(17, 1, 18),
                         arg_declaration_item( 
                             string("b"),
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type())),
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())),
                         )
                     )
                 ),

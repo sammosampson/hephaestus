@@ -23,7 +23,8 @@ impl AbstractSyntaxNode {
 #[derive(PartialEq, Debug, Clone)]
 pub enum AbstractSyntaxNodeItem {
     Run { expr: AbstractSyntaxNode },
-    Load { file_name: String },
+    Load { file: AbstractSyntaxNode },
+    ForeignSystemLibrary { library: AbstractSyntaxNode },
     ProcedureHeader {
         name: String,
         args: AbstractSyntaxChildNodes,

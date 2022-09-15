@@ -60,8 +60,12 @@ impl AbstractSyntaxRootNodeVisitor for RootAssemblyAstNodeVisitor {
         _return_types: &mut AbstractSyntaxChildNodes,
         _statements: &mut AbstractSyntaxChildNodes
     ) {
-        self.generated_code.push(ByteCodeInstruction::LII);
-        self.generated_code.push(ByteCodeInstruction::R(0));
-        self.generated_code.push(ByteCodeInstruction::RVAL(1));
+        self.generated_code.push(
+            ByteCodeInstruction::AssignToNumericLiteral { 
+                to: ByteCodeValue::Register(0),
+                from: ByteCodeValue::S64(1)
+            }
+        );
+        self.generated_code.push(ByteCodeInstruction::Return);
     }
 }

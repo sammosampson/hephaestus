@@ -28,7 +28,7 @@ fn parse_procedure_body_parses_correctly() {
                     node( 
                         position(30, 1, 31),
                         type_item(
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
                         )
                     ),
                 ),

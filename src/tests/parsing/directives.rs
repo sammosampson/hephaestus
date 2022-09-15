@@ -44,7 +44,39 @@ fn parse_load_directive_parses_correctly() {
         units[0].tree, 
         node(
             position(0, 1, 1),
-            load_directive_item("test.jai".to_string())
+            load_directive_item(
+                node(
+                    position(6, 1, 7),
+                    literal_item(string_literal(string("test.jai"))),
+                )
+            )
+        )
+    );
+}
+
+
+#[test]
+fn parse_foreign_system_library_directive_parses_correctly() {
+    let units = run_parse_file_return_only_units("Kernel32 :: #foreign_system_library \"kernel32\";");
+       
+    assert_eq!(units.len(), 1);
+
+    assert_eq!(
+        units[0].tree, 
+        node(
+            position(0, 1, 1),
+            constant_item(
+                string("Kernel32"),
+                node(
+                    position(12, 1, 13),
+                    foreign_system_library_directive_item(
+                        node(
+                            position(36, 1, 37),
+                            literal_item(string_literal(string("kernel32"))),
+                        )       
+                    ),
+                )
+            )    
         )
     );
 }

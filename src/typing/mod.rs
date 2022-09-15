@@ -1,7 +1,10 @@
 mod repository;
 mod inference;
+
 pub use repository::*;
 pub use inference::*;
+
+use std::mem::*;
 
 use crate::{
     parsing::*,
@@ -36,21 +39,25 @@ pub fn try_get_resolved_runtime_type_pointer(resolvable_type: &ResolvableType) -
 
 #[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub enum RuntimeTypeId {
-    BuiltInType(BuiltInType),
-    UserDefined(CompilationUnitId)
+    BuiltInType { built_in_type: BuiltInType, is_pointer: bool },
+    UserDefined { unit_id: CompilationUnitId, is_pointer: bool }
 }
 
 pub fn built_in_type_runtime_type_id(built_in_type: BuiltInType) -> RuntimeTypeId {
-    RuntimeTypeId::BuiltInType(built_in_type)
+    RuntimeTypeId::BuiltInType { built_in_type, is_pointer: false }
+}
+
+pub fn built_in_type_pointer_runtime_type_id(built_in_type: BuiltInType) -> RuntimeTypeId {
+    RuntimeTypeId::BuiltInType { built_in_type, is_pointer: true }
 }
 
 pub fn user_defined_runtime_type_id(unit_id: CompilationUnitId) -> RuntimeTypeId {
-    RuntimeTypeId::UserDefined(unit_id)
+    RuntimeTypeId::UserDefined { unit_id, is_pointer: false }
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum BuiltInType {
-    Int32,
+    SignedInt32,
     Float32,
     Void
 }
@@ -59,14 +66,13 @@ pub fn void_built_in_type() -> BuiltInType {
     BuiltInType::Void
 }
 
-pub fn int_32_built_in_type() -> BuiltInType {
-    BuiltInType::Int32
+pub fn signed_int_32_built_in_type() -> BuiltInType {
+    BuiltInType::SignedInt32
 }
 
 pub fn float_32_built_in_type() -> BuiltInType {
     BuiltInType::Float32
 }
-
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct RuntimeType {
@@ -88,22 +94,19 @@ pub fn create_type(id: RuntimeTypeId, name: String, item: RuntimeTypeItem, size:
     }
 }
 
-impl From<BuiltInType> for RuntimeType {
-    fn from(from: BuiltInType) -> Self {
-        match from {
-            BuiltInType::Int32 => int_32_runtime_type(),
-            BuiltInType::Float32 => float_32_runtime_type(),
-            BuiltInType::Void => void_runtime_type(),
-        }
-    }
-}
-
-pub fn int_32_runtime_type() -> RuntimeType {
+pub fn signed_int_32_runtime_type() -> RuntimeType {
     create_type(
-        built_in_type_runtime_type_id(int_32_built_in_type()),
-        "i32".to_string(),
+        built_in_type_runtime_type_id(signed_int_32_built_in_type()),
+        "s32".to_string(),
         integer_type_item(),
         resolved_type_size(4)
+    )
+}
+
+pub fn signed_int_32_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(signed_int_32_built_in_type()),
+        signed_int_32_runtime_type()
     )
 }
 
@@ -116,6 +119,13 @@ pub fn float_32_runtime_type() -> RuntimeType {
     )
 }
 
+pub fn float_32_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(float_32_built_in_type()),
+        float_32_runtime_type()
+    )
+}
+
 pub fn void_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(void_built_in_type()),
@@ -125,10 +135,27 @@ pub fn void_runtime_type() -> RuntimeType {
     )
 }
 
+pub fn void_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(void_built_in_type()),
+        void_runtime_type()
+    )
+}
+
+pub fn pointer_runtime_type(id: RuntimeTypeId, to_type: RuntimeType) -> RuntimeType {
+    create_type(
+        id,
+        format!("*{}", to_type.name).to_string(),
+        pointer_type_item(Box::new(to_type)),
+        resolved_type_size(size_of::<usize>())
+    )
+}
+
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum RuntimeTypeItem {
     None,
     ProcedureDefinition { arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers },
+    Pointer { to_type: Box<RuntimeType> },
     Int,
     Float,
     Void
@@ -142,6 +169,10 @@ impl Default for RuntimeTypeItem {
 
 pub fn procedure_definition_type_item(arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers) -> RuntimeTypeItem {
     RuntimeTypeItem::ProcedureDefinition { arg_types, return_types }
+}
+
+pub fn pointer_type_item(to_type: Box<RuntimeType>) -> RuntimeTypeItem {
+    RuntimeTypeItem::Pointer { to_type }
 }
 
 fn integer_type_item() -> RuntimeTypeItem {

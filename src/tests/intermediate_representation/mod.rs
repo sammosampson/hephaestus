@@ -18,7 +18,8 @@ fn compile_file_and_get_intemediate_representation(file_path: &str, reader: Mock
     
     let mut result = vec!();
 
-    for next_message in message_receiver {
+    loop {
+        let next_message = message_receiver.recv().unwrap();
         match next_message {
             CompilationMessage::ByteCodeAssembled { code } => result.push(code),
             CompilationMessage::CompilationComplete => break,           

@@ -9,7 +9,8 @@ pub use source_files::*;
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Operator {
     Add,
-    Subtract
+    Subtract,
+    Multiply
 }
 
 pub fn add_operator() -> Operator {
@@ -20,6 +21,9 @@ pub fn subtract_operator() -> Operator {
     Operator::Subtract
 }
 
+pub fn multiply_operator() -> Operator {
+    Operator::Multiply
+}
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Literal {

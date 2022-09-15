@@ -17,6 +17,7 @@ pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
+        SourceTokenItem::Directive(directive) => parse_const_directive(directive, lexer, token.position),
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),

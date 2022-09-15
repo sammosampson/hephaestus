@@ -16,14 +16,14 @@ fn create_external_procedure_with_no_args_type() -> RuntimeType {
 
 fn create_external_procedure_with_int_arg_type() -> RuntimeType {
     create_external_procedure(
-        vec!(create_shareable(int_32_runtime_type())),
+        vec!(create_shareable(signed_int_32_runtime_type())),
         vec!()
     )
 }
 
 fn create_external_procedure_with_int_arg_and_float_return_type() -> RuntimeType {
     create_external_procedure(
-        vec!(create_shareable(int_32_runtime_type())),        
+        vec!(create_shareable(signed_int_32_runtime_type())),        
         vec!(create_shareable(float_32_runtime_type()))
     )
 }
@@ -72,7 +72,7 @@ fn typing_procedure_body_waits_for_external_procedure() {
                                             position(48, 2, 27),
                                             literal_item(unsigned_int_literal(1))
                                         ),
-                                        resolved_resolvable_type(create_shareable(int_32_runtime_type())) 
+                                        resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())) 
                                     )
                                 ),
                             ),
@@ -130,7 +130,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_return_arg() {
                                                     position(53, 2, 32),
                                                     literal_item(unsigned_int_literal(1))
                                                 ),
-                                                resolved_resolvable_type(create_shareable(int_32_runtime_type())) 
+                                                resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())) 
                                             )
                                         ),
                                     ),
@@ -183,7 +183,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                 position(31, 2, 10),
                                 literal_item(unsigned_int_literal(1))
                             ),
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
                         )
                     ),
                     node(
@@ -198,7 +198,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                             position(61, 3, 27),  
                                             identifier_item(string("a"))
                                         ),
-                                        resolved_resolvable_type(create_shareable(int_32_runtime_type())) 
+                                        resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())) 
                                     )
                                 ),
                             ),

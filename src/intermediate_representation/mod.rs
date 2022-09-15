@@ -14,28 +14,16 @@ pub fn create_intermediate_representation(id: CompilationUnitId, byte_code: Byte
     IntermediateRepresentation { id, byte_code }
 }
 
-#[allow(dead_code)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ByteCodeValue {
+    Register(usize),
+    S64(i64)
+}
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ByteCodeInstruction {
-    None,
-    R(usize),
-    RVAL(i64),
-    F(usize),
-    FVAL(f64),
-    CLF,
-    MOV, MOVF,
-    STI, STF, LDI, LDF,
-    LII, LIF,
-    PSH, POP,
-    PSHF, POPF,
-    ADD, SUB, MUL, DIV,
-    FADD, FSUB, FMUL, FDIV,
-    JNZ, JEZ, JGZ, JLZ, JMP,
-    CALL(CompilationUnitId),
-    SHL, SHR,
-    BAND, BOR, BNOT, BXOR,
-    LAND, LOR, LNOT,
-    HLT
+    AssignToNumericLiteral { to: ByteCodeValue, from: ByteCodeValue },
+    Return
 }
 
 pub type ByteCodeInstructionStream = Vec<ByteCodeInstruction>;

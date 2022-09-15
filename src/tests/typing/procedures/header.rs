@@ -41,12 +41,41 @@ fn typing_procedure_header_with_args_returns_correct_types() {
     assert_eq!(types[0].name, string("SomeProcedure"));
     assert_eq!(types[0].item, procedure_definition_type_item( 
         vec!(
-            create_shareable(int_32_runtime_type()),
+            create_shareable(signed_int_32_runtime_type()),
             create_shareable(float_32_runtime_type()),
         ), 
         vec!(
             create_shareable(float_32_runtime_type()),
-            create_shareable(int_32_runtime_type()),
+            create_shareable(signed_int_32_runtime_type()),
+        )
+    ));
+    assert_eq!(types[0].size, not_required_type_size());
+}
+
+#[test]
+fn typing_procedure_header_with_pointer_args_returns_correct_types() {
+    let mut units = run_parse_file_return_only_units("SomeProcedure :: (a: *int, b: *float) -> *float, *int {
+    }");
+
+    let proc_header = units.pop().unwrap();
+    let proc_header_id = proc_header.id;
+
+    let (types, _unit) = run_typing_on_unit(
+        start_type_repository_actor(), 
+        proc_header
+    );
+
+    assert_eq!(types.len(), 1);
+    assert_eq!(types[0].id, user_defined_runtime_type_id(proc_header_id));
+    assert_eq!(types[0].name, string("SomeProcedure"));
+    assert_eq!(types[0].item, procedure_definition_type_item( 
+        vec!(
+            create_shareable(signed_int_32_pointer_runtime_type()),
+            create_shareable(float_32_pointer_runtime_type()),
+        ), 
+        vec!(
+            create_shareable(float_32_pointer_runtime_type()),
+            create_shareable(signed_int_32_pointer_runtime_type()),
         )
     ));
     assert_eq!(types[0].size, not_required_type_size());

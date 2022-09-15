@@ -7,7 +7,7 @@ pub fn create_actor_thread_pool() -> ActorThreadPool {
     create_thread_pool(40)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ActorHandle<TMessage> {
     sender: Sender<TMessage>,
 }

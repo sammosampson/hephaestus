@@ -24,7 +24,7 @@ fn handle_parse_file<T: FileRead>(file_reader: &T, file_name: String, compiler_h
     shutdown_after_receive()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum FileParseResult {
     CompilationUnits { file_name: String, units: CompilationUnits },
     NotFound(String),

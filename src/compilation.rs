@@ -9,7 +9,7 @@ use crate::{
     running::*
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum CompilationMessage {
     Compile(String),
     ParseFile(String, CompilationActorHandle),
@@ -287,10 +287,12 @@ fn process_parsed_compilation_units<TReader: FileRead, TInterpreter: Interpret, 
     units: CompilationUnits,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
-    for unit in units {
 
+    for unit in &units {
         register_compilation_requested(&mut compiler.compilation_units_requested_list, unit.id);
+    }
 
+    for unit in units {
         let (typing_handle, ..) = start_actor(
             &ctx, 
             create_typing_actor()

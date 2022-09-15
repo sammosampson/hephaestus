@@ -69,7 +69,7 @@ fn parse_procedure_header_with_return_types_parses_correctly() {
                     ),
                     node(
                         position(33, 1, 34),
-                        type_item(resolved_resolvable_type(create_shareable(int_32_runtime_type()))),
+                        type_item(resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))),
                     )
                 ),
                 units[0].id,
@@ -95,7 +95,7 @@ fn parse_procedure_header_with_arg_parses_correctly() {
                         position(18, 1, 19),
                         arg_declaration_item( 
                             string("x"),
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type())),
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())),
                         )
                     )
                 ),
@@ -132,6 +132,40 @@ fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
                     node(
                         position(44, 1, 45),
                         type_item(resolved_resolvable_type(create_shareable(void_runtime_type()))),
+                    ),
+                ),
+                units[0].id
+            )
+        )
+    );
+}
+
+#[test]
+fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
+    let units= run_parse_file_return_only_units("SomeProcedure :: (x: *float, y: *int) -> *void {
+}");
+
+    assert_eq!(units.len(), 2);
+    assert_eq!(
+        units[1].tree, 
+        node(
+            position(0, 1, 1),
+            procedure_header_item(
+                string("SomeProcedure"),
+                vec!(
+                    node(
+                        position(18, 1, 19),
+                        arg_declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))),
+                    ),
+                    node(
+                        position(29, 1, 30),
+                        arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))),
+                    )
+                ),
+                vec!(
+                    node(
+                        position(42, 1, 43),
+                        type_item(resolved_resolvable_type(create_shareable(void_pointer_runtime_type()))),
                     ),
                 ),
                 units[0].id

@@ -3,7 +3,7 @@ use crate::acting::*;
 use crate::compilation::*;
 use super::*;
 
-#[derive(Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct FindTypeCriteria { 
     name: String,
     args: RuntimeTypePointers

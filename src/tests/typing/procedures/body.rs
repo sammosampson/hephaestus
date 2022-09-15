@@ -30,7 +30,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                         position(18, 1, 19),
                         arg_declaration_item(
                             string("a"),
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
                         )
                     ),
                     node(
@@ -51,7 +51,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                     node(
                         position(46, 1, 47),
                         type_item(
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
                         )
                     )
                 ),
@@ -64,7 +64,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                                 position(65, 2, 14),
                                 identifier_item(string("a"))
                             ),
-                            resolved_resolvable_type(create_shareable(int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
                         )
                     ),
                     node(
@@ -99,13 +99,69 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                                             position(104, 4, 21),
                                             literal_item(unsigned_int_literal(2))
                                         ),
-                                        resolved_resolvable_type(create_shareable(int_32_runtime_type()))
+                                        resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
                                     )
                                 )
                             )
                         )
                     ),   
                 )
+            )
+        )
+    );
+}
+
+
+#[test]
+fn typing_procedure_body_with_pointer_args_from_header_get_typed_correctly() {
+    let mut units = run_parse_file_return_only_units("SomeProcedure :: (a: *int, b: *float) -> *float, *int {
+    }");
+
+    let _proc_header = units.pop().unwrap();
+    let proc_body = units.pop().unwrap();
+    
+    let (types, unit) = run_typing_on_unit(
+        start_type_repository_actor(), 
+        proc_body
+    );
+
+    assert_eq!(types.len(), 0);
+    assert_eq!(
+        unit.tree,
+        node(
+            position(54, 1, 55),
+            procedure_body_item(
+                vec!(
+                    node(
+                        position(18, 1, 19),
+                        arg_declaration_item(
+                            string("a"),
+                            resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))
+                        )
+                    ),
+                    node(
+                        position(27, 1, 28),
+                        arg_declaration_item(
+                            string("b"),
+                            resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))
+                        )
+                    )
+                ),
+                vec!(
+                    node(
+                        position(42, 1, 43),
+                        type_item(
+                            resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))
+                        )
+                    ),
+                    node(
+                        position(50, 1, 51),
+                        type_item(
+                            resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))
+                        )
+                    )
+                ),
+                vec!()
             )
         )
     );
