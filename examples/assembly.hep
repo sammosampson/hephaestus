@@ -85,6 +85,24 @@ The base pointer rbp (and its predecessor ebp on x86), being a stable "anchor"
  However, some time ago it was noticed that compiler-generated code doesn't really need it (the compiler can easily keep track of offsets from rsp), and the DWARF debugging format provides means 
  (CFI) to access stack frames without the base pointer.
 
+ PUSH X = 
+   MOV PTR [RSP - SIZEOF(X)], X
+   SUB RSP, SIZEOF(X) 
+
+and POP is opposite
+
+PUSHF/PUSHFQ and POP equivs = Push/pop 16/64bit flags register. PUSH RAX, POPFQ will set the falgs register to RAX, v useful
+
+CALL = pushes address of next instruction (RIP) on to stack and then jumps (sets RIP) to where CALL wants to globally
+RET POPs the RIP
+
+NEG = negates (2's comp)
+INC/DEC incs/decs by 1
+dec can be used with flags reg eg JNZ if not 0. ADD SUB etc aslo set flags
+
+XCHG - Exchange or swap operands
+
+
 -------------------------------
 HELLO WORLD:
 -------------------------------
