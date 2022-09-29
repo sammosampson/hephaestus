@@ -3,6 +3,7 @@ use crate::{
     typing::*,
     tests::parsing::*,
     threading::*, 
+    utilities::*
 };
 
 #[test]
@@ -17,6 +18,7 @@ fn parse_literal_expression_parses_correctly() {
         node(
             position(11, 1, 12),
             procedure_body_item(
+                string("main"),
                 vec!(),
                 vec!(),
                 vec!(
@@ -62,6 +64,7 @@ fn parse_variable_expression_parses_correctly() {
         node(
             position(25, 1, 26),
             procedure_body_item(
+                string("main"),
                 vec!(
                     node(
                         position(9, 1, 10),

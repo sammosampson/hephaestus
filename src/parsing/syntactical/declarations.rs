@@ -1,9 +1,9 @@
 use crate::parsing::*;
 
-pub fn parse_top_level_declaration(name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
+pub fn parse_top_level_declaration(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     if is_open_paren(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
-        return parse_procedure_header(name, lexer, position, units)
+        return parse_procedure_header(filename, name, lexer, position, units)
     } 
 
     parse_declaration(name, lexer, position)

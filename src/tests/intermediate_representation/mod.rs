@@ -1,4 +1,4 @@
-mod expressions;
+mod procedures;
 
 use crate::{
     intermediate_representation::*,
@@ -21,11 +21,19 @@ fn compile_file_and_get_intemediate_representation(file_path: &str, reader: Mock
     loop {
         let next_message = message_receiver.recv().unwrap();
         match next_message {
-            CompilationMessage::ByteCodeAssembled { code } => result.push(code),
+            CompilationMessage::ByteCodeBuilt { code } => result.push(code),
             CompilationMessage::CompilationComplete => break,           
             _ => {}
         }
     }
 
     return result
+}
+
+fn get_first_ir_with_byte_code<'a>(irs: &'a Vec<IntermediateRepresentation>) -> &'a IntermediateRepresentation {
+    irs
+        .iter()
+        .filter(|ir| ir.byte_code.len() > 0)
+        .next()
+        .unwrap()
 }

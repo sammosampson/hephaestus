@@ -142,3 +142,4 @@ main:
 //nasm -fwin64 hello.asm -o hello.obj
 //C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\bin\Hostx64\x64
 //link /MACHINE:X64 /SUBSYSTEM:CONSOLE /OUT:hello.exe /NODEFAULTLIB /ENTRY:main "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\kernel32.lib" hello.obj
+//"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\kernel32.lib"

@@ -3,6 +3,8 @@ use std::sync::mpsc::*;
 use std::sync::*;
 use std::thread;
 use core::fmt::Debug;
+use log::*;
+
 use crate::collections::*;
 
 pub type Lockable<T> = Mutex<T>;
@@ -37,7 +39,7 @@ pub fn create_concurrent<T>(to_wrap: T) -> Concurrent<T> {
 fn send<T : ParallelisableClone>(sender: &Sender<T>, to_send: T) {
     let to_send_dbg = format!("{:?}", &to_send);
     if let Err(error) = sender.send(to_send) {
-        panic!("error sending message in threading: {}, message was: {}", error, to_send_dbg)
+        trace!("error sending message in threading: {}, message was: {}", error, to_send_dbg)
     }
 }
 

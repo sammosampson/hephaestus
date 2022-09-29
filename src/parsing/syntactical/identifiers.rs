@@ -1,9 +1,9 @@
 use crate::parsing::*;
 
-pub fn parse_top_level_identifier(name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
+pub fn parse_top_level_identifier(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     if is_declaration_assignment(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
-        return parse_top_level_declaration(name, lexer, position, units);
+        return parse_top_level_declaration(filename, name, lexer, position, units);
     }
 
     parse_remainder_of_identifier(name, lexer, position)

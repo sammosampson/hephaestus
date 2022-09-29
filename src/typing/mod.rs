@@ -59,6 +59,7 @@ pub fn user_defined_runtime_type_id(unit_id: CompilationUnitId) -> RuntimeTypeId
 pub enum BuiltInType {
     SignedInt32,
     Float32,
+    String,
     Void
 }
 
@@ -72,6 +73,10 @@ pub fn signed_int_32_built_in_type() -> BuiltInType {
 
 pub fn float_32_built_in_type() -> BuiltInType {
     BuiltInType::Float32
+}
+
+pub fn string_built_in_type() -> BuiltInType {
+    BuiltInType::String
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -126,6 +131,23 @@ pub fn float_32_pointer_runtime_type() -> RuntimeType {
     )
 }
 
+
+pub fn string_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(string_built_in_type()),
+        "string".to_string(),
+        string_type_item(),
+        resolved_type_size(4)
+    )
+}
+
+pub fn string_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(string_built_in_type()),
+        string_runtime_type()
+    )
+}
+
 pub fn void_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(void_built_in_type()),
@@ -158,6 +180,7 @@ pub enum RuntimeTypeItem {
     Pointer { to_type: Box<RuntimeType> },
     Int,
     Float,
+    String,
     Void
 }
 
@@ -181,6 +204,10 @@ fn integer_type_item() -> RuntimeTypeItem {
 
 fn float_type_item() -> RuntimeTypeItem {
     RuntimeTypeItem::Float
+}
+
+fn string_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::String
 }
 
 fn void_type_item() -> RuntimeTypeItem {

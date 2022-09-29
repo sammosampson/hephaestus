@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod interpreter;
 mod byte_code_runner;
 
@@ -14,7 +16,6 @@ use crate::{
 
 pub type RunnableCompileTimeCodeLookup = HashMap<CompilationUnitId, Shareable<ByteCodeInstructionStream>>;
 
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct RunnableCompileTimeCode {
     to_run_id: CompilationUnitId,
@@ -29,12 +30,10 @@ pub fn create_runnable_compile_time_code(to_run_id: CompilationUnitId) -> Runnab
 }
 
 
-#[allow(dead_code)]
 pub fn get_code_block_to_run(code: &RunnableCompileTimeCode) -> Shareable<ByteCodeInstructionStream> {
     get_code_block(code, &code.to_run_id)
 }
 
-#[allow(dead_code)]
 pub fn get_code_block(code: &RunnableCompileTimeCode, id: &CompilationUnitId) -> Shareable<ByteCodeInstructionStream> {
     code.blocks.get(id).unwrap().clone()
 }

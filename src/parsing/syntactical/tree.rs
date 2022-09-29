@@ -32,6 +32,7 @@ pub enum AbstractSyntaxNodeItem {
         body: ProcedureBodyReference
     },
     ProcedureBody { 
+        name: String,
         args: AbstractSyntaxChildNodes,
         return_types: AbstractSyntaxChildNodes,
         statements: AbstractSyntaxChildNodes,
@@ -49,6 +50,7 @@ pub enum AbstractSyntaxNodeItem {
         expr: AbstractSyntaxNode,
         type_id: ResolvableType
     },
+    Null,
     Return {
         args: AbstractSyntaxChildNodes
     },
@@ -88,6 +90,7 @@ pub trait AbstractSyntaxRootNodeVisitor {
 
     fn visit_procedure_body(
         &mut self, 
+        name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
         return_types: &mut AbstractSyntaxChildNodes,
         statements: &mut AbstractSyntaxChildNodes
@@ -153,12 +156,13 @@ where TVistor : AbstractSyntaxRootNodeVisitor {
             return_types,
             body
         } => visitor.visit_procedure_header(name, args, return_types, body),
-        AbstractSyntaxNodeItem::ProcedureBody { 
+        AbstractSyntaxNodeItem::ProcedureBody {
+            name, 
             args,
             return_types,
             statements 
         } => {
-            visitor.visit_procedure_body(args, return_types, statements);
+            visitor.visit_procedure_body(name, args, return_types, statements);
         },
         item => handle_cannot_visit_node(item)
     }

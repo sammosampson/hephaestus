@@ -11,8 +11,12 @@ mod threading;
 mod compilation;
 mod collections;
 mod acting;
+mod utilities;
 
 fn main() {
+    std::env::set_var("RUST_LOG", "debug");
+    pretty_env_logger::init();
+    
     match arguments::get_file_to_compile_from_invocation_arguments() {
         Some(file_name) => { 
             compilation::compile(

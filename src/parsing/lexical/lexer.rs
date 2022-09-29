@@ -242,7 +242,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
                 create_keyword_token_item(keyword)
             );
         }
-    
+
         return create_token(
             get_character_position(&next_character), 
             create_identifier_token_item(alphanumeric_string)

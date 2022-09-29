@@ -32,6 +32,7 @@ fn handle_perform_typing(
 ) -> AfterReceiveAction {
     let resolved_types = perform_typing(ctx, type_repository, &mut unit);
     send_message_to_actor(&compiler, create_unit_typed_event(resolved_types, unit));
+    
     shutdown_after_receive()
 }
 
@@ -40,8 +41,9 @@ pub fn perform_typing(
     type_repository: &CompilationActorHandle,
     unit: &mut CompilationUnit
 ) -> RuntimeTypePointers {
-    let mut visitor = create_root_visitor(ctx, type_repository, unit.id);
+    let mut visitor = create_root_visitor(ctx, type_repository, unit.id);    
     apply_visitor_to_ast_root(&mut unit.tree, &mut visitor);
+
     visitor.resolved_types
 }
 
@@ -79,7 +81,7 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
         args: &mut AbstractSyntaxChildNodes,
         return_types: &mut AbstractSyntaxChildNodes,
         _body: &mut ProcedureBodyReference
-    ) {
+    ) {    
         let mut visitor = create_procedure_header_visitor();
         apply_visitor_to_ast_procedure_header(args, return_types, &mut visitor);        
 
@@ -90,16 +92,17 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
             not_required_type_size()
         );
         
-        self.resolved_types.push(create_shareable(resolved_type));
+        self.resolved_types.push(create_shareable(resolved_type));    
     }
 
     fn visit_procedure_body(
         &mut self,
+        _name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
         return_types: &mut AbstractSyntaxChildNodes,
         statements: &mut AbstractSyntaxChildNodes
-    ) {
+    ) {       
         let mut visitor = create_procedure_body_visitor(self.ctx, self.type_repository);
-        apply_visitor_to_ast_procedure_body(args, return_types, statements, &mut visitor);
+        apply_visitor_to_ast_procedure_body(args, return_types, statements, &mut visitor);        
     }
 }

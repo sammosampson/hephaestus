@@ -10,8 +10,8 @@ pub trait Interpret : Send + Clone + 'static {
 pub struct Interpreter;
 
 impl Interpret for Interpreter {
-    fn interpret(&mut self, code: RunnableCompileTimeCode) {
-        dbg!(code);
+    fn interpret(&mut self, _code: RunnableCompileTimeCode) {
+        //dbg!(code);
     }
 }
 

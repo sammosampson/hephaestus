@@ -1,16 +1,16 @@
-//"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\kernel32.lib"
+STD_OUTPUT_HANDLE :: -11;
 
 Kernel32 :: #foreign_system_library "kernel32";
-WriteFile :: (handle: *void, to_write: *void, length: int) -> bool #foreign Kernel32;
+WriteFile :: (handle: *void, to_write: *void, bytes_to_write: int, bytes_written: *void, overlapped: *void) -> bool #foreign Kernel32;
 GetStdHandle :: (handle_type: int) -> *void #foreign Kernel32;
 
-print :: (to_print: *void) {
-    handle := GetStdHandle(-11);
-    WriteFile(handle, to_print, 13);
+print :: (to_print: *void, length: int) {
+    handle := GetStdHandle(STD_OUTPUT_HANDLE);
+    WriteFile(handle, to_print, length, null, null);
 }
 
 main :: () {
-    print("hello world\n");
+    print("hello world!\r\n\0", 15);
 }
 
 //#run main()

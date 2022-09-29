@@ -24,7 +24,7 @@ pub fn add_mock_file(reader: &mut MockFileReader, file_path: &str, content: &str
 }
 
 pub fn add_source_to_test_file_system(source: &str) -> (&str, MockFileReader) {
-    let file_path = "Test.hep";
+    let file_path = "test.hep";
     let mut reader = create_mock_file_reader();
     add_mock_file(&mut reader, file_path, source);
     

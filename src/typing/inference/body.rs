@@ -76,7 +76,7 @@ impl <'a> AbstractSyntaxProcedureBodyNodeVisitor for ProcedureBodyInferenceVisit
         name: &mut String,
         args: &mut AbstractSyntaxChildNodes,
         type_id: &mut ResolvableType
-    ) {
+    ) {   
         visit_procedure_call_return_first_return_type(
             self.ctx,
             self.type_repository,
@@ -105,7 +105,7 @@ fn visit_procedure_call_return_first_return_type(
     args: &mut AbstractSyntaxChildNodes,
     name: &mut String, 
     type_id: &mut ResolvableType
-) -> RuntimeTypePointers {
+) -> RuntimeTypePointers {  
     let mut visitor = create_args_visitor(ctx, type_repository, local_type_map);
     apply_visitor_to_ast_args(args, &mut visitor);
 
@@ -116,7 +116,7 @@ fn visit_procedure_call_return_first_return_type(
     );
 
     *type_id = resolved_resolvable_type(resolved_type.clone());
-
+    
     if let RuntimeTypeItem::ProcedureDefinition { return_types, .. } = &resolved_type.item {
         return return_types.clone();
     }
@@ -187,7 +187,7 @@ impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a>
         match literal {
             Literal::UnsignedInt(_value) => self.resolved_type = Some(create_shareable(signed_int_32_runtime_type())),
             Literal::Float(_value) => self.resolved_type = Some(create_shareable(float_32_runtime_type())),
-            item => todo!("typing for literal: {:?}", item),
+            Literal::String(_value) => self.resolved_type = Some(create_shareable(string_runtime_type()))
         }
     }
 

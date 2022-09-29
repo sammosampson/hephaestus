@@ -2,6 +2,7 @@
 use crate::parsing::*;
 use crate::threading::*;
 use crate::typing::*;
+use crate::utilities::*;
 use crate::tests::parsing::*;
 
 #[test]
@@ -108,7 +109,7 @@ fn parse_procedure_header_with_arg_parses_correctly() {
 
 #[test]
 fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
-    let units= run_parse_file_return_only_units("SomeProcedure :: (x: float, y: SomeType) -> void {
+    let units= run_parse_file_return_only_units("SomeProcedure :: (x: float, y: SomeType, z: string) -> void {
 }");
 
     assert_eq!(units.len(), 2);
@@ -126,11 +127,15 @@ fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
                     node(
                         position(28, 1, 29),
                         arg_declaration_item(string("y"), unresolved_named_resolvable_type(string("SomeType"))),
+                    ),
+                    node(
+                        position(41, 1, 42),
+                        arg_declaration_item(string("z"), resolved_resolvable_type(create_shareable(string_runtime_type()))),
                     )
                 ),
                 vec!(
                     node(
-                        position(44, 1, 45),
+                        position(55, 1, 56),
                         type_item(resolved_resolvable_type(create_shareable(void_runtime_type()))),
                     ),
                 ),
@@ -142,9 +147,8 @@ fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
 
 #[test]
 fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
-    let units= run_parse_file_return_only_units("SomeProcedure :: (x: *float, y: *int) -> *void {
+    let units= run_parse_file_return_only_units("SomeProcedure :: (x: *float, y: *int, z: *string) -> *void {
 }");
-
     assert_eq!(units.len(), 2);
     assert_eq!(
         units[1].tree, 
@@ -160,11 +164,15 @@ fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
                     node(
                         position(29, 1, 30),
                         arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))),
+                    ),
+                    node(
+                        position(38, 1, 39),
+                        arg_declaration_item(string("z"), resolved_resolvable_type(create_shareable(string_pointer_runtime_type()))),
                     )
                 ),
                 vec!(
                     node(
-                        position(42, 1, 43),
+                        position(54, 1, 55),
                         type_item(resolved_resolvable_type(create_shareable(void_pointer_runtime_type()))),
                     ),
                 ),

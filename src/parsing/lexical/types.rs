@@ -23,6 +23,7 @@ fn to_runtime_non_pointer_type(from: BuiltInType) -> RuntimeType {
     match from {
         BuiltInType::SignedInt32 => signed_int_32_runtime_type(),
         BuiltInType::Float32 => float_32_runtime_type(),
+        BuiltInType::String => string_runtime_type(),
         BuiltInType::Void => void_runtime_type(),
     }
 }
@@ -31,6 +32,7 @@ fn to_runtime_pointer_type(from: BuiltInType) -> RuntimeType {
     match from {
         BuiltInType::SignedInt32 => signed_int_32_pointer_runtime_type(),
         BuiltInType::Float32 => float_32_pointer_runtime_type(),
+        BuiltInType::String => string_pointer_runtime_type(),
         BuiltInType::Void => void_pointer_runtime_type(),
     }
 }
@@ -42,6 +44,7 @@ const SOURCE_TYPE_S32: &str = "s32";
 const SOURCE_TYPE_FLOAT: &str = "float";
 const SOURCE_TYPE_F32: &str = "f32";
 const SOURCE_TYPE_VOID: &str = "void";
+const SOURCE_TYPE_STRING: &str = "string";
 
 pub fn parse_built_in_type(from: &str) -> BuiltInTypeOption {
     match from {
@@ -49,6 +52,7 @@ pub fn parse_built_in_type(from: &str) -> BuiltInTypeOption {
         SOURCE_TYPE_INT => Some(signed_int_32_built_in_type()),
         SOURCE_TYPE_FLOAT => Some(float_32_built_in_type()),
         SOURCE_TYPE_F32 => Some(float_32_built_in_type()),
+        SOURCE_TYPE_STRING => Some(string_built_in_type()),
         SOURCE_TYPE_VOID => Some(void_built_in_type()),
         _=> None,
     }

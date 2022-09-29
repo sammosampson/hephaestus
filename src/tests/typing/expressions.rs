@@ -2,6 +2,7 @@
 use crate::threading::*;
 use crate::typing::*;
 use crate::parsing::*;
+use crate::utilities::*;
 use crate::tests::parsing::*;
 use crate::tests::typing::*;
 
@@ -23,6 +24,7 @@ fn typing_procedure_body_types_variable_int_literal_assignment() {
         node(
             position(20, 1, 21),
             procedure_body_item(
+                string("SomeProcedure"),
                 vec!(),
                 vec!(),
                 vec!(                       
@@ -61,6 +63,7 @@ fn typing_procedure_body_types_variable_number_expression_assignment() {
         node(
             position(20, 1, 21),
             procedure_body_item(
+                string("SomeProcedure"),
                 vec!(),
                 vec!(),
                 vec!(                       

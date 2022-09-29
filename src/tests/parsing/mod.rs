@@ -9,10 +9,6 @@ use crate::compilation::*;
 use crate::tests::file_system::*;
 use crate::tests::acting::*;
 
-pub fn string(value: &str) -> String {
-    value.to_string()
-}
-
 pub fn node(position: SourceFilePosition, item: AbstractSyntaxNodeItem) -> AbstractSyntaxNode {
     create_node(item, position)
 }

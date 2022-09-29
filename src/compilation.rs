@@ -9,6 +9,8 @@ use crate::{
     running::*
 };
 
+use log::*;
+
 #[derive(Clone, Debug)]
 pub enum CompilationMessage {
     Compile(String),
@@ -19,8 +21,8 @@ pub enum CompilationMessage {
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     AddResolvedType(RuntimeTypePointer),
-    AssembleByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
-    ByteCodeAssembled { code: IntermediateRepresentation },
+    BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
+    ByteCodeBuilt { code: IntermediateRepresentation },
     RunByteCode { code: RunnableCompileTimeCode, compiler: CompilationActorHandle },
     ByteCodeRan { id: CompilationUnitId },
     CompilationComplete
@@ -76,12 +78,12 @@ pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> Co
     CompilationMessage::AddResolvedType(resolved_type)
 }
 
-pub fn create_assemble_byte_code_command(unit: CompilationUnit, compiler: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::AssembleByteCode { unit, compiler }
+pub fn create_build_byte_code_command(unit: CompilationUnit, compiler: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::BuildByteCode { unit, compiler }
 }
 
-pub fn create_byte_code_assembled_event(code: IntermediateRepresentation) -> CompilationMessage {
-    CompilationMessage::ByteCodeAssembled { code }
+pub fn create_byte_code_built_event(code: IntermediateRepresentation) -> CompilationMessage {
+    CompilationMessage::ByteCodeBuilt { code }
 }
 
 pub fn create_run_byte_code_command(code: RunnableCompileTimeCode, compiler: CompilationActorHandle) -> CompilationMessage {
@@ -166,7 +168,7 @@ fn create_compiler_actor<TReader: FileRead, TInterpreter: Interpret, TMessageWir
 impl <TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage> Actor<CompilationMessage> for CompilerActor<TReader, TInterpreter, TMessageWireTap> {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         self.message_wire_tap.tap(&message);
-        
+
         match message {
             CompilationMessage::Compile(file_name) =>
                 handle_compile(file_name, ctx, self.reader.clone()),
@@ -174,8 +176,8 @@ impl <TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompil
                 handle_file_parsed(self, parse_result, ctx),
             CompilationMessage::UnitTyped(resolved_types, unit) => 
                 handle_unit_typed(self, unit, resolved_types, ctx),
-            CompilationMessage::ByteCodeAssembled { code } => 
-                handle_byte_code_assembled(self, code, ctx, self.interpreter.clone()),
+            CompilationMessage::ByteCodeBuilt { code } => 
+                handle_byte_code_built(self, code, ctx, self.interpreter.clone()),
             CompilationMessage::ByteCodeRan { id } => 
                 handle_byte_code_ran(self, id, ctx),
             CompilationMessage::CompilationComplete => shutdown_after_receive(),
@@ -189,6 +191,9 @@ fn handle_compile<TReader: FileRead>(
     ctx: &CompilationMessageContext,
     reader: TReader
 ) -> AfterReceiveAction {
+
+    debug!("handling compile for: {:?}", &file_name);
+        
     let (parser_handle, ..) = start_actor(
         ctx, 
         create_parser_actor(reader)
@@ -209,6 +214,7 @@ fn handle_file_parsed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTa
     parse_result: FileParseResult,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
+
     match parse_result {
         FileParseResult::CompilationUnits { units, .. } => process_parsed_compilation_units(compiler, units, ctx),
         FileParseResult::NotFound(file_name) => process_parse_file_not_found(file_name)
@@ -221,6 +227,8 @@ fn handle_unit_typed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap
     resolved_types: RuntimeTypePointers,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
+    
+    debug!("handling unit typed for {:?}", unit.id);
     
     for resolved_type in resolved_types {
         send_message_to_actor(&compiler.type_repository, create_add_resolved_type_command(resolved_type));
@@ -235,19 +243,21 @@ fn handle_unit_typed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap
 
     send_message_to_actor(
         &intemediate_representation_handle, 
-        create_assemble_byte_code_command(unit, compiler_handle)
+        create_build_byte_code_command(unit, compiler_handle)
     );
 
     continue_listening_after_receive()
 }
 
-fn handle_byte_code_assembled<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
+fn handle_byte_code_built<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
     _compiler: &mut CompilerActor<TReader, TInterpreter, TMessageWireTap>,
     code: IntermediateRepresentation,
     ctx: &CompilationMessageContext,
     interpreter: TInterpreter
 ) -> AfterReceiveAction {
 
+    debug!("handling byte code built for {:?} {:?}", code.top_level_symbol, code.id);
+    
     let (byte_code_runner, ..) = start_actor(
         ctx, 
         create_byte_code_runner_actor(interpreter)
@@ -270,11 +280,16 @@ fn handle_byte_code_ran<TReader: FileRead, TInterpreter: Interpret, TMessageWire
     id: CompilationUnitId,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
+    
+    debug!("handling byte code ran for {:?}", id);
+    
     remove_unit_from_compilation_requested_list(
         &mut compiler.compilation_units_requested_list,
         &id
     );
 
+    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
+    
     if compilation_requested_list_is_empty(&compiler.compilation_units_requested_list) {
         send_message_to_actor(&create_self_handle(ctx), create_compilation_complete_event());
     }
@@ -288,9 +303,14 @@ fn process_parsed_compilation_units<TReader: FileRead, TInterpreter: Interpret, 
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
 
+    debug!("process parsed compilation units for {:?} units", units.len());
+    
     for unit in &units {
         register_compilation_requested(&mut compiler.compilation_units_requested_list, unit.id);
     }
+
+    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
+    
 
     for unit in units {
         let (typing_handle, ..) = start_actor(

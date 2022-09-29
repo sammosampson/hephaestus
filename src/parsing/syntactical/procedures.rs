@@ -67,6 +67,7 @@ pub fn parse_procedure_call_arg_expr(lexer: &mut Lexer) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
+        SourceTokenItem::Keyword(keyword) => parse_procedure_call_keyword(keyword, token.position),
         SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position),
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
@@ -75,7 +76,14 @@ pub fn parse_procedure_call_arg_expr(lexer: &mut Lexer) -> AbstractSyntaxNode {
     }
 }
 
-pub fn parse_procedure_header(name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
+fn parse_procedure_call_keyword(keyword: Keyword, position: SourceFilePosition) -> AbstractSyntaxNode {
+    match keyword {
+        Keyword::Null => create_node(null_item(), position),
+        _ => create_error_node(unimplemented_error(), position),
+    }
+}
+
+pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     let args = parse_procedure_args(lexer);
     
     assert!(is_close_paren(&peek_next_token(lexer).item));
@@ -86,7 +94,7 @@ pub fn parse_procedure_header(name: String, lexer: &mut Lexer, position: SourceF
     let mut body_ref = unknown_procedure_body_reference();
 
     if is_open_brace(&peek_next_token(lexer).item) {
-        let body = create_unit(parse_procedure_body(lexer, args.clone(), return_types.clone()));
+        let body = create_unit(filename, parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone()));
         body_ref = local_procedure_body_reference(body.id);
         units.push(body);
     }
@@ -201,6 +209,7 @@ fn parse_procedure_return_type(lexer: &mut Lexer) -> AbstractSyntaxNode {
 
 fn parse_procedure_body(
     lexer: &mut Lexer,
+    name: String,
     args: AbstractSyntaxChildNodes,
     return_types: AbstractSyntaxChildNodes
 ) -> AbstractSyntaxNode {
@@ -212,7 +221,7 @@ fn parse_procedure_body(
     assert!(is_close_brace(&peek_next_token(lexer).item));
     eat_next_token(lexer);
 
-    create_node(procedure_body_item(args, return_types, statements), brace.position)
+    create_node(procedure_body_item(name, args, return_types, statements), brace.position)
 }
 
 fn parse_foreign_library_identifier(lexer: &mut Lexer) -> AbstractSyntaxNode {
@@ -309,11 +318,13 @@ pub fn procedure_header_item(
 }
 
 pub fn procedure_body_item(
+    name: String,
     args: AbstractSyntaxChildNodes,
     return_types: AbstractSyntaxChildNodes,
     statements: AbstractSyntaxChildNodes
 ) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::ProcedureBody { 
+        name,
         args,
         return_types,
         statements
@@ -326,6 +337,9 @@ pub fn return_item(
     AbstractSyntaxNodeItem::Return { args }
 }
 
+pub fn null_item() -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Null
+}
 
 pub fn procedure_call_item(
     name: String,
