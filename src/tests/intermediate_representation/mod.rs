@@ -37,3 +37,11 @@ fn get_first_ir_with_byte_code<'a>(irs: &'a Vec<IntermediateRepresentation>) -> 
         .next()
         .unwrap()
 }
+
+fn get_first_ir_with_byte_code_named<'a>(irs: &'a Vec<IntermediateRepresentation>, name: &str) -> &'a IntermediateRepresentation {
+    irs
+        .iter()
+        .filter(|ir| ir.byte_code.len() > 0 && ir.top_level_symbol == name)
+        .next()
+        .unwrap()
+}
