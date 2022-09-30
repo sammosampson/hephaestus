@@ -80,6 +80,8 @@ pub enum AbstractSyntaxNodeItem {
 pub trait AbstractSyntaxRootNodeVisitor {
     fn visit_run(&mut self, expr: &mut AbstractSyntaxNode);
 
+    fn visit_const(&mut self, name: &mut String, value: &mut AbstractSyntaxNode);
+
     fn visit_procedure_header(
         &mut self,
         name: &mut String,
@@ -128,6 +130,7 @@ pub trait AbstractSyntaxArgumentsNodeVisitor {
 }
 
 pub trait AbstractSyntaxExpressionNodeVisitor {
+    fn visit_foreign_system_library(&mut self, library: &mut AbstractSyntaxNode);
     fn visit_literal(&mut self, literal: &mut Literal);
     fn visit_identifier(&mut self, name: &mut String);
     fn visit_expression(
@@ -150,6 +153,8 @@ where TVistor : AbstractSyntaxRootNodeVisitor {
     match ast.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } =>
             visitor.visit_run(expr),
+        AbstractSyntaxNodeItem::Constant { name, value } =>
+            visitor.visit_const(name, value),
         AbstractSyntaxNodeItem::ProcedureHeader { 
             name,
             args,
@@ -244,6 +249,7 @@ where TVistor : AbstractSyntaxArgumentsNodeVisitor {
 pub fn apply_visitor_to_ast_expression<TVistor>(ast: &mut AbstractSyntaxNode, visitor: &mut TVistor) 
 where TVistor : AbstractSyntaxExpressionNodeVisitor {
     match ast.item_mut() {
+        AbstractSyntaxNodeItem::ForeignSystemLibrary { library } => visitor.visit_foreign_system_library(library),
         AbstractSyntaxNodeItem::Literal(literal) => visitor.visit_literal(literal),
         AbstractSyntaxNodeItem::Identifier(name) => visitor.visit_identifier(name),
         AbstractSyntaxNodeItem::BinaryExpr { 

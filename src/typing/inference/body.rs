@@ -243,4 +243,7 @@ impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a>
             self.resolved_type = Some(resolved_types.first().unwrap().clone());
         }
     }
+
+    fn visit_foreign_system_library(&mut self, _library: &mut AbstractSyntaxNode) {
+    }
 }

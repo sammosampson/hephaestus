@@ -9,6 +9,12 @@ use crate::{
     utilities::*
 };
 
+pub type ForeignLibraryReferences = Vec<String>;
+
+pub fn add_foreign_library_reference(references: &mut ForeignLibraryReferences, reference: String) {
+    references.push(reference);
+}
+
 #[derive(Debug, Clone)]
 pub struct IntermediateRepresentation {
     pub id: CompilationUnitId,
@@ -16,11 +22,20 @@ pub struct IntermediateRepresentation {
     pub top_level_symbol: String,
     pub byte_code: ByteCodeInstructionStream,
     pub symbols: ByteCodeSymbols,
-    pub data: ByteCodeData
+    pub data: ByteCodeData,
+    pub foreign_libraries: ForeignLibraryReferences
 }
 
 pub fn create_intermediate_representation(id: CompilationUnitId, filename: String) -> IntermediateRepresentation {
-    IntermediateRepresentation { id, filename, top_level_symbol: string(""), byte_code: vec!(), symbols: vec!(), data: vec!() }
+    IntermediateRepresentation {
+        id,
+        filename,
+        top_level_symbol: string(""),
+        byte_code: vec!(),
+        symbols: vec!(),
+        data: vec!(),
+        foreign_libraries: vec!()
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -171,8 +186,12 @@ pub fn add_symbol(symbols: &mut ByteCodeSymbols, symbol: ByteCodeSymbol) -> u32 
     (symbols.len() - 1) as u32
 }
 
+pub fn data_section_item_name(data_item_pointer: u32) -> String {
+    format!("ds{}", data_item_pointer)
+}
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ByteCodeDataItem {
     String { value: String }
 }

@@ -105,4 +105,7 @@ impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
         let mut visitor = create_procedure_body_visitor(self.ctx, self.type_repository);
         apply_visitor_to_ast_procedure_body(args, return_types, statements, &mut visitor);        
     }
+
+    fn visit_const(&mut self, _name: &mut String, _value: &mut AbstractSyntaxNode) {
+    }
 }

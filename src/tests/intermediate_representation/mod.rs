@@ -30,14 +30,6 @@ fn compile_file_and_get_intemediate_representation(file_path: &str, reader: Mock
     return result
 }
 
-fn get_first_ir_with_byte_code<'a>(irs: &'a Vec<IntermediateRepresentation>) -> &'a IntermediateRepresentation {
-    irs
-        .iter()
-        .filter(|ir| ir.byte_code.len() > 0)
-        .next()
-        .unwrap()
-}
-
 fn get_first_ir_with_byte_code_named<'a>(irs: &'a Vec<IntermediateRepresentation>, name: &str) -> &'a IntermediateRepresentation {
     irs
         .iter()
