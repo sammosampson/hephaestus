@@ -60,6 +60,7 @@ pub enum BuiltInType {
     SignedInt32,
     Float32,
     String,
+    Boolean,
     Void
 }
 
@@ -77,6 +78,10 @@ pub fn float_32_built_in_type() -> BuiltInType {
 
 pub fn string_built_in_type() -> BuiltInType {
     BuiltInType::String
+}
+
+pub fn bool_built_in_type() -> BuiltInType {
+    BuiltInType::Boolean
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -148,6 +153,22 @@ pub fn string_pointer_runtime_type() -> RuntimeType {
     )
 }
 
+pub fn bool_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(bool_built_in_type()),
+        "bool".to_string(),
+        bool_type_item(),
+        resolved_type_size(1)
+    )
+}
+
+pub fn bool_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(bool_built_in_type()),
+        bool_runtime_type()
+    )
+}
+
 pub fn void_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(void_built_in_type()),
@@ -181,6 +202,7 @@ pub enum RuntimeTypeItem {
     Int,
     Float,
     String,
+    Bool,
     Void
 }
 
@@ -208,6 +230,10 @@ fn float_type_item() -> RuntimeTypeItem {
 
 fn string_type_item() -> RuntimeTypeItem {
     RuntimeTypeItem::String
+}
+
+fn bool_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::Bool
 }
 
 fn void_type_item() -> RuntimeTypeItem {

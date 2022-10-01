@@ -10,7 +10,13 @@ pub fn parse_top_level_declaration(filename: String, name: String, lexer: &mut L
 }
 
 pub fn parse_declaration(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(constant_item(name, parse_constant_value(lexer)), position)
+    let node = create_node(constant_item(name, parse_constant_value(lexer)), position);
+    
+    if is_line_terminiator(&peek_next_token(lexer).item) {
+        eat_next_token(lexer);
+    }
+    
+    node
 }
 
 pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
@@ -20,6 +26,7 @@ pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
         SourceTokenItem::Directive(directive) => parse_const_directive(directive, lexer, token.position),
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
+        SourceTokenItem::Negate => create_node(negate_item(parse_constant_value(lexer)), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
         _ => create_error_node(unimplemented_error(), token.position),
     }
@@ -27,4 +34,8 @@ pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
 
 pub fn constant_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Constant { name, value }
+}
+
+pub fn negate_item(value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Negate(value)
 }

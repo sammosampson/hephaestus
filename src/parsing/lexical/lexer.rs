@@ -114,10 +114,19 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
                 get_character_position(&next_character), 
                 create_assignment_token_item(create_goes_to_assignment())
             );
+        } 
+        
+        if is_character_whitespace(&peek_next_character(&mut lexer.reader)) {
+            eat_next_character(&mut lexer.reader);            
+            return create_token(
+                get_character_position(&next_character), 
+                create_operator_token_item(subtract_operator())
+            );
         }
+        
         return create_token(
             get_character_position(&next_character), 
-            create_operator_token_item(subtract_operator())
+            create_negate_token_item()
         );
     }
 

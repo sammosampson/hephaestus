@@ -246,4 +246,7 @@ impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a>
 
     fn visit_foreign_system_library(&mut self, _library: &mut AbstractSyntaxNode) {
     }
+
+    fn visit_null(&mut self) {
+    }
 }

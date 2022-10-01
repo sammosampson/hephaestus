@@ -50,6 +50,7 @@ pub enum AbstractSyntaxNodeItem {
         expr: AbstractSyntaxNode,
         type_id: ResolvableType
     },
+    Negate(AbstractSyntaxNode),
     Null,
     Return {
         args: AbstractSyntaxChildNodes
@@ -146,6 +147,8 @@ pub trait AbstractSyntaxExpressionNodeVisitor {
         args: &mut AbstractSyntaxChildNodes,
         type_id: &mut ResolvableType
     );
+
+    fn visit_null(&mut self);
 }
 
 pub fn apply_visitor_to_ast_root<TVistor>(ast: &mut AbstractSyntaxNode, visitor: &mut TVistor) 
@@ -264,7 +267,8 @@ where TVistor : AbstractSyntaxExpressionNodeVisitor {
             args, 
             type_id
         } => 
-                visitor.visit_procedure_call(name, args, type_id),
+            visitor.visit_procedure_call(name, args, type_id),
+        AbstractSyntaxNodeItem::Null => visitor.visit_null(),
         item => handle_cannot_visit_node(item)
     }
 }

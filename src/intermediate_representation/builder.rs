@@ -2,8 +2,7 @@ use crate::{
     acting::*,
     compilation::*,
     parsing::*,
-    intermediate_representation::*,
-    typing::*
+    intermediate_representation::*
 };
 
 pub struct IntemediateRepresentationActor;
@@ -24,230 +23,206 @@ impl Actor<CompilationMessage> for IntemediateRepresentationActor {
 
 fn build_bytecode(unit: &mut CompilationUnit, compiler: &CompilationActorHandle) -> AfterReceiveAction {
     
-    let mut visitor = create_root_bytecode_build_ast_node_visitor(unit);
-
-    apply_visitor_to_ast_root(&mut unit.tree, &mut visitor);
-
-    send_message_to_actor(
-            compiler, 
-            create_byte_code_built_event(visitor.ir));
+    let mut ir = create_intermediate_representation(unit.id, unit.filename.clone());    
+    build_bytecode_at_root(unit, &mut ir);
+    send_message_to_actor(compiler, create_byte_code_built_event(ir));
     shutdown_after_receive()
 }
 
-pub struct RootByteCodeBuildAstNodeVisitor {
-    ir: IntermediateRepresentation
+fn build_bytecode_at_root(unit: &CompilationUnit, ir: &mut IntermediateRepresentation) {
+    match unit.tree.item_ref() {
+        AbstractSyntaxNodeItem::ProcedureHeader { name, .. } =>
+            build_bytecode_at_procedure_header(ir, name),
+        AbstractSyntaxNodeItem::ProcedureBody { name, args, statements, .. } =>
+            build_bytecode_at_procedure_body(ir, name, args, statements),
+        AbstractSyntaxNodeItem::Constant { name, value} =>
+            build_bytecode_at_top_root_const(ir, name, value),
+        _ => todo!()
+    }    
 }
 
-fn create_root_bytecode_build_ast_node_visitor(unit: &mut CompilationUnit) -> RootByteCodeBuildAstNodeVisitor {
-    RootByteCodeBuildAstNodeVisitor { 
-        ir: create_intermediate_representation(unit.id, unit.filename.clone())
-    }
-}
+fn build_bytecode_at_top_root_const(ir: &mut IntermediateRepresentation, name: &str, value: &AbstractSyntaxNode) {
+    ir.top_level_symbol = string(name);
 
-impl AbstractSyntaxRootNodeVisitor for RootByteCodeBuildAstNodeVisitor {
-    fn visit_run(&mut self, _expr: &mut AbstractSyntaxNode) {
-        todo!("run at top level")
-    }
-
-    fn visit_const(&mut self, name: &mut String, value: &mut AbstractSyntaxNode) {
-        
-    }
-
-    fn visit_procedure_header(
-        &mut self,
-        name: &mut String,
-        _args: &mut AbstractSyntaxChildNodes,
-        _return_types: &mut AbstractSyntaxChildNodes,
-        _body: &mut ProcedureBodyReference
-    ) {
-        self.ir.top_level_symbol = name.clone();
-    }
-
-    fn visit_procedure_body(
-        &mut self, 
-        name: &mut String,
-        args: &mut AbstractSyntaxChildNodes,
-        return_types: &mut AbstractSyntaxChildNodes,
-        statements: &mut AbstractSyntaxChildNodes
-    ) {
-        self.ir.top_level_symbol = string(&name);
-
-        add_symbol(&mut self.ir.symbols, external_code_label(string(&name), 0x0));
-
-        add_byte_codes(
-            &mut self.ir.byte_code,
-            vec!(
-                push_reg_64_instruction(base_pointer_register()),
-                move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
-            )
-        );
-    
-        let mut visitor = create_procedure_body_visitor(&mut self.ir);
-        apply_visitor_to_ast_procedure_body(args, return_types, statements, &mut visitor);
-
-        add_byte_codes(
-            &mut self.ir.byte_code, 
-            vec!(
-                move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-                pop_reg_64_instruction(base_pointer_register()),
-                ret_instruction()
-            )
-        );
-    }
-
-}
-
-pub struct ProcedureBodyVisitor<'a> {
-    ir: &'a mut IntermediateRepresentation,
-    current_arg_count: usize
-}
-
-fn create_procedure_body_visitor<'a>(ir: &'a mut IntermediateRepresentation) -> ProcedureBodyVisitor<'a> {
-    ProcedureBodyVisitor { 
-        ir,
-        current_arg_count: 0
+    match value.item_ref() {
+        AbstractSyntaxNodeItem::ForeignSystemLibrary { library } =>
+            build_bytecode_at_foreign_system_library_const(ir, library),
+        AbstractSyntaxNodeItem::Negate(value) => ,        
+        _ => todo!()
     }
 }
 
-impl<'a> AbstractSyntaxProcedureBodyNodeVisitor for ProcedureBodyVisitor<'a> {
-    fn visit_argument_declaration(
-        &mut self,
-        _name: &mut String,
-        _type_id: &mut ResolvableType
-    ) {
-        add_byte_code(
-            &mut self.ir.byte_code,
-            move_reg_to_reg_plus_offset_64_instruction(
-                call_arg_register(self.current_arg_count), 
-                base_pointer_register(), 
-                (16 + (self.current_arg_count * 8)) as u8
-            )
-        );
-        
-        self.current_arg_count += 1;
-    }
-
-    fn visit_return_type_declaration(&mut self, _return_type: &mut ResolvableType) {
-        todo!("return type from proc body")
-    }
-
-    fn visit_procedure_call(
-        &mut self,
-        name: &mut String,
-        args: &mut AbstractSyntaxChildNodes,
-        _type_id: &mut ResolvableType
-    ) {
-        add_byte_code(
-            &mut self.ir.byte_code,
-            sub_value_from_reg_8_instruction(32, stack_pointer_register())
-        );
-
-        let mut visitor = create_args_visitor(self.ir);
-        apply_visitor_to_ast_args(args, &mut visitor);  
-
-        let call_name_symbol_index = add_symbol(&mut self.ir.symbols, foreign_external(string(&name)));
-    
-        add_byte_code(
-            &mut self.ir.byte_code,
-            call_to_symbol_instruction(call_name_symbol_index)
-        );
-
-        add_byte_code(
-            &mut self.ir.byte_code,
-            add_value_to_reg_8_instruction(32, stack_pointer_register())
-        );
-    }
-
-    fn visit_assignment(
-        &mut self,
-        _name: &mut String,
-        _value: &mut AbstractSyntaxNode,
-        _type_id: &mut ResolvableType
-    ) {
-        todo!("assignment in proc body")
-    }
-
-    fn visit_return_statement(&mut self, _args: &mut AbstractSyntaxChildNodes) {
+fn build_bytecode_at_foreign_system_library_const(ir: &mut IntermediateRepresentation, library: &AbstractSyntaxNode) {
+    match library.item_ref() {
+        AbstractSyntaxNodeItem::Literal(literal) =>
+        build_bytecode_at_foreign_system_library_literal_const(ir, literal),
+        _ => todo!("foreign system library none literals")
     }
 }
 
-struct ProcedureCallArgVisitor <'a> { 
-    ir: &'a mut IntermediateRepresentation,
-    current_arg_count: usize
-}
-
-fn create_args_visitor<'a>(ir: &'a mut IntermediateRepresentation) -> ProcedureCallArgVisitor::<'a> {
-    ProcedureCallArgVisitor { 
-        ir,
-        current_arg_count: 0
+fn build_bytecode_at_foreign_system_library_literal_const(ir: &mut IntermediateRepresentation, library: &Literal) {
+    match library {
+        Literal::String(value) =>
+            add_foreign_library_reference(&mut ir.foreign_libraries, string(value)),
+        _ => todo!("foreign system library none string literals")
     }
 }
 
-impl <'a> AbstractSyntaxArgumentsNodeVisitor for ProcedureCallArgVisitor<'a> {
-    fn visit_argument(&mut self, expr: &mut AbstractSyntaxNode, _arg_type: &mut ResolvableType) {
-        let mut visitor = create_arg_expression_visitor(self.ir, self.current_arg_count);
-        apply_visitor_to_ast_expression(expr, &mut visitor);
-        self.current_arg_count += 1;
+fn build_bytecode_at_procedure_header(ir: &mut IntermediateRepresentation, name: &str) {
+    ir.top_level_symbol = string(name);
+}
+
+fn build_bytecode_at_procedure_body(
+    ir: &mut IntermediateRepresentation, 
+    name: &str,
+    args: &AbstractSyntaxChildNodes,
+    statements: &AbstractSyntaxChildNodes
+) {
+    ir.top_level_symbol = string(&name);
+
+    add_symbol(&mut ir.symbols, external_code_label(string(&name), 0));
+
+    add_byte_codes(
+        &mut ir.byte_code,
+        vec!(
+            push_reg_64_instruction(base_pointer_register()),
+            move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        )
+    );
+
+    for arg_index in 0..args.len() {
+        build_bytecode_at_procedure_body_argument_declaration(ir, arg_index);
+    }
+
+    for statement in statements {
+        build_bytecode_at_procedure_body_statement(ir, statement);
+    }
+
+    add_byte_codes(
+        &mut ir.byte_code, 
+        vec!(
+            move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
+            pop_reg_64_instruction(base_pointer_register()),
+            ret_instruction()
+        )
+    );
+}
+
+fn build_bytecode_at_procedure_body_argument_declaration(ir: &mut IntermediateRepresentation, arg_index: usize) {
+    add_byte_code(
+        &mut ir.byte_code,
+        move_reg_to_reg_plus_offset_64_instruction(
+            call_arg_register(arg_index), 
+            base_pointer_register(), 
+            (16 + (arg_index * 8)) as u8
+        )
+    );
+}
+
+fn build_bytecode_at_procedure_body_statement(ir: &mut IntermediateRepresentation, statement: &AbstractSyntaxNode) {
+    match statement.item_ref() {
+        AbstractSyntaxNodeItem::ProcedureCall { name, args, .. } => 
+            build_bytecode_at_procedure_call(ir, name, args),
+        AbstractSyntaxNodeItem::Assignment { name, value, .. } => 
+            build_bytecode_at_assignment(ir, name, value),
+        _ => todo!()
     }
 }
 
-struct ProcedureCallArgExpressionVisitor <'a> { 
-    ir: &'a mut IntermediateRepresentation,
-    current_arg_count: usize
-}
-
-fn create_arg_expression_visitor<'a>(ir: &'a mut IntermediateRepresentation, current_arg_count: usize) -> ProcedureCallArgExpressionVisitor::<'a> {
-    ProcedureCallArgExpressionVisitor { 
-        ir,
-        current_arg_count
+fn build_bytecode_at_assignment(ir: &mut IntermediateRepresentation, assignment_name: &str, value: &AbstractSyntaxNode) {
+    match value.item_ref() {
+        AbstractSyntaxNodeItem::ProcedureCall { name, args, .. } => 
+            build_bytecode_at_procedure_call_with_assignment(ir, assignment_name, name, args),
+        _ => todo!()
     }
 }
 
-impl <'a> AbstractSyntaxExpressionNodeVisitor for ProcedureCallArgExpressionVisitor<'a> {
-    fn visit_literal(&mut self, literal: &mut Literal) {
-        match literal {
-            Literal::UnsignedInt(value) => {
-                add_byte_code(
-                    &mut self.ir.byte_code, 
-                    move_value_to_reg_32_instruction(*value as u32, call_arg_register(self.current_arg_count))
-                );
-            },
-            Literal::String(value) => {
-                let data_item_pointer = add_data_item(&mut self.ir.data, string_data_item(string(&value)));
-                add_symbol(&mut self.ir.symbols, data_section_item(data_section_item_name(data_item_pointer), data_item_pointer));
-                add_byte_code(
-                    &mut self.ir.byte_code, 
-                    load_data_section_address_to_reg_64(data_item_pointer, call_arg_register(self.current_arg_count))
-                );
-            },
-            _ =>  todo!("float literals as call args")
-        }
-    }
+fn build_bytecode_at_procedure_call_with_assignment(ir: &mut IntermediateRepresentation, _assignment_name: &str, call_name: &str, args: &AbstractSyntaxChildNodes) {
+    reserve_shadow_stack_space(ir);
+    build_bytecode_at_procedure_call_arguments(args, ir);
+    call_external_function(ir, call_name);
+    move_procedure_call_return_value_into_storage(ir);
+    release_shadow_stack_space(ir);
+}
 
-    fn visit_identifier(&mut self, _name: &mut String) {
-        todo!("identifiers as call args")
-    }
+fn build_bytecode_at_procedure_call(ir: &mut IntermediateRepresentation, name: &str, args: &AbstractSyntaxChildNodes) {
+    reserve_shadow_stack_space(ir);
+    build_bytecode_at_procedure_call_arguments(args, ir);
+    call_external_function(ir, name);
+    release_shadow_stack_space(ir);
+}
 
-    fn visit_expression(
-        &mut self,
-        _op: &mut AbstractSyntaxNode,
-        _lhs: &mut AbstractSyntaxNode,
-        _rhs: &mut AbstractSyntaxNode,
-        _type_id: &mut ResolvableType
-    ) {
-        todo!("expressions as call args")
+fn build_bytecode_at_procedure_call_arguments(args: &AbstractSyntaxChildNodes, ir: &mut IntermediateRepresentation) {
+    for arg_index in 0..args.len() {
+        build_bytecode_at_procedure_call_argument(ir, &args[arg_index], arg_index);
     }
+}
 
-    fn visit_procedure_call(
-        &mut self,
-        _name: &mut String,
-        _args: &mut AbstractSyntaxChildNodes,
-        _type_id: &mut ResolvableType
-    ) {
-        todo!("proc call as call args")
-    }
+fn build_bytecode_at_procedure_call_argument(ir: &mut IntermediateRepresentation, arg: &AbstractSyntaxNode, arg_index: usize) {
+    match arg.item_ref() {
+        AbstractSyntaxNodeItem::Argument { expr, .. } =>
+        build_bytecode_at_procedure_call_argument_expression(ir, expr, arg_index),
+        _ => todo!()
+    }    
+}
 
-    fn visit_foreign_system_library(&mut self, library: &mut AbstractSyntaxNode) {
-        panic!("foreign system library as call args")
+fn build_bytecode_at_procedure_call_argument_expression(ir: &mut IntermediateRepresentation, expr: &AbstractSyntaxNode, arg_index: usize) {
+    match expr.item_ref() {
+        AbstractSyntaxNodeItem::Literal(literal) =>
+            build_bytecode_at_procedure_call_argument_literal(ir, literal, arg_index),
+        _ => todo!()
+    }    
+}
+
+fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepresentation, literal: &Literal, arg_index: usize) {
+    match literal {
+        Literal::UnsignedInt(value) => {
+            add_byte_code(
+                &mut ir.byte_code, 
+                move_value_to_reg_32_instruction(*value as u32, call_arg_register(arg_index))
+            );
+        },
+        Literal::String(value) => {
+            let data_item_pointer = add_data_item(&mut ir.data, string_data_item(string(&value)));
+            add_symbol(&mut ir.symbols, data_section_item(data_section_item_name(data_item_pointer), data_item_pointer));
+            add_byte_code(
+                &mut ir.byte_code, 
+                load_data_section_address_to_reg_64(data_item_pointer, call_arg_register(arg_index))
+            );
+        },
+        _ =>  todo!("float literals as call args")
     }
+}
+
+fn move_procedure_call_return_value_into_storage(ir: &mut IntermediateRepresentation) {
+    add_byte_code(
+        &mut ir.byte_code, 
+        move_reg_to_reg_plus_offset_32_instruction(
+            call_return_arg_register(0), 
+            base_pointer_register(),
+            0xF8
+        )
+    );
+}
+
+fn call_external_function(ir: &mut IntermediateRepresentation, name: &str) {
+    let call_name_symbol_index = add_symbol(&mut ir.symbols, foreign_external(string(name)));
+    add_byte_code(
+        &mut ir.byte_code,
+        call_to_symbol_instruction(call_name_symbol_index)
+    );
+}
+
+fn reserve_shadow_stack_space(ir: &mut IntermediateRepresentation) {
+    add_byte_code(
+        &mut ir.byte_code,
+        sub_value_from_reg_8_instruction(32, stack_pointer_register())
+    );
+}
+
+fn release_shadow_stack_space(ir: &mut IntermediateRepresentation) {
+    add_byte_code(
+        &mut ir.byte_code,
+        add_value_to_reg_8_instruction(32, stack_pointer_register())
+    );
 }

@@ -21,6 +21,7 @@ pub enum SourceTokenItem {
     Enclosure(Enclosure),
     Range(Range),
     Operator(Operator),
+    Negate,
     Assignment(Assignment),
     Literal(Literal),
     Terminator(Terminator),
