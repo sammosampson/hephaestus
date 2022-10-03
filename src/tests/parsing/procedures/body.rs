@@ -31,7 +31,7 @@ fn parse_procedure_body_parses_correctly() {
                     node( 
                         position(30, 1, 31),
                         type_item(
-                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
                     ),
                 ),
@@ -42,7 +42,7 @@ fn parse_procedure_body_parses_correctly() {
                             string("a"),
                             node(
                                 position(45, 2, 10),
-                                literal_item(unsigned_int_literal(1))
+                                literal_item(unresolved_resolvable_literal(unresolved_int_literal(1, false)))
                             ),
                             unresolved_resolvable_type()
                         )
@@ -76,7 +76,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(104, 4, 30),
-                                            literal_item(string_literal(string("a")))
+                                            literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("a"))))
                                         ),
                                         unresolved_resolvable_type()
                                     )
@@ -94,7 +94,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(121, 5, 12),
-                                            literal_item(float_literal(1.0))
+                                            literal_item(unresolved_resolvable_literal(unresolved_float_literal(1.0, false)))
                                         ),
                                         unresolved_resolvable_type()
                                     )
@@ -104,7 +104,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(126, 5, 17),
-                                            literal_item(unsigned_int_literal(2))
+                                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(2, false)))
                                         ),
                                         unresolved_resolvable_type()
                                     )

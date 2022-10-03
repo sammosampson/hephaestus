@@ -46,12 +46,12 @@ fn typing_procedure_header_with_args_returns_correct_types() {
     assert_eq!(types[0].name, string("SomeProcedure"));
     assert_eq!(types[0].item, procedure_definition_type_item( 
         vec!(
-            create_shareable(signed_int_32_runtime_type()),
+            create_shareable(signed_int_64_runtime_type()),
             create_shareable(float_32_runtime_type()),
         ), 
         vec!(
             create_shareable(float_32_runtime_type()),
-            create_shareable(signed_int_32_runtime_type()),
+            create_shareable(signed_int_64_runtime_type()),
         )
     ));
     assert_eq!(types[0].size, not_required_type_size());
@@ -77,12 +77,12 @@ fn typing_procedure_header_with_pointer_args_returns_correct_types() {
     assert_eq!(types[0].name, string("SomeProcedure"));
     assert_eq!(types[0].item, procedure_definition_type_item( 
         vec!(
-            create_shareable(signed_int_32_pointer_runtime_type()),
+            create_shareable(signed_int_64_pointer_runtime_type()),
             create_shareable(float_32_pointer_runtime_type()),
         ), 
         vec!(
             create_shareable(float_32_pointer_runtime_type()),
-            create_shareable(signed_int_32_pointer_runtime_type()),
+            create_shareable(signed_int_64_pointer_runtime_type()),
         )
     ));
     assert_eq!(types[0].size, not_required_type_size());
@@ -106,12 +106,12 @@ fn typing_foreign_library_procedure_header_returns_correct_types() {
     assert_eq!(types[0].name, string("SomeProcedure"));
     assert_eq!(types[0].item, procedure_definition_type_item( 
         vec!(
-            create_shareable(signed_int_32_pointer_runtime_type()),
+            create_shareable(signed_int_64_pointer_runtime_type()),
             create_shareable(float_32_pointer_runtime_type()),
         ), 
         vec!(
             create_shareable(float_32_pointer_runtime_type()),
-            create_shareable(signed_int_32_pointer_runtime_type()),
+            create_shareable(signed_int_64_pointer_runtime_type()),
         )
     ));
     assert_eq!(types[0].size, not_required_type_size());

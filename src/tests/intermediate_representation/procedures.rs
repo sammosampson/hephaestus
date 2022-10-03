@@ -58,7 +58,7 @@ fn byte_code_for_procedure_body_with_args_generates_correctly() {
 
 #[test]
 fn byte_code_for_procedure_call_with_args_generates_correctly() {
-    let irs = compile_source_and_get_intemediate_representation("print :: (to_print: string, length: int) -> *void {
+    let irs = compile_source_and_get_intemediate_representation("print :: (to_print: string, length: u32) -> *void {
 }
     
 main :: () {

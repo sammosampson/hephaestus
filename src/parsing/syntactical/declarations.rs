@@ -26,7 +26,6 @@ pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
         SourceTokenItem::Directive(directive) => parse_const_directive(directive, lexer, token.position),
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
-        SourceTokenItem::Negate => create_node(negate_item(parse_constant_value(lexer)), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
         _ => create_error_node(unimplemented_error(), token.position),
     }
@@ -34,8 +33,4 @@ pub fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
 
 pub fn constant_item(name: String, value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::Constant { name, value }
-}
-
-pub fn negate_item(value: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Negate(value)
 }

@@ -314,7 +314,7 @@ pub fn procedure_header_item(
     return_types: AbstractSyntaxChildNodes,
     body: ProcedureBodyReference
 ) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_types, body }
+    AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args: return_types, body }
 }
 
 pub fn procedure_body_item(
@@ -346,15 +346,15 @@ pub fn procedure_call_item(
     args: AbstractSyntaxChildNodes,
     type_id: ResolvableType
 ) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ProcedureCall { name, args, type_id }
+    AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id }
 }
 
 pub fn arg_declaration_item(name: String, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ArgumentDeclaration { name, type_id }
+    AbstractSyntaxNodeItem::ArgumentDeclaration { name, arg_type: type_id }
 }
 
 pub fn arg_item(expr: AbstractSyntaxNode, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Argument { expr, type_id }
+    AbstractSyntaxNodeItem::Argument { expr, arg_type: type_id }
 }
 
 pub fn type_item(t: ResolvableType) -> AbstractSyntaxNodeItem {

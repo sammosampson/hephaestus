@@ -14,7 +14,7 @@ fn compound_get_for_for_loop() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
         
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(0)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 0, is_negative: false }));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Range(Range::LeftInclusive));

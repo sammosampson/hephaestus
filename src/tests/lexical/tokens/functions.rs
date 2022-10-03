@@ -32,7 +32,7 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::GoesTo));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt64));
        
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Brace(EnclosureType::Open)));
@@ -41,7 +41,7 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Keyword(Keyword::Return));
 
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(1)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 1, is_negative: false }));
     
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
@@ -77,7 +77,7 @@ fn compound_get_for_function_declaration_with_body() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::InitialiseAssignValue));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(1)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 1, is_negative: false }));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
@@ -107,7 +107,7 @@ fn compound_get_for_function_declaration_two_args() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt64));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
@@ -154,7 +154,36 @@ fn compound_get_for_function_declaration_pointer_args() {
     assert_eq!(token.item, SourceTokenItem::Pointer);
 
     let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt64));
+}
+
+#[test]
+fn compound_get_for_function_declaration_other_built_in_type_args() {
+    let mut lexer = lex("SomeFunction :: (a: u32, b: s32, c: s64) { }");
+
+    eat_next_token(&mut lexer);
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt32));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+
+    let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt64));
+
 }
 
 
@@ -175,7 +204,7 @@ fn compound_get_for_function_call() {
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
 
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(2)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 2, is_negative: false }));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));

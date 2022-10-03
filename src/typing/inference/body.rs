@@ -3,8 +3,9 @@ use std::collections::HashMap;
 
 use crate::parsing::*;
 use crate::compilation::*;
-use crate::threading::create_shareable;
+use crate::threading::*;
 use crate::typing::*;
+use crate::utilities::*;
 
 pub type LocalTypeMap = HashMap<String, RuntimeTypePointer>;
 pub type LocalTypes = RuntimeTypePointers;
@@ -21,84 +22,99 @@ pub fn create_local_type_map() -> LocalTypeMap {
     LocalTypeMap::default()
 }
 
-pub struct ProcedureBodyInferenceVisitor<'a> { 
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    local_type_map: LocalTypeMap,
-    local_return_types: LocalTypes
+pub fn perform_typing_for_procedure_body(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    args: &mut AbstractSyntaxChildNodes,
+    return_types: &mut AbstractSyntaxChildNodes,
+    statements: &mut AbstractSyntaxChildNodes
+) {
+    let mut local_type_map = create_local_type_map();
+    let mut local_return_types = vec!();
+
+    for arg in args {
+        match arg.item_mut() {
+            AbstractSyntaxNodeItem::ArgumentDeclaration { name, arg_type: type_id } => 
+                perform_typing_for_procedure_body_argument_declaration(&mut local_type_map, name, type_id),
+            item => panic!("{:?} is not viable procedure body arg", item)
+        }
+    }
+
+    for return_type in return_types {
+        match return_type.item_mut() {
+            AbstractSyntaxNodeItem::Type(resolvable_type) => 
+                perform_typing_for_procedure_body_return_type_declaration(&mut local_return_types, resolvable_type),
+                item => panic!("{:?} is not viable procedure body return type", item)
+        }
+    }
+    
+    for statement in statements {
+        match statement.item_mut() {
+            AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id} => 
+                perform_typing_for_procedure_body_procedure_call(ctx, type_repository, &mut local_type_map, name, args, type_id),
+            AbstractSyntaxNodeItem::Assignment { name, value, assignment_type: type_id } => 
+                perform_typing_for_procedure_body_assignment(ctx, type_repository, &mut local_type_map, name, value, type_id),
+            AbstractSyntaxNodeItem::Return { args } => {
+                perform_typing_for_expression_args(ctx, type_repository, &mut local_type_map, args, &local_return_types);
+            },
+            item => panic!("{:?} is not viable procedure body statement", item)
+        }
+    }    
 }
 
-pub fn create_procedure_body_visitor<'a>(
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle
-) -> ProcedureBodyInferenceVisitor<'a> {
-    ProcedureBodyInferenceVisitor::<'a> {
-        ctx,
-        type_repository,
-        local_type_map: create_local_type_map(),
-        local_return_types: vec!()
-    }
-}
+fn perform_typing_for_expression_args(ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &mut LocalTypeMap,
+    args: &mut AbstractSyntaxChildNodes,
+    local_return_types: &RuntimeTypePointers
+) {
+    let returned_arg_types = perform_typing_for_args(ctx, type_repository, local_type_map, args);
 
-impl <'a> AbstractSyntaxProcedureBodyNodeVisitor for ProcedureBodyInferenceVisitor<'a> {
-    fn visit_argument_declaration(&mut self, name: &mut String, arg_type: &mut ResolvableType) {
-        if let Some(resolved_type) = try_get_resolved_runtime_type_pointer(arg_type) {
-            add_local_type_to_map(
-                &mut self.local_type_map,
-                name.clone(),
-                resolved_type
-            );    
-        }
-    }
-
-    fn visit_return_type_declaration(&mut self, return_type: &mut ResolvableType) {      
-        if let Some(resolved_type) = try_get_resolved_runtime_type_pointer(return_type) {
-            self.local_return_types.push(resolved_type);
-        }
-    }
-
-    fn visit_return_statement(&mut self, args: &mut AbstractSyntaxChildNodes) {
-        let mut visitor = create_args_visitor(
-            self.ctx,
-            self.type_repository, 
-            &self.local_type_map
-        );
-
-        apply_visitor_to_ast_args(args, &mut visitor);
-        
-        if visitor.resolved_arg_types != self.local_return_types {
-            todo!("handle differences between what is returned and procedure header return types")
-        }
-    }
-
-    fn visit_procedure_call(
-        &mut self,
-        name: &mut String,
-        args: &mut AbstractSyntaxChildNodes,
-        type_id: &mut ResolvableType
-    ) {   
-        visit_procedure_call_return_first_return_type(
-            self.ctx,
-            self.type_repository,
-            &self.local_type_map,
-            args,
-            name,
-            type_id
-        );
-    }
-
-    fn visit_assignment(&mut self, name: &mut String, value: &mut AbstractSyntaxNode, resolvable_type: &mut ResolvableType) {
-        let mut visitor = create_expression_visitor(self.ctx, self.type_repository, &self.local_type_map);
-        apply_visitor_to_ast_expression(value, &mut visitor);
-        
-        if let Some(resolved_type) = visitor.resolved_type {
-            *resolvable_type = resolved_resolvable_type(resolved_type.clone());
-            add_local_type_to_map(&mut self.local_type_map, name.clone(), resolved_type);
-        }
+    if &returned_arg_types != local_return_types {
+        todo!("handle differences between what is returned and procedure header return types")
     }
 }
 
-fn visit_procedure_call_return_first_return_type(
+fn perform_typing_for_procedure_body_argument_declaration(local_type_map: &mut LocalTypeMap, name: &mut String, arg_type: &mut ResolvableType) {
+    if let Some(resolved_type) = try_get_resolved_runtime_type_pointer(arg_type) {
+        add_local_type_to_map(local_type_map, name.clone(), resolved_type);    
+    }
+}
+
+fn perform_typing_for_procedure_body_return_type_declaration(local_return_types: &mut LocalTypes, return_type: &mut ResolvableType) {      
+    if let Some(resolved_type) = try_get_resolved_runtime_type_pointer(return_type) {
+        local_return_types.push(resolved_type);
+    }
+}
+
+fn perform_typing_for_procedure_body_procedure_call(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &mut LocalTypeMap,
+    name: &mut String,
+    args: &mut AbstractSyntaxChildNodes,
+    type_id: &mut ResolvableType
+) {   
+    perform_typing_for_procedure_call_return_first_return_type(ctx, type_repository, local_type_map, args, name, type_id);
+}
+
+fn perform_typing_for_procedure_body_assignment(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &mut LocalTypeMap,
+    name: &mut String,
+    value: &mut AbstractSyntaxNode,
+    resolvable_type: &mut ResolvableType
+) {
+    let resolved_type = perform_typing_for_expression(ctx, type_repository, local_type_map, value);
+    
+    if let Some(resolved_type) = resolved_type {
+        *resolvable_type = resolved_resolvable_type(resolved_type.clone());
+        add_local_type_to_map(local_type_map, name.clone(), resolved_type);
+    }
+}
+
+fn perform_typing_for_procedure_call_return_first_return_type(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &LocalTypeMap,
@@ -106,11 +122,10 @@ fn visit_procedure_call_return_first_return_type(
     name: &mut String, 
     type_id: &mut ResolvableType
 ) -> RuntimeTypePointers {  
-    let mut visitor = create_args_visitor(ctx, type_repository, local_type_map);
-    apply_visitor_to_ast_args(args, &mut visitor);
-
+    let resolved_arg_types = perform_typing_for_args(ctx, type_repository, local_type_map, args);
+    
     let resolved_type = find_type(
-        create_find_type_criteria(name.to_string(), visitor.resolved_arg_types),
+        create_find_type_criteria(name.to_string(), resolved_arg_types),
         ctx,
         type_repository
     );
@@ -124,129 +139,165 @@ fn visit_procedure_call_return_first_return_type(
     vec!()
 }
 
+fn perform_typing_for_args(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    args: &mut AbstractSyntaxChildNodes
+) -> RuntimeTypePointers {
+    let mut resolved_arg_types = vec!();
 
-struct ArgsInferenceVisitor <'a> { 
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    local_type_map: &'a LocalTypeMap,
-    resolved_arg_types: RuntimeTypePointers
+    for arg in args {
+        perform_typing_for_arg(ctx, type_repository, local_type_map, &mut resolved_arg_types, arg)
+    }
+
+    resolved_arg_types
 }
 
-fn create_args_visitor<'a>(
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    local_type_map: &'a LocalTypeMap,
-) -> ArgsInferenceVisitor::<'a> {
-    ArgsInferenceVisitor { 
-        ctx,
-        type_repository, 
-        local_type_map,
-        resolved_arg_types: vec!() 
+fn perform_typing_for_arg(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    resolved_arg_types: &mut RuntimeTypePointers,
+    arg: &mut AbstractSyntaxNode
+) {
+    match arg.item_mut() {
+        AbstractSyntaxNodeItem::Argument { expr, arg_type: resolvable_type } => {
+            if let Some(resolved_type) = perform_typing_for_arg_expression(ctx, type_repository, local_type_map, expr, resolvable_type) {
+                resolved_arg_types.push(resolved_type.clone());
+            }
+        }
+        _ => {}
     }
 }
 
-impl <'a> AbstractSyntaxArgumentsNodeVisitor for ArgsInferenceVisitor<'a> {
-    fn visit_argument(&mut self, expr: &mut AbstractSyntaxNode, arg_type: &mut ResolvableType) {
-        let mut visitor = create_expression_visitor(
-            self.ctx,
-            self.type_repository,
-            self.local_type_map
-        );
-        
-        apply_visitor_to_ast_expression(expr, &mut visitor);
+pub fn perform_typing_for_arg_expression(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    expr: &mut AbstractSyntaxNode,
+    expected_arg_type: &mut ResolvableType
+)  -> Option<RuntimeTypePointer> { 
+    match expr.item_mut() {
+        AbstractSyntaxNodeItem::Literal(literal) =>
+            perform_typing_for_arg_expression_literal(literal, expected_arg_type),
+        AbstractSyntaxNodeItem::Identifier(name) =>
+            perform_typing_for_expression_identifier(name, local_type_map),
+        AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
+            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id),
+        AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id } =>
+            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id),
+        _ => None
+    }
+}
 
-        if let Some(resolved_type) = visitor.resolved_type {
-            *arg_type = resolved_resolvable_type(resolved_type.clone());
-            self.resolved_arg_types.push(resolved_type);
+fn perform_typing_for_arg_expression_literal(literal: &mut ResolvableLiteral, expected_arg_type: &mut ResolvableType) -> Option<RuntimeTypePointer> {
+    if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
+        match unresolved_literal {
+            UnresolvedLiteral::Int { number, is_negative } => {
+                todo!()
+            },
+            UnresolvedLiteral::Float { number, is_negative } => { 
+                todo!()
+            },
+            UnresolvedLiteral::String(value) => {
+                todo!()
+            },
         }
     }
+    panic!("literal should not be resolved at this point")
 }
 
-pub struct ExpressionInferenceVisitor<'a> { 
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    local_type_map: &'a LocalTypeMap,
-    resolved_type: Option<RuntimeTypePointer>
+pub fn perform_typing_for_expression(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    expr: &mut AbstractSyntaxNode
+)  -> Option<RuntimeTypePointer> { 
+    match expr.item_mut() {
+        AbstractSyntaxNodeItem::Literal(literal) =>
+            perform_typing_for_expression_literal(literal),
+        AbstractSyntaxNodeItem::Identifier(name) =>
+            perform_typing_for_expression_identifier(name, local_type_map),
+        AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
+            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id),
+        AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id } =>
+            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id),
+        _ => None
+    }
 }
 
-pub fn create_expression_visitor<'a>(
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    local_type_map: &'a LocalTypeMap
-) -> ExpressionInferenceVisitor<'a> {
-    ExpressionInferenceVisitor::<'a> {
+fn perform_typing_for_expression_literal(literal: &mut ResolvableLiteral) -> Option<RuntimeTypePointer> {
+    if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
+        match unresolved_literal {
+            UnresolvedLiteral::Int { number, is_negative } => {
+                *literal = resolved_resolvable_literal(resolved_signed_int_64_literal(parse_signed_int_64_from_number(*number, *is_negative)));
+                return Some(create_shareable(signed_int_64_runtime_type()));
+            },
+            UnresolvedLiteral::Float { number, is_negative } => { 
+                *literal = resolved_resolvable_literal(resolved_float_32_literal(parse_float_32_from_number(*number, *is_negative)));
+                return Some(create_shareable(float_32_runtime_type()));
+            }
+            UnresolvedLiteral::String(value) => {
+                *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
+                return Some(create_shareable(string_runtime_type()));
+            },
+        }
+    }
+    panic!("literal should not be resaolved at this point")
+}
+
+fn perform_typing_for_expression_identifier(name: &mut String, local_type_map: &LocalTypeMap) -> Option<RuntimeTypePointer> {
+    if let Some(local_identifier_type) = get_type_for_local_identifier(local_type_map, &name) {
+        return Some(local_identifier_type.clone());
+    } else {
+        todo!("look global scope for identifiers and other external places")
+    }
+}
+
+fn perform_typing_for_expression_expression(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    lhs: &mut AbstractSyntaxNode,
+    rhs: &mut AbstractSyntaxNode,
+    type_id: &mut ResolvableType
+) -> Option<RuntimeTypePointer> {
+    let lhs_resolved_type = perform_typing_for_expression(ctx, type_repository, local_type_map, lhs);
+    let rhs_resolved_type = perform_typing_for_expression(ctx, type_repository, local_type_map, rhs);
+    
+    if lhs_resolved_type != rhs_resolved_type {
+        todo!("deal with different types on either side of expression")
+    }
+
+    if let Some(resolved_type) = lhs_resolved_type {
+        *type_id = resolved_resolvable_type(resolved_type.clone());
+        return Some(resolved_type);
+    }
+
+    None
+}
+
+fn perform_typing_for_expression_procedure_call(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    name: &mut String,
+    args: &mut AbstractSyntaxChildNodes,
+    type_id: &mut ResolvableType
+) -> Option<RuntimeTypePointer> {
+    let resolved_types = perform_typing_for_procedure_call_return_first_return_type(
         ctx,
         type_repository,
-        local_type_map, 
-        resolved_type: None
-    }
-}
-
-impl <'a> AbstractSyntaxExpressionNodeVisitor for ExpressionInferenceVisitor<'a> {
-    fn visit_literal(&mut self, literal: &mut Literal) {
-        match literal {
-            Literal::UnsignedInt(_value) => self.resolved_type = Some(create_shareable(signed_int_32_runtime_type())),
-            Literal::Float(_value) => self.resolved_type = Some(create_shareable(float_32_runtime_type())),
-            Literal::String(_value) => self.resolved_type = Some(create_shareable(string_runtime_type()))
-        }
+        local_type_map,
+        args,
+        name,
+        type_id
+    );
+    
+    if resolved_types.len() > 0 {
+        return Some(resolved_types.first().unwrap().clone());
     }
 
-    fn visit_identifier(&mut self, name: &mut String) {
-        if let Some(local_identifier_type) = get_type_for_local_identifier(&self.local_type_map, &name) {
-            self.resolved_type = Some(local_identifier_type.clone());
-        } else {
-            todo!("look global scope for identifiers and other external places")
-        }
-    }
-
-    fn visit_expression(
-        &mut self,
-        _op: &mut AbstractSyntaxNode,
-        lhs: &mut AbstractSyntaxNode,
-        rhs: &mut AbstractSyntaxNode,
-        type_id: &mut ResolvableType
-    ) {
-        let mut visitor = create_expression_visitor(self.ctx, self.type_repository, self.local_type_map);
-        
-        apply_visitor_to_ast_expression(lhs, &mut visitor);
-        let lhs_resolved_type = visitor.resolved_type.clone();
-        
-        apply_visitor_to_ast_expression(rhs, &mut visitor);
-        let rhs_resolved_type = visitor.resolved_type.clone();
-        
-        if lhs_resolved_type != rhs_resolved_type {
-            todo!("deal with different types on either side of expression")
-        }
-
-        if let Some(resolved_type) = lhs_resolved_type {
-            *type_id = resolved_resolvable_type(resolved_type.clone());
-            self.resolved_type = Some(resolved_type);
-        }
-    }
-
-    fn visit_procedure_call(
-        &mut self,
-        name: &mut String,
-        args: &mut AbstractSyntaxChildNodes,
-        type_id: &mut ResolvableType
-    ) {
-        let resolved_types = visit_procedure_call_return_first_return_type(
-            self.ctx,
-            self.type_repository,
-            self.local_type_map,
-            args,
-            name,
-            type_id
-        );
-        
-        if resolved_types.len() > 0 {
-            self.resolved_type = Some(resolved_types.first().unwrap().clone());
-        }
-    }
-
-    fn visit_foreign_system_library(&mut self, _library: &mut AbstractSyntaxNode) {
-    }
-
-    fn visit_null(&mut self) {
-    }
+    todo!()
 }

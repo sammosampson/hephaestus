@@ -14,7 +14,7 @@ fn parse_const_declaration_parses_correctly() {
                 string("SomeValue"),
                 node(
                     position(13, 1, 14),
-                    literal_item(unsigned_int_literal(1)),
+                    literal_item(unresolved_resolvable_literal(unresolved_int_literal(1, false))),
                 )
             )    
         )

@@ -47,7 +47,7 @@ fn build_bytecode_at_top_root_const(ir: &mut IntermediateRepresentation, name: &
     match value.item_ref() {
         AbstractSyntaxNodeItem::ForeignSystemLibrary { library } =>
             build_bytecode_at_foreign_system_library_const(ir, library),
-        AbstractSyntaxNodeItem::Negate(value) => ,        
+        AbstractSyntaxNodeItem::Literal(literal) => build_bytecode_at_literal_const(ir, &get_resolved_literal(literal)),        
         _ => todo!()
     }
 }
@@ -55,16 +55,23 @@ fn build_bytecode_at_top_root_const(ir: &mut IntermediateRepresentation, name: &
 fn build_bytecode_at_foreign_system_library_const(ir: &mut IntermediateRepresentation, library: &AbstractSyntaxNode) {
     match library.item_ref() {
         AbstractSyntaxNodeItem::Literal(literal) =>
-        build_bytecode_at_foreign_system_library_literal_const(ir, literal),
+            build_bytecode_at_foreign_system_library_literal_const(ir, &get_resolved_literal(literal)),
         _ => todo!("foreign system library none literals")
     }
 }
 
-fn build_bytecode_at_foreign_system_library_literal_const(ir: &mut IntermediateRepresentation, library: &Literal) {
+fn build_bytecode_at_foreign_system_library_literal_const(ir: &mut IntermediateRepresentation, library: &ResolvedLiteral) {
     match library {
-        Literal::String(value) =>
+        ResolvedLiteral::String(value) =>
             add_foreign_library_reference(&mut ir.foreign_libraries, string(value)),
         _ => todo!("foreign system library none string literals")
+    }
+}
+
+fn build_bytecode_at_literal_const(ir: &mut IntermediateRepresentation, library: &ResolvedLiteral) {
+    match library {
+        ResolvedLiteral::UnsignedInt32(number) => todo!("const int number literals"),
+        _ => todo!("const none int number literals")
     }
 }
 
@@ -161,28 +168,28 @@ fn build_bytecode_at_procedure_call_arguments(args: &AbstractSyntaxChildNodes, i
 fn build_bytecode_at_procedure_call_argument(ir: &mut IntermediateRepresentation, arg: &AbstractSyntaxNode, arg_index: usize) {
     match arg.item_ref() {
         AbstractSyntaxNodeItem::Argument { expr, .. } =>
-        build_bytecode_at_procedure_call_argument_expression(ir, expr, arg_index),
+            build_bytecode_at_procedure_call_argument_expression(ir, expr, arg_index),
         _ => todo!()
     }    
 }
 
-fn build_bytecode_at_procedure_call_argument_expression(ir: &mut IntermediateRepresentation, expr: &AbstractSyntaxNode, arg_index: usize) {
+fn build_bytecode_at_procedure_call_argument_expression(ir: &mut IntermediateRepresentation,  expr: &AbstractSyntaxNode, arg_index: usize) {
     match expr.item_ref() {
         AbstractSyntaxNodeItem::Literal(literal) =>
-            build_bytecode_at_procedure_call_argument_literal(ir, literal, arg_index),
+            build_bytecode_at_procedure_call_argument_literal(ir, &get_resolved_literal(literal), arg_index),
         _ => todo!()
     }    
 }
 
-fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepresentation, literal: &Literal, arg_index: usize) {
+fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepresentation, literal: &ResolvedLiteral, arg_index: usize) {
     match literal {
-        Literal::UnsignedInt(value) => {
+        ResolvedLiteral::UnsignedInt32(value) => {
             add_byte_code(
                 &mut ir.byte_code, 
-                move_value_to_reg_32_instruction(*value as u32, call_arg_register(arg_index))
+                move_value_to_reg_32_instruction(*value, call_arg_register(arg_index))
             );
         },
-        Literal::String(value) => {
+        ResolvedLiteral::String(value) => {
             let data_item_pointer = add_data_item(&mut ir.data, string_data_item(string(&value)));
             add_symbol(&mut ir.symbols, data_section_item(data_section_item_name(data_item_pointer), data_item_pointer));
             add_byte_code(
@@ -190,7 +197,7 @@ fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepres
                 load_data_section_address_to_reg_64(data_item_pointer, call_arg_register(arg_index))
             );
         },
-        _ =>  todo!("float literals as call args")
+        _ =>  todo!("Other literals as call args")
     }
 }
 

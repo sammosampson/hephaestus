@@ -22,11 +22,11 @@ fn parse_run_directive_parses_correctly() {
                         ),
                         node(
                             position(5, 1, 6),
-                            literal_item(unsigned_int_literal(1)),
+                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(1, false))),
                         ),
                         node(
                             position(9, 1, 10),
-                            literal_item(unsigned_int_literal(2)),
+                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(2, false))),
                         ),
                         unresolved_resolvable_type()
                     )
@@ -48,7 +48,7 @@ fn parse_load_directive_parses_correctly() {
             load_directive_item(
                 node(
                     position(6, 1, 7),
-                    literal_item(string_literal(string("test.jai"))),
+                    literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("test.jai")))),
                 )
             )
         )
@@ -73,7 +73,7 @@ fn parse_foreign_system_library_directive_parses_correctly() {
                     foreign_system_library_directive_item(
                         node(
                             position(36, 1, 37),
-                            literal_item(string_literal(string("kernel32"))),
+                            literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("kernel32")))),
                         )       
                     ),
                 )

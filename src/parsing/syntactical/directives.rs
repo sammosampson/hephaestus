@@ -59,7 +59,7 @@ fn parse_ending_string_literal(lexer: &mut Lexer, literal: String, position: Sou
     if is_line_terminiator(&peek_next_token(lexer).item) {
         eat_next_token(lexer)
     }
-    create_node(literal_item(string_literal(literal)), position)
+    create_node(literal_item(unresolved_resolvable_literal(unresolved_string_literal(literal))), position)
 }
 
 

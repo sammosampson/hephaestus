@@ -33,7 +33,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                         position(18, 1, 19),
                         arg_declaration_item(
                             string("a"),
-                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
                     ),
                     node(
@@ -61,7 +61,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                     node(
                         position(57, 1, 58),
                         type_item(
-                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
                     )
                 ),
@@ -74,7 +74,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                                 position(76, 2, 14),
                                 identifier_item(string("a"))
                             ),
-                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
                     ),
                     node(
@@ -108,7 +108,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                                     arg_item(
                                         node(
                                             position(126, 5, 16),
-                                            literal_item(float_literal(1.0))
+                                            literal_item(resolved_resolvable_literal(resolved_float_32_literal(1.0)))
                                         ),
                                         resolved_resolvable_type(create_shareable(float_32_runtime_type()))
                                     )
@@ -118,9 +118,9 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                                     arg_item(
                                         node(
                                             position(131, 5, 21),
-                                            literal_item(unsigned_int_literal(2))
+                                            literal_item(resolved_resolvable_literal(resolved_signed_int_64_literal(2)))
                                         ),
-                                        resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))
+                                        resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                                     )
                                 )
                             )
@@ -158,7 +158,7 @@ fn typing_procedure_body_with_pointer_args_from_header_get_typed_correctly() {
                         position(18, 1, 19),
                         arg_declaration_item(
                             string("a"),
-                            resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))
                         )
                     ),
                     node(
@@ -179,7 +179,7 @@ fn typing_procedure_body_with_pointer_args_from_header_get_typed_correctly() {
                     node(
                         position(50, 1, 51),
                         type_item(
-                            resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))
+                            resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))
                         )
                     )
                 ),

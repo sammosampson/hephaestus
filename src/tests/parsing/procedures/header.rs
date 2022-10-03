@@ -70,7 +70,7 @@ fn parse_procedure_header_with_return_types_parses_correctly() {
                     ),
                     node(
                         position(33, 1, 34),
-                        type_item(resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))),
+                        type_item(resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))),
                     )
                 ),
                 local_procedure_body_reference(units[0].id),
@@ -96,7 +96,7 @@ fn parse_procedure_header_with_arg_parses_correctly() {
                         position(18, 1, 19),
                         arg_declaration_item( 
                             string("x"),
-                            resolved_resolvable_type(create_shareable(signed_int_32_runtime_type())),
+                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type())),
                         )
                     )
                 ),
@@ -163,7 +163,7 @@ fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
                     ),
                     node(
                         position(29, 1, 30),
-                        arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))),
+                        arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))),
                     ),
                     node(
                         position(38, 1, 39),
@@ -184,7 +184,6 @@ fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
 
 
 #[test]
-
 fn parse_foreign_system_library_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
     let units= run_parse_file_return_only_units("SomeProcedure :: (x: *float, y: *int) -> *void #foreign Kernel32");
 
@@ -202,7 +201,7 @@ fn parse_foreign_system_library_procedure_header_with_pointer_args_and_return_ty
                     ),
                     node(
                         position(29, 1, 30),
-                        arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_pointer_runtime_type()))),
+                        arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))),
                     )
                 ),
                 vec!(
@@ -217,6 +216,39 @@ fn parse_foreign_system_library_procedure_header_with_pointer_args_and_return_ty
                         identifier_item(string("Kernel32"))
                     )
                 )
+            )
+        )
+    );
+}
+
+#[test]
+fn parse_procedure_header_with_other_built_in_args_types_parses_correctly() {
+    let units= run_parse_file_return_only_units("SomeProcedure :: (x: u32, y: s32, z: s64) {
+}");
+
+    assert_eq!(units.len(), 2);
+    assert_eq!(
+        units[1].tree, 
+        node(
+            position(0, 1, 1),
+            procedure_header_item(
+                string("SomeProcedure"),
+                vec!(
+                    node(
+                        position(18, 1, 19),
+                        arg_declaration_item(string("x"), resolved_resolvable_type(create_shareable(unsigned_int_32_runtime_type()))),
+                    ),
+                    node(
+                        position(26, 1, 27),
+                        arg_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))),
+                    ),
+                    node(
+                        position(34, 1, 35),
+                        arg_declaration_item(string("z"), resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))),
+                    )
+                ),
+                vec!(),
+                local_procedure_body_reference(units[0].id)
             )
         )
     );

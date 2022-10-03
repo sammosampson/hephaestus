@@ -125,7 +125,7 @@ fn parse_procedure_call_with_string_arg_parses_correctly() {
                                 arg_item(
                                     node(                                                    
                                         position(19, 1, 20),
-                                        literal_item(string_literal(string("Hello")))
+                                        literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("Hello"))))
                                     ),
                                     unresolved_resolvable_type()
                                 )

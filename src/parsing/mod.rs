@@ -26,20 +26,75 @@ pub fn multiply_operator() -> Operator {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum Literal {
-    UnsignedInt(u64),
-    Float(f64),
+pub enum ResolvableLiteral {
+    Unresolved(UnresolvedLiteral),
+    Resolved(ResolvedLiteral),
+}
+
+pub fn unresolved_resolvable_literal(literal :UnresolvedLiteral) -> ResolvableLiteral {
+    ResolvableLiteral::Unresolved(literal)
+}
+
+pub fn resolved_resolvable_literal(literal :ResolvedLiteral) -> ResolvableLiteral {
+    ResolvableLiteral::Resolved(literal)
+}
+
+pub fn get_resolved_literal(literal: &ResolvableLiteral) -> ResolvedLiteral {
+    if let ResolvableLiteral::Resolved(literal) = literal {
+        return literal.clone();
+    }
+    panic!("resolvable literal is not resolved")
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum UnresolvedLiteral {
+    Int { number: usize, is_negative: bool },
+    Float { number: f64, is_negative: bool },
     String(String)
 }
 
-pub fn unsigned_int_literal(number: u64) -> Literal {
-    Literal::UnsignedInt(number)
+pub fn unresolved_int_literal(number: usize, is_negative: bool) -> UnresolvedLiteral {
+    UnresolvedLiteral::Int { number, is_negative }
 }
 
-pub fn float_literal(number: f64) -> Literal {
-    Literal::Float(number)
+pub fn unresolved_float_literal(number: f64, is_negative: bool) -> UnresolvedLiteral {
+    UnresolvedLiteral::Float { number, is_negative }
 }
 
-pub fn string_literal(string: String) -> Literal {
-    Literal::String(string)
+pub fn unresolved_string_literal(string: String) -> UnresolvedLiteral {
+    UnresolvedLiteral::String(string)
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum ResolvedLiteral {
+    UnsignedInt64(u64),
+    UnsignedInt32(u32),
+    SignedInt64(i64),
+    SignedInt32(i32),
+    Float32(f32),
+    String(String)
+}
+
+pub fn resolved_unsigned_int_64_literal(value: u64) -> ResolvedLiteral {
+    ResolvedLiteral::UnsignedInt64(value)
+}
+
+pub fn resolved_unsigned_int_32_literal(value: u32) -> ResolvedLiteral {
+    ResolvedLiteral::UnsignedInt32(value)
+}
+
+pub fn resolved_signed_int_64_literal(value: i64) -> ResolvedLiteral {
+    ResolvedLiteral::SignedInt64(value)
+}
+
+pub fn resolved_signed_int_32_literal(value: i32) -> ResolvedLiteral {
+    ResolvedLiteral::SignedInt32(value)
+}
+
+pub fn resolved_float_32_literal(value: f32) -> ResolvedLiteral {
+    ResolvedLiteral::Float32(value)
+}
+
+pub fn resolved_string_literal(value: String) -> ResolvedLiteral {
+    ResolvedLiteral::String(value)
 }

@@ -57,7 +57,9 @@ pub fn user_defined_runtime_type_id(unit_id: CompilationUnitId) -> RuntimeTypeId
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum BuiltInType {
+    UnsignedInt32,
     SignedInt32,
+    SignedInt64,
     Float32,
     String,
     Boolean,
@@ -70,6 +72,14 @@ pub fn void_built_in_type() -> BuiltInType {
 
 pub fn signed_int_32_built_in_type() -> BuiltInType {
     BuiltInType::SignedInt32
+}
+
+pub fn signed_int_64_built_in_type() -> BuiltInType {
+    BuiltInType::SignedInt64
+}
+
+pub fn unsigned_int_32_built_in_type() -> BuiltInType {
+    BuiltInType::UnsignedInt32
 }
 
 pub fn float_32_built_in_type() -> BuiltInType {
@@ -108,7 +118,26 @@ pub fn signed_int_32_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(signed_int_32_built_in_type()),
         "s32".to_string(),
-        integer_type_item(),
+        signed_integer_type_item(),
+        resolved_type_size(4)
+    )
+}
+
+
+pub fn signed_int_64_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(signed_int_64_built_in_type()),
+        "s64".to_string(),
+        signed_integer_type_item(),
+        resolved_type_size(8)
+    )
+}
+
+pub fn unsigned_int_32_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(signed_int_32_built_in_type()),
+        "u32".to_string(),
+        unsigned_integer_type_item(),
         resolved_type_size(4)
     )
 }
@@ -117,6 +146,20 @@ pub fn signed_int_32_pointer_runtime_type() -> RuntimeType {
     pointer_runtime_type(
         built_in_type_pointer_runtime_type_id(signed_int_32_built_in_type()),
         signed_int_32_runtime_type()
+    )
+}
+
+pub fn signed_int_64_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(signed_int_64_built_in_type()),
+        signed_int_64_runtime_type()
+    )
+}
+
+pub fn unsigned_int_32_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(unsigned_int_32_built_in_type()),
+        unsigned_int_32_runtime_type()
     )
 }
 
@@ -135,7 +178,6 @@ pub fn float_32_pointer_runtime_type() -> RuntimeType {
         float_32_runtime_type()
     )
 }
-
 
 pub fn string_runtime_type() -> RuntimeType {
     create_type(
@@ -199,7 +241,7 @@ pub enum RuntimeTypeItem {
     None,
     ProcedureDefinition { arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers },
     Pointer { to_type: Box<RuntimeType> },
-    Int,
+    Int { is_signed: bool },
     Float,
     String,
     Bool,
@@ -220,8 +262,12 @@ pub fn pointer_type_item(to_type: Box<RuntimeType>) -> RuntimeTypeItem {
     RuntimeTypeItem::Pointer { to_type }
 }
 
-fn integer_type_item() -> RuntimeTypeItem {
-    RuntimeTypeItem::Int
+fn signed_integer_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::Int { is_signed: true }
+}
+
+fn unsigned_integer_type_item() -> RuntimeTypeItem {
+    RuntimeTypeItem::Int { is_signed: false }
 }
 
 fn float_type_item() -> RuntimeTypeItem {
