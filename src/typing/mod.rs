@@ -57,33 +57,59 @@ pub fn user_defined_runtime_type_id(unit_id: CompilationUnitId) -> RuntimeTypeId
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum BuiltInType {
+    UnsignedInt8,
+    SignedInt8,
+    UnsignedInt16,
+    SignedInt16,
     UnsignedInt32,
     SignedInt32,
+    UnsignedInt64,
     SignedInt64,
     Float32,
+    Float64,
     String,
     Boolean,
     Void
 }
 
-pub fn void_built_in_type() -> BuiltInType {
-    BuiltInType::Void
+pub fn unsigned_int_8_built_in_type() -> BuiltInType {
+    BuiltInType::UnsignedInt8
 }
 
-pub fn signed_int_32_built_in_type() -> BuiltInType {
-    BuiltInType::SignedInt32
+pub fn signed_int_8_built_in_type() -> BuiltInType {
+    BuiltInType::SignedInt8
 }
 
-pub fn signed_int_64_built_in_type() -> BuiltInType {
-    BuiltInType::SignedInt64
+pub fn unsigned_int_16_built_in_type() -> BuiltInType {
+    BuiltInType::UnsignedInt16
+}
+
+pub fn signed_int_16_built_in_type() -> BuiltInType {
+    BuiltInType::SignedInt16
 }
 
 pub fn unsigned_int_32_built_in_type() -> BuiltInType {
     BuiltInType::UnsignedInt32
 }
 
+pub fn signed_int_32_built_in_type() -> BuiltInType {
+    BuiltInType::SignedInt32
+}
+
+pub fn unsigned_int_64_built_in_type() -> BuiltInType {
+    BuiltInType::UnsignedInt64
+}
+
+pub fn signed_int_64_built_in_type() -> BuiltInType {
+    BuiltInType::SignedInt64
+}
+
 pub fn float_32_built_in_type() -> BuiltInType {
     BuiltInType::Float32
+}
+
+pub fn float_64_built_in_type() -> BuiltInType {
+    BuiltInType::Float64
 }
 
 pub fn string_built_in_type() -> BuiltInType {
@@ -92,6 +118,10 @@ pub fn string_built_in_type() -> BuiltInType {
 
 pub fn bool_built_in_type() -> BuiltInType {
     BuiltInType::Boolean
+}
+
+pub fn void_built_in_type() -> BuiltInType {
+    BuiltInType::Void
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -103,6 +133,7 @@ pub struct RuntimeType {
 }
 
 pub type RuntimeTypePointer = Shareable<RuntimeType>;
+pub type OptionalRuntimeTypePointer = Option<RuntimeTypePointer>;
 pub type RuntimeTypePointers = Vec<RuntimeTypePointer>;
 
 pub fn create_type(id: RuntimeTypeId, name: String, item: RuntimeTypeItem, size: TypeSize) -> RuntimeType {
@@ -114,45 +145,148 @@ pub fn create_type(id: RuntimeTypeId, name: String, item: RuntimeTypeItem, size:
     }
 }
 
-pub fn signed_int_32_runtime_type() -> RuntimeType {
+pub fn unsigned_int_8_runtime_type() -> RuntimeType {
     create_type(
-        built_in_type_runtime_type_id(signed_int_32_built_in_type()),
-        "s32".to_string(),
-        signed_integer_type_item(),
-        resolved_type_size(4)
+        built_in_type_runtime_type_id(signed_int_8_built_in_type()),
+        SOURCE_TYPE_U8.to_string(),
+        unsigned_integer_type_item(),
+        resolved_type_size(1)
     )
 }
 
-
-pub fn signed_int_64_runtime_type() -> RuntimeType {
+pub fn signed_int_8_runtime_type() -> RuntimeType {
     create_type(
-        built_in_type_runtime_type_id(signed_int_64_built_in_type()),
-        "s64".to_string(),
+        built_in_type_runtime_type_id(signed_int_8_built_in_type()),
+        SOURCE_TYPE_S8.to_string(),
         signed_integer_type_item(),
-        resolved_type_size(8)
+        resolved_type_size(1)
+    )
+}
+
+pub fn unsigned_int_16_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(signed_int_16_built_in_type()),
+        SOURCE_TYPE_U16.to_string(),
+        unsigned_integer_type_item(),
+        resolved_type_size(2)
+    )
+}
+
+pub fn signed_int_16_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(signed_int_16_built_in_type()),
+        SOURCE_TYPE_S16.to_string(),
+        signed_integer_type_item(),
+        resolved_type_size(2)
     )
 }
 
 pub fn unsigned_int_32_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(signed_int_32_built_in_type()),
-        "u32".to_string(),
+        SOURCE_TYPE_U32.to_string(),
         unsigned_integer_type_item(),
         resolved_type_size(4)
     )
 }
 
-pub fn signed_int_32_pointer_runtime_type() -> RuntimeType {
-    pointer_runtime_type(
-        built_in_type_pointer_runtime_type_id(signed_int_32_built_in_type()),
-        signed_int_32_runtime_type()
+pub fn signed_int_32_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(signed_int_32_built_in_type()),
+        SOURCE_TYPE_S32.to_string(),
+        signed_integer_type_item(),
+        resolved_type_size(4)
     )
 }
 
-pub fn signed_int_64_pointer_runtime_type() -> RuntimeType {
+pub fn unsigned_int_64_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(unsigned_int_64_built_in_type()),
+        SOURCE_TYPE_U64.to_string(),
+        unsigned_integer_type_item(),
+        resolved_type_size(8)
+    )
+}
+
+pub fn signed_int_64_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(signed_int_64_built_in_type()),
+        SOURCE_TYPE_S64.to_string(),
+        signed_integer_type_item(),
+        resolved_type_size(8)
+    )
+}
+
+pub fn float_32_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(float_32_built_in_type()),
+        SOURCE_TYPE_F32.to_string(),
+        float_type_item(),
+        resolved_type_size(4)
+    )
+}
+
+pub fn float_64_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(float_64_built_in_type()),
+        SOURCE_TYPE_F64.to_string(),
+        float_type_item(),
+        resolved_type_size(8)
+    )
+}
+
+pub fn string_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(string_built_in_type()),
+        SOURCE_TYPE_STRING.to_string(),
+        string_type_item(),
+        resolved_type_size(4)
+    )
+}
+
+pub fn bool_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(bool_built_in_type()),
+        SOURCE_TYPE_BOOL.to_string(),
+        bool_type_item(),
+        resolved_type_size(1)
+    )
+}
+
+pub fn void_runtime_type() -> RuntimeType {
+    create_type(
+        built_in_type_runtime_type_id(void_built_in_type()),
+        SOURCE_TYPE_VOID.to_string(),
+        void_type_item(),
+        not_required_type_size()
+    )
+}
+
+pub fn unsigned_int_8_pointer_runtime_type() -> RuntimeType {
     pointer_runtime_type(
-        built_in_type_pointer_runtime_type_id(signed_int_64_built_in_type()),
-        signed_int_64_runtime_type()
+        built_in_type_pointer_runtime_type_id(unsigned_int_8_built_in_type()),
+        unsigned_int_8_runtime_type()
+    )
+}
+
+pub fn signed_int_8_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(signed_int_8_built_in_type()),
+        signed_int_8_runtime_type()
+    )
+}
+
+pub fn unsigned_int_16_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(unsigned_int_16_built_in_type()),
+        unsigned_int_16_runtime_type()
+    )
+}
+
+pub fn signed_int_16_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(signed_int_16_built_in_type()),
+        signed_int_16_runtime_type()
     )
 }
 
@@ -163,12 +297,24 @@ pub fn unsigned_int_32_pointer_runtime_type() -> RuntimeType {
     )
 }
 
-pub fn float_32_runtime_type() -> RuntimeType {
-    create_type(
-        built_in_type_runtime_type_id(float_32_built_in_type()),
-        "f32".to_string(),
-        float_type_item(),
-        resolved_type_size(4)
+pub fn signed_int_32_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(signed_int_32_built_in_type()),
+        signed_int_32_runtime_type()
+    )
+}
+
+pub fn unsigned_int_64_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(unsigned_int_64_built_in_type()),
+        unsigned_int_64_runtime_type()
+    )
+}
+
+pub fn signed_int_64_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(signed_int_64_built_in_type()),
+        signed_int_64_runtime_type()
     )
 }
 
@@ -179,12 +325,10 @@ pub fn float_32_pointer_runtime_type() -> RuntimeType {
     )
 }
 
-pub fn string_runtime_type() -> RuntimeType {
-    create_type(
-        built_in_type_runtime_type_id(string_built_in_type()),
-        "string".to_string(),
-        string_type_item(),
-        resolved_type_size(4)
+pub fn float_64_pointer_runtime_type() -> RuntimeType {
+    pointer_runtime_type(
+        built_in_type_pointer_runtime_type_id(float_64_built_in_type()),
+        float_64_runtime_type()
     )
 }
 
@@ -195,28 +339,10 @@ pub fn string_pointer_runtime_type() -> RuntimeType {
     )
 }
 
-pub fn bool_runtime_type() -> RuntimeType {
-    create_type(
-        built_in_type_runtime_type_id(bool_built_in_type()),
-        "bool".to_string(),
-        bool_type_item(),
-        resolved_type_size(1)
-    )
-}
-
 pub fn bool_pointer_runtime_type() -> RuntimeType {
     pointer_runtime_type(
         built_in_type_pointer_runtime_type_id(bool_built_in_type()),
         bool_runtime_type()
-    )
-}
-
-pub fn void_runtime_type() -> RuntimeType {
-    create_type(
-        built_in_type_runtime_type_id(void_built_in_type()),
-        "void".to_string(),
-        void_type_item(),
-        not_required_type_size()
     )
 }
 

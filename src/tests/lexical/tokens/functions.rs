@@ -159,10 +159,38 @@ fn compound_get_for_function_declaration_pointer_args() {
 
 #[test]
 fn compound_get_for_function_declaration_other_built_in_type_args() {
-    let mut lexer = lex("SomeFunction :: (a: u32, b: s32, c: s64) { }");
+    let mut lexer = lex("SomeFunction :: (a: u8, b: s8, c: u16, d: s16, e: u32, f: s32, g: u64, h: s64, g: float32, h: float64, i: bool) { }");
 
     eat_next_token(&mut lexer);
     eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt8));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt8));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt16));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt16));
+
     eat_next_token(&mut lexer);    
     eat_next_token(&mut lexer);    
     eat_next_token(&mut lexer);    
@@ -176,6 +204,12 @@ fn compound_get_for_function_declaration_other_built_in_type_args() {
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt64));
 
     eat_next_token(&mut lexer);    
     eat_next_token(&mut lexer);    
@@ -183,6 +217,144 @@ fn compound_get_for_function_declaration_other_built_in_type_args() {
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt64));
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float32));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float64));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Boolean));
+
+}
+
+
+#[test]
+fn compound_get_for_function_declaration_other_built_in_pointer_type_args() {
+    let mut lexer = lex("SomeFunction :: (a: *u8, b: *s8, c: *u16, d: *s16, e: *u32, f: *s32, g: *u64, h: *s64, g: *float32, h: *float64, i: *bool) { }");
+
+    eat_next_token(&mut lexer);
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt8));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt8));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt16));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt16));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt32));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt32));
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);   
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer); 
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::UnsignedInt64));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::SignedInt64));
+    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float32));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Float64));
+
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+    eat_next_token(&mut lexer);    
+        
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Pointer);
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(BuiltInType::Boolean));
 
 }
 

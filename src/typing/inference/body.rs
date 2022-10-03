@@ -55,24 +55,20 @@ pub fn perform_typing_for_procedure_body(
             AbstractSyntaxNodeItem::Assignment { name, value, assignment_type: type_id } => 
                 perform_typing_for_procedure_body_assignment(ctx, type_repository, &mut local_type_map, name, value, type_id),
             AbstractSyntaxNodeItem::Return { args } => {
-                perform_typing_for_expression_args(ctx, type_repository, &mut local_type_map, args, &local_return_types);
+                perform_typing_for_procedure_body_return_args(ctx, type_repository, &mut local_type_map, args, &local_return_types);
             },
             item => panic!("{:?} is not viable procedure body statement", item)
         }
     }    
 }
 
-fn perform_typing_for_expression_args(ctx: &CompilationMessageContext,
+fn perform_typing_for_procedure_body_return_args(ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &mut LocalTypeMap,
     args: &mut AbstractSyntaxChildNodes,
     local_return_types: &RuntimeTypePointers
 ) {
-    let returned_arg_types = perform_typing_for_args(ctx, type_repository, local_type_map, args);
-
-    if &returned_arg_types != local_return_types {
-        todo!("handle differences between what is returned and procedure header return types")
-    }
+    perform_typing_for_known_target_type_args(ctx, type_repository, local_type_map, local_return_types, args);
 }
 
 fn perform_typing_for_procedure_body_argument_declaration(local_type_map: &mut LocalTypeMap, name: &mut String, arg_type: &mut ResolvableType) {
@@ -106,7 +102,7 @@ fn perform_typing_for_procedure_body_assignment(
     value: &mut AbstractSyntaxNode,
     resolvable_type: &mut ResolvableType
 ) {
-    let resolved_type = perform_typing_for_expression(ctx, type_repository, local_type_map, value);
+    let resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, value);
     
     if let Some(resolved_type) = resolved_type {
         *resolvable_type = resolved_resolvable_type(resolved_type.clone());
@@ -122,7 +118,7 @@ fn perform_typing_for_procedure_call_return_first_return_type(
     name: &mut String, 
     type_id: &mut ResolvableType
 ) -> RuntimeTypePointers {  
-    let resolved_arg_types = perform_typing_for_args(ctx, type_repository, local_type_map, args);
+    let resolved_arg_types = perform_typing_for_unknown_target_type_args(ctx, type_repository, local_type_map, args);
     
     let resolved_type = find_type(
         create_find_type_criteria(name.to_string(), resolved_arg_types),
@@ -139,48 +135,130 @@ fn perform_typing_for_procedure_call_return_first_return_type(
     vec!()
 }
 
-fn perform_typing_for_args(
+fn perform_typing_for_unknown_target_type_args(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &LocalTypeMap,
     args: &mut AbstractSyntaxChildNodes
-) -> RuntimeTypePointers {
-    let mut resolved_arg_types = vec!();
-
+)-> RuntimeTypePointers {
     for arg in args {
-        perform_typing_for_arg(ctx, type_repository, local_type_map, &mut resolved_arg_types, arg)
+        perform_typing_for_unknown_target_type_arg(ctx, type_repository, local_type_map, arg);
     }
-
-    resolved_arg_types
+    todo!()
 }
 
-fn perform_typing_for_arg(
+fn perform_typing_for_unknown_target_type_arg(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &LocalTypeMap,
-    resolved_arg_types: &mut RuntimeTypePointers,
+    arg: &mut AbstractSyntaxNode
+)-> RuntimeTypePointers {
+    match arg.item_mut() {
+        AbstractSyntaxNodeItem::Argument { expr, arg_type } => {
+            todo!()
+        }
+        _ => {}
+    }
+    todo!()
+}
+
+fn perform_typing_for_known_target_type_args(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    known_target_types: &RuntimeTypePointers,
+    args: &mut AbstractSyntaxChildNodes
+) {
+    if args.len() != known_target_types.len() {
+        todo!("error output where args and known types are not same length")
+    }
+
+    for arg_index in 0..args.len() {
+        perform_typing_for_known_target_type_arg(
+            ctx,
+            type_repository,
+            local_type_map,
+            &known_target_types[arg_index],
+            &mut args[arg_index]
+        );
+    }
+}
+
+fn perform_typing_for_known_target_type_arg(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    known_target_type: &RuntimeTypePointer,
     arg: &mut AbstractSyntaxNode
 ) {
     match arg.item_mut() {
-        AbstractSyntaxNodeItem::Argument { expr, arg_type: resolvable_type } => {
-            if let Some(resolved_type) = perform_typing_for_arg_expression(ctx, type_repository, local_type_map, expr, resolvable_type) {
-                resolved_arg_types.push(resolved_type.clone());
-            }
+        AbstractSyntaxNodeItem::Argument { expr, arg_type } => {
+            perform_typing_for_known_target_type_expression(ctx, type_repository, local_type_map, expr, known_target_type);
+            *arg_type = resolved_resolvable_type(known_target_type.clone());
         }
         _ => {}
     }
 }
 
-pub fn perform_typing_for_arg_expression(
+pub fn perform_typing_for_known_target_type_expression(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &LocalTypeMap,
     expr: &mut AbstractSyntaxNode,
-    expected_arg_type: &mut ResolvableType
-)  -> Option<RuntimeTypePointer> { 
+    known_target_type: &RuntimeTypePointer
+) { 
+    match expr.item_mut() {
+        AbstractSyntaxNodeItem::Literal(literal) => {
+            perform_typing_for_known_target_type_expression_literal(literal, known_target_type);
+        },
+        AbstractSyntaxNodeItem::Identifier(name) => {
+            perform_typing_for_expression_identifier(name, local_type_map);
+        },
+        AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type, ..} => {
+            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, expression_type);
+        },
+        AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type } => {
+            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, procedure_call_type);
+        },
+        _ => {}
+    }
+}
+
+fn perform_typing_for_known_target_type_expression_literal(
+    literal: &mut ResolvableLiteral,
+    known_target_type: &RuntimeTypePointer
+)  {
+    if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
+        match unresolved_literal {
+            UnresolvedLiteral::Int { number, is_negative } => {
+                if let RuntimeTypeItem::Int { is_signed } = known_target_type.item {
+
+                }
+            },
+            UnresolvedLiteral::Float { number, is_negative } => { 
+                if let RuntimeTypeItem::Float = known_target_type.item {
+                    
+                }
+            },
+            UnresolvedLiteral::String(value) => {
+                if let RuntimeTypeItem::String = known_target_type.item {
+                    *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
+                }
+            },
+        }
+    }
+    panic!("literal should not be resolved at this point")
+}
+
+pub fn perform_typing_for_smallest_possible_inferred_type_expression(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &LocalTypeMap,
+    expr: &mut AbstractSyntaxNode
+)  -> OptionalRuntimeTypePointer { 
     match expr.item_mut() {
         AbstractSyntaxNodeItem::Literal(literal) =>
-            perform_typing_for_arg_expression_literal(literal, expected_arg_type),
+            perform_typing_for_smallest_possible_inferred_expression_literal(literal),
         AbstractSyntaxNodeItem::Identifier(name) =>
             perform_typing_for_expression_identifier(name, local_type_map),
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
@@ -191,7 +269,7 @@ pub fn perform_typing_for_arg_expression(
     }
 }
 
-fn perform_typing_for_arg_expression_literal(literal: &mut ResolvableLiteral, expected_arg_type: &mut ResolvableType) -> Option<RuntimeTypePointer> {
+fn perform_typing_for_smallest_possible_inferred_expression_literal(literal: &mut ResolvableLiteral) -> Option<RuntimeTypePointer> {
     if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
         match unresolved_literal {
             UnresolvedLiteral::Int { number, is_negative } => {
@@ -199,24 +277,24 @@ fn perform_typing_for_arg_expression_literal(literal: &mut ResolvableLiteral, ex
             },
             UnresolvedLiteral::Float { number, is_negative } => { 
                 todo!()
-            },
+            }
             UnresolvedLiteral::String(value) => {
                 todo!()
             },
         }
     }
-    panic!("literal should not be resolved at this point")
+    panic!("literal should not be resaolved at this point")
 }
 
-pub fn perform_typing_for_expression(
+pub fn perform_typing_for_inferred_type_expression(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &LocalTypeMap,
     expr: &mut AbstractSyntaxNode
-)  -> Option<RuntimeTypePointer> { 
+)  -> OptionalRuntimeTypePointer { 
     match expr.item_mut() {
         AbstractSyntaxNodeItem::Literal(literal) =>
-            perform_typing_for_expression_literal(literal),
+            perform_typing_for_inferred_type_expression_literal(literal),
         AbstractSyntaxNodeItem::Identifier(name) =>
             perform_typing_for_expression_identifier(name, local_type_map),
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
@@ -227,7 +305,7 @@ pub fn perform_typing_for_expression(
     }
 }
 
-fn perform_typing_for_expression_literal(literal: &mut ResolvableLiteral) -> Option<RuntimeTypePointer> {
+fn perform_typing_for_inferred_type_expression_literal(literal: &mut ResolvableLiteral) -> OptionalRuntimeTypePointer {
     if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
         match unresolved_literal {
             UnresolvedLiteral::Int { number, is_negative } => {
@@ -247,7 +325,7 @@ fn perform_typing_for_expression_literal(literal: &mut ResolvableLiteral) -> Opt
     panic!("literal should not be resaolved at this point")
 }
 
-fn perform_typing_for_expression_identifier(name: &mut String, local_type_map: &LocalTypeMap) -> Option<RuntimeTypePointer> {
+fn perform_typing_for_expression_identifier(name: &mut String, local_type_map: &LocalTypeMap) -> OptionalRuntimeTypePointer {
     if let Some(local_identifier_type) = get_type_for_local_identifier(local_type_map, &name) {
         return Some(local_identifier_type.clone());
     } else {
@@ -262,9 +340,9 @@ fn perform_typing_for_expression_expression(
     lhs: &mut AbstractSyntaxNode,
     rhs: &mut AbstractSyntaxNode,
     type_id: &mut ResolvableType
-) -> Option<RuntimeTypePointer> {
-    let lhs_resolved_type = perform_typing_for_expression(ctx, type_repository, local_type_map, lhs);
-    let rhs_resolved_type = perform_typing_for_expression(ctx, type_repository, local_type_map, rhs);
+) -> OptionalRuntimeTypePointer {
+    let lhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, lhs);
+    let rhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, rhs);
     
     if lhs_resolved_type != rhs_resolved_type {
         todo!("deal with different types on either side of expression")
@@ -285,7 +363,7 @@ fn perform_typing_for_expression_procedure_call(
     name: &mut String,
     args: &mut AbstractSyntaxChildNodes,
     type_id: &mut ResolvableType
-) -> Option<RuntimeTypePointer> {
+) -> OptionalRuntimeTypePointer {
     let resolved_types = perform_typing_for_procedure_call_return_first_return_type(
         ctx,
         type_repository,

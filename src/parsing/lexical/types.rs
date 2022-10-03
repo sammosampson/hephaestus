@@ -21,10 +21,16 @@ fn to_runtime_type(from: BuiltInType, is_pointer: bool) -> RuntimeType {
 
 fn to_runtime_non_pointer_type(from: BuiltInType) -> RuntimeType {
     match from {
-        BuiltInType::SignedInt32 => signed_int_32_runtime_type(),
-        BuiltInType::SignedInt64 => signed_int_64_runtime_type(),
+        BuiltInType::UnsignedInt8 => unsigned_int_8_runtime_type(),
+        BuiltInType::SignedInt8 => signed_int_8_runtime_type(),
+        BuiltInType::UnsignedInt16 => unsigned_int_16_runtime_type(),
+        BuiltInType::SignedInt16 => signed_int_16_runtime_type(),
         BuiltInType::UnsignedInt32 => unsigned_int_32_runtime_type(),
+        BuiltInType::SignedInt32 => signed_int_32_runtime_type(),
+        BuiltInType::UnsignedInt64 => unsigned_int_64_runtime_type(),
+        BuiltInType::SignedInt64 => signed_int_64_runtime_type(),
         BuiltInType::Float32 => float_32_runtime_type(),
+        BuiltInType::Float64 => float_64_runtime_type(),
         BuiltInType::String => string_runtime_type(),
         BuiltInType::Void => void_runtime_type(),
         BuiltInType::Boolean => bool_runtime_type(),
@@ -33,10 +39,16 @@ fn to_runtime_non_pointer_type(from: BuiltInType) -> RuntimeType {
 
 fn to_runtime_pointer_type(from: BuiltInType) -> RuntimeType {
     match from {
-        BuiltInType::SignedInt32 => signed_int_32_pointer_runtime_type(),
-        BuiltInType::SignedInt64 => signed_int_64_pointer_runtime_type(),
+        BuiltInType::UnsignedInt8 => unsigned_int_8_pointer_runtime_type(),
+        BuiltInType::SignedInt8 => signed_int_8_pointer_runtime_type(),
+        BuiltInType::UnsignedInt16 => unsigned_int_16_pointer_runtime_type(),
+        BuiltInType::SignedInt16 => signed_int_16_pointer_runtime_type(),
         BuiltInType::UnsignedInt32 => unsigned_int_32_pointer_runtime_type(),
+        BuiltInType::SignedInt32 => signed_int_32_pointer_runtime_type(),
+        BuiltInType::UnsignedInt64 => unsigned_int_64_pointer_runtime_type(),
+        BuiltInType::SignedInt64 => signed_int_64_pointer_runtime_type(),
         BuiltInType::Float32 => float_32_pointer_runtime_type(),
+        BuiltInType::Float64 => float_64_pointer_runtime_type(),
         BuiltInType::String => string_pointer_runtime_type(),
         BuiltInType::Void => void_pointer_runtime_type(),
         BuiltInType::Boolean => bool_pointer_runtime_type(),
@@ -45,24 +57,36 @@ fn to_runtime_pointer_type(from: BuiltInType) -> RuntimeType {
 
 type BuiltInTypeOption = Option<BuiltInType>;
 
-const SOURCE_TYPE_INT: &str = "int";
-const SOURCE_TYPE_S64: &str = "s64";
-const SOURCE_TYPE_S32: &str = "s32";
-const SOURCE_TYPE_U32: &str = "u32";
-const SOURCE_TYPE_FLOAT: &str = "float";
-const SOURCE_TYPE_F32: &str = "f32";
-const SOURCE_TYPE_VOID: &str = "void";
-const SOURCE_TYPE_STRING: &str = "string";
-const SOURCE_TYPE_BOOL: &str = "bool";
+pub const SOURCE_TYPE_INT: &str = "int";
+pub const SOURCE_TYPE_FLOAT: &str = "float";
+pub const SOURCE_TYPE_U8: &str = "u8";
+pub const SOURCE_TYPE_S8: &str = "s8";
+pub const SOURCE_TYPE_U16: &str = "u16";
+pub const SOURCE_TYPE_S16: &str = "s16";
+pub const SOURCE_TYPE_U32: &str = "u32";
+pub const SOURCE_TYPE_S32: &str = "s32";
+pub const SOURCE_TYPE_U64: &str = "u64";
+pub const SOURCE_TYPE_S64: &str = "s64";
+pub const SOURCE_TYPE_F32: &str = "float32";
+pub const SOURCE_TYPE_F64: &str = "float64";
+pub const SOURCE_TYPE_VOID: &str = "void";
+pub const SOURCE_TYPE_STRING: &str = "string";
+pub const SOURCE_TYPE_BOOL: &str = "bool";
 
 pub fn parse_built_in_type(from: &str) -> BuiltInTypeOption {
     match from {
+        SOURCE_TYPE_U8 => Some(unsigned_int_8_built_in_type()), 
+        SOURCE_TYPE_S8 => Some(signed_int_8_built_in_type()), 
+        SOURCE_TYPE_U16 => Some(unsigned_int_16_built_in_type()), 
+        SOURCE_TYPE_S16 => Some(signed_int_16_built_in_type()), 
         SOURCE_TYPE_U32 => Some(unsigned_int_32_built_in_type()), 
         SOURCE_TYPE_S32 => Some(signed_int_32_built_in_type()), 
+        SOURCE_TYPE_U64 => Some(unsigned_int_64_built_in_type()), 
         SOURCE_TYPE_S64 => Some(signed_int_64_built_in_type()), 
         SOURCE_TYPE_INT => Some(signed_int_64_built_in_type()),
         SOURCE_TYPE_FLOAT => Some(float_32_built_in_type()),
         SOURCE_TYPE_F32 => Some(float_32_built_in_type()),
+        SOURCE_TYPE_F64 => Some(float_64_built_in_type()),
         SOURCE_TYPE_STRING => Some(string_built_in_type()),
         SOURCE_TYPE_BOOL => Some(bool_built_in_type()),
         SOURCE_TYPE_VOID => Some(void_built_in_type()),

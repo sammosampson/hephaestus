@@ -44,7 +44,7 @@ pub fn perform_typing(
 
     match unit.tree.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } => {
-            perform_typing_for_expression(ctx, type_repository, &create_local_type_map(), expr);        
+            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_local_type_map(), expr);        
         },
         AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args, .. } => {
             perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args);                      

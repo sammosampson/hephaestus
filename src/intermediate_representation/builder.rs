@@ -47,7 +47,8 @@ fn build_bytecode_at_top_root_const(ir: &mut IntermediateRepresentation, name: &
     match value.item_ref() {
         AbstractSyntaxNodeItem::ForeignSystemLibrary { library } =>
             build_bytecode_at_foreign_system_library_const(ir, library),
-        AbstractSyntaxNodeItem::Literal(literal) => build_bytecode_at_literal_const(ir, &get_resolved_literal(literal)),        
+        AbstractSyntaxNodeItem::Literal(literal) =>
+            build_bytecode_at_literal_const(ir, &get_resolved_literal(literal)),        
         _ => todo!()
     }
 }
@@ -68,9 +69,9 @@ fn build_bytecode_at_foreign_system_library_literal_const(ir: &mut IntermediateR
     }
 }
 
-fn build_bytecode_at_literal_const(ir: &mut IntermediateRepresentation, library: &ResolvedLiteral) {
+fn build_bytecode_at_literal_const(_ir: &mut IntermediateRepresentation, library: &ResolvedLiteral) {
     match library {
-        ResolvedLiteral::UnsignedInt32(number) => todo!("const int number literals"),
+        ResolvedLiteral::UnsignedInt32(_number) => todo!("const int number literals"),
         _ => todo!("const none int number literals")
     }
 }
