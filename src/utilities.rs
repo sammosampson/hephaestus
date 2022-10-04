@@ -1,48 +1,38 @@
-use std::num::*;
+use std::{num::*, ops::Neg};
 
 pub fn string(value: &str) -> String {
     value.to_string()
 }
 
 type ParseUnsignedIntResult = Result<usize, ParseIntError>;
-type ParseFloatResult = Result<f64, ParseFloatError>;
+type ParseFloat64Result = Result<f64, ParseFloatError>;
+type ParseFloat32Result = Result<f32, ParseFloatError>;
 
 pub fn parse_number_from_string(from: &str) -> ParseUnsignedIntResult {
     from.parse::<usize>()
 }
 
-pub fn parse_float_from_string(from: &str) -> ParseFloatResult {
+pub fn parse_float_32_from_string(from: &str) -> ParseFloat32Result {
+    from.parse::<f32>()
+}
+
+pub fn parse_float_64_from_string(from: &str) -> ParseFloat64Result {
     from.parse::<f64>()
 }
 
-
-pub fn parse_signed_int_32_from_number(from: usize, is_negative: bool) -> i32 {
-    let result = from as i32;
-
-    if is_negative {
-        return -result;
+pub fn try_parse_signed_number_from_number<TFrom, TTo: TryFrom<TFrom> + Neg<Output = TTo>>(from: TFrom, is_negative: bool) -> Option<TTo> {
+    if let Ok(mut converted_number) = TTo::try_from(from) {
+        if is_negative {
+            converted_number = converted_number.neg();
+        }
+        return Some(converted_number)
     }
-    
-    result
+    None
 }
 
-pub fn parse_signed_int_64_from_number(from: usize, is_negative: bool) -> i64 {
-    let result = from as i64;
-
-    if is_negative {
-        return -result;
+pub fn try_parse_unsigned_number_from_number<TFrom, TTo: TryFrom<TFrom>>(from: TFrom) -> Option<TTo> {
+    if let Ok(converted_number) = TTo::try_from(from) {
+        return Some(converted_number);
     }
-    
-    result
-}
-
-
-pub fn parse_float_32_from_number(from: f64, is_negative: bool) -> f32 {
-    let result = from as f32;
-
-    if is_negative {
-        return -result;
-    }
-    
-    result
+    None
 }

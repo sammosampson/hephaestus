@@ -46,7 +46,7 @@ fn compound_get_for_variable_initial_assignment_to_float() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::InitialiseAssignValue));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Float { number: 1.0, is_negative: false }));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Float32 { number: 1.0, is_negative: false }));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));

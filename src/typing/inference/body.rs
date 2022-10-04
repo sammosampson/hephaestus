@@ -232,22 +232,142 @@ fn perform_typing_for_known_target_type_expression_literal(
         match unresolved_literal {
             UnresolvedLiteral::Int { number, is_negative } => {
                 if let RuntimeTypeItem::Int { is_signed } = known_target_type.item {
-
+                    if let TypeSize::Resolved { size_in_bytes } = known_target_type.size {
+                        let resolved = match size_in_bytes {
+                            1 => resolve_to_int_8_literal_if_possible(*number, *is_negative, is_signed),
+                            2 => resolve_to_int_16_literal_if_possible(*number, *is_negative, is_signed),
+                            4 => resolve_to_int_32_literal_if_possible(*number, *is_negative, is_signed),
+                            8 => resolve_to_int_64_literal_if_possible(*number, *is_negative, is_signed),
+                            _ => panic!("type size in bytes invalid")
+                        };
+                        if let Some(resolved) = resolved {
+                            *literal = resolved_resolvable_literal(resolved);
+                        } else {
+                            panic!("literal value is too large for target type")
+                        }
+                    } else {
+                        panic!("target type size is not resolved")
+                    }
+                } else {
+                    panic!("literal value is not for target type")
                 }
             },
-            UnresolvedLiteral::Float { number, is_negative } => { 
+            UnresolvedLiteral::Float32 { number, is_negative } => { 
                 if let RuntimeTypeItem::Float = known_target_type.item {
-                    
+                    if let TypeSize::Resolved { size_in_bytes } = known_target_type.size {
+                        let resolved = match size_in_bytes {
+                            4 => resolve_to_float_32_literal_if_possible(*number, *is_negative),
+                            8 => resolve_to_float_64_literal_if_possible(*number as f64, *is_negative),
+                            _ => panic!("type size in bytes invalid")
+                        };
+                        if let Some(resolved) = resolved {
+                            *literal = resolved_resolvable_literal(resolved);
+                        } else {
+                            panic!("literal value is too large for target type")
+                        }
+                    } else {
+                        panic!("target type size is not resolved")
+                    }
+                } else {
+                    panic!("literal value is not for target type")
+                }
+            },
+            UnresolvedLiteral::Float64 { number, is_negative } => { 
+                if let RuntimeTypeItem::Float = known_target_type.item {
+                    if let TypeSize::Resolved { size_in_bytes } = known_target_type.size {
+                        let resolved = match size_in_bytes {
+                            8 => resolve_to_float_64_literal_if_possible(*number, *is_negative),
+                            _ => panic!("type size in bytes invalid")
+                        };
+                        if let Some(resolved) = resolved {
+                            *literal = resolved_resolvable_literal(resolved);
+                        } else {
+                            panic!("literal value is too large for target type")
+                        }
+                    } else {
+                        panic!("target type size is not resolved")
+                    }
+                } else {
+                    panic!("literal value is not for target type")
                 }
             },
             UnresolvedLiteral::String(value) => {
                 if let RuntimeTypeItem::String = known_target_type.item {
                     *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
+                } else {
+                    panic!("literal value is not for target type")
                 }
             },
         }
     }
     panic!("literal should not be resolved at this point")
+}
+
+fn resolve_to_int_8_literal_if_possible(number: usize, is_negative: bool, is_signed: bool) -> Option<ResolvedLiteral> {
+    if is_signed {
+        if let Some(converted_number) = try_parse_signed_number_from_number(number, is_negative) {
+            return Some(ResolvedLiteral::SignedInt8(converted_number));
+        }
+    } else {
+        if let Some(converted_number) = try_parse_unsigned_number_from_number(number) {
+            return Some(ResolvedLiteral::UnsignedInt8(converted_number));
+        }
+    }
+    None
+}
+
+fn resolve_to_int_16_literal_if_possible(number: usize, is_negative: bool, is_signed: bool) -> Option<ResolvedLiteral> {
+    if is_signed {
+        if let Some(converted_number) = try_parse_signed_number_from_number(number, is_negative) {
+            return Some(ResolvedLiteral::SignedInt16(converted_number));
+        }
+    } else {
+        if let Some(converted_number) = try_parse_unsigned_number_from_number(number) {
+            return Some(ResolvedLiteral::UnsignedInt16(converted_number));
+        }
+    }
+    None
+}
+
+fn resolve_to_int_32_literal_if_possible(number: usize, is_negative: bool, is_signed: bool) -> Option<ResolvedLiteral> {
+    if is_signed {
+        if let Some(converted_number) = try_parse_signed_number_from_number(number, is_negative) {
+            return Some(ResolvedLiteral::SignedInt32(converted_number));
+        }
+    } else {
+        if let Some(converted_number) = try_parse_unsigned_number_from_number(number) {
+            return Some(ResolvedLiteral::UnsignedInt32(converted_number));
+        }
+    }
+    None
+}
+
+fn resolve_to_int_64_literal_if_possible(number: usize, is_negative: bool, is_signed: bool) -> Option<ResolvedLiteral> {
+    if is_signed {
+        if let Some(converted_number) = try_parse_signed_number_from_number(number, is_negative) {
+            return Some(ResolvedLiteral::SignedInt64(converted_number));
+        }
+    } else {
+        if let Some(converted_number) = try_parse_unsigned_number_from_number(number) {
+            return Some(ResolvedLiteral::UnsignedInt64(converted_number));
+        }
+    }
+    None
+}
+
+
+fn resolve_to_float_32_literal_if_possible(number: f32, is_negative: bool) -> Option<ResolvedLiteral> {
+    if let Some(converted_number) = try_parse_signed_number_from_number(number, is_negative) {
+        return Some(ResolvedLiteral::Float32(converted_number));
+    }
+    None
+}
+
+fn resolve_to_float_64_literal_if_possible(number: f64, is_negative: bool) -> Option<ResolvedLiteral> {
+    if let Some(converted_number) = try_parse_signed_number_from_number(number, is_negative) {
+        return Some(ResolvedLiteral::Float64(converted_number));
+    }
+    None
 }
 
 pub fn perform_typing_for_smallest_possible_inferred_type_expression(
@@ -275,9 +395,12 @@ fn perform_typing_for_smallest_possible_inferred_expression_literal(literal: &mu
             UnresolvedLiteral::Int { number, is_negative } => {
                 todo!()
             },
-            UnresolvedLiteral::Float { number, is_negative } => { 
+            UnresolvedLiteral::Float32 { number, is_negative } => { 
                 todo!()
-            }
+            },
+            UnresolvedLiteral::Float64 { number, is_negative } => { 
+                todo!()
+            },
             UnresolvedLiteral::String(value) => {
                 todo!()
             },
@@ -309,12 +432,16 @@ fn perform_typing_for_inferred_type_expression_literal(literal: &mut ResolvableL
     if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
         match unresolved_literal {
             UnresolvedLiteral::Int { number, is_negative } => {
-                *literal = resolved_resolvable_literal(resolved_signed_int_64_literal(parse_signed_int_64_from_number(*number, *is_negative)));
+                *literal = resolved_resolvable_literal(resolved_signed_int_64_literal(try_parse_signed_number_from_number(*number, *is_negative).unwrap()));
                 return Some(create_shareable(signed_int_64_runtime_type()));
             },
-            UnresolvedLiteral::Float { number, is_negative } => { 
-                *literal = resolved_resolvable_literal(resolved_float_32_literal(parse_float_32_from_number(*number, *is_negative)));
+            UnresolvedLiteral::Float32 { number, is_negative } => { 
+                *literal = resolved_resolvable_literal(resolved_float_32_literal(try_parse_signed_number_from_number(*number, *is_negative).unwrap()));
                 return Some(create_shareable(float_32_runtime_type()));
+            },
+            UnresolvedLiteral::Float64 { number, is_negative } => { 
+                *literal = resolved_resolvable_literal(resolved_float_64_literal(try_parse_signed_number_from_number(*number, *is_negative).unwrap()));
+                return Some(create_shareable(float_64_runtime_type()));
             }
             UnresolvedLiteral::String(value) => {
                 *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));

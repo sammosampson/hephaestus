@@ -94,7 +94,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(121, 5, 12),
-                                            literal_item(unresolved_resolvable_literal(unresolved_float_literal(1.0, false)))
+                                            literal_item(unresolved_resolvable_literal(unresolved_float_32_literal(1.0, false)))
                                         ),
                                         unresolved_resolvable_type()
                                     )
