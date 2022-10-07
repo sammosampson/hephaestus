@@ -4,13 +4,14 @@ Kernel32 :: #foreign_system_library "kernel32";
 WriteFile :: (handle: *void, to_write: *void, bytes_to_write: u32, bytes_written: *void, overlapped: *void) -> bool #foreign Kernel32;
 GetStdHandle :: (handle_type: u32) -> *void #foreign Kernel32;
 
-print :: (to_print: *void, length: int) {
+print :: (to_print: *void, length: u32) {
     handle := GetStdHandle(STD_OUTPUT_HANDLE);
     WriteFile(handle, to_print, length, null, null);
 }
 
 main :: () {
-    print("hello world!\r\n\0", 15);
+    length: u32 = 15;
+    print("hello world!\r\0", length);
 }
 
 //#run main()

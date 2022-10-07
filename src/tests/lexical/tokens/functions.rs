@@ -1,5 +1,6 @@
 use crate::parsing::*;
 use crate::typing::*;
+use crate::utilities::*;
 
 #[test]
 fn compound_get_for_function_declaration() {
@@ -41,7 +42,7 @@ fn compound_get_for_function_declaration() {
     assert_eq!(token.item, SourceTokenItem::Keyword(Keyword::Return));
 
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 1, is_negative: false }));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int(string("1"))));
     
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
@@ -77,7 +78,7 @@ fn compound_get_for_function_declaration_with_body() {
     assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::InitialiseAssignValue));
     
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 1, is_negative: false }));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int(string("1"))));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
@@ -376,7 +377,7 @@ fn compound_get_for_function_call() {
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Arg));
 
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int { number: 2, is_negative: false }));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int(string("2"))));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));

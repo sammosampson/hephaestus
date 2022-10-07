@@ -2,6 +2,7 @@ mod directives;
 mod consts;
 mod procedures;
 mod expressions;
+mod assignments;
 
 use crate::parsing::*;
 use crate::acting::*;

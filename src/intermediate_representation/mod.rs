@@ -1,8 +1,12 @@
 #![allow(dead_code)]
 
 mod builder;
+mod procedures;
+mod constants;
 
 pub use builder::*;
+pub use procedures::*;
+pub use constants::*;
 
 use crate::{
     parsing::CompilationUnitId,
@@ -69,8 +73,10 @@ pub enum ByteCodeInstruction {
     SubValueFromReg8 { value: u8, from: ByteCodeRegister },
     MoveSymbolToReg32 { symbol_index: u32, to: ByteCodeRegister },
     MoveValueToReg32 { value: u32, to: ByteCodeRegister },
+    MoveValueToReg64 { value: u64, to: ByteCodeRegister },
     MoveRegToReg64 { from: ByteCodeRegister, to: ByteCodeRegister },
     MoveValueToRegPlusOffset32 { value: u32, to: ByteCodeRegister, offset: u8 },
+    MoveValueToRegPlusOffset64 { value: u64, to: ByteCodeRegister, offset: u8 },
     MoveRegToRegPlusOffset32 { from: ByteCodeRegister, to: ByteCodeRegister, offset: u8 },
     MoveRegToRegPlusOffset64 { from: ByteCodeRegister, to: ByteCodeRegister, offset: u8 },
     MoveRegPlusOffsetToReg32 { from: ByteCodeRegister, offset: u8, to: ByteCodeRegister },
@@ -110,12 +116,20 @@ pub fn move_value_to_reg_32_instruction(value: u32, to: ByteCodeRegister) -> Byt
     ByteCodeInstruction::MoveValueToReg32 { value, to }
 }
 
+pub fn move_value_to_reg_64_instruction(value: u64, to: ByteCodeRegister) -> ByteCodeInstruction {
+    ByteCodeInstruction::MoveValueToReg64 { value, to }
+}
+
 pub fn move_reg_to_reg_64_instruction(from: ByteCodeRegister, to: ByteCodeRegister) -> ByteCodeInstruction {
     ByteCodeInstruction::MoveRegToReg64 { from, to }
 }
 
 pub fn move_value_to_reg_plus_offset_32_instruction(value: u32, to: ByteCodeRegister, offset: u8) -> ByteCodeInstruction {
     ByteCodeInstruction::MoveValueToRegPlusOffset32 { value, to, offset }
+}
+
+pub fn move_value_to_reg_plus_offset_64_instruction(value: u64, to: ByteCodeRegister, offset: u8) -> ByteCodeInstruction {
+    ByteCodeInstruction::MoveValueToRegPlusOffset64 { value, to, offset }
 }
 
 pub fn move_reg_to_reg_plus_offset_64_instruction(from: ByteCodeRegister, to: ByteCodeRegister, offset: u8) -> ByteCodeInstruction {
@@ -159,7 +173,8 @@ pub fn add_byte_codes(byte_code_stream: &mut Vec<ByteCodeInstruction>, mut instr
 pub enum ByteCodeSymbol {
     DataSectionItem { name: String, value: u32 },
     ForeignExternal { name: String },
-    AbsoluteExternal { name: String, value: u32 },
+    AbsoluteExternal32 { name: String, value: u32 },
+    AbsoluteExternal64 { name: String, value: u64 },
     ExternalCodeLabel { name: String, position: u32 },
 }
 
@@ -173,8 +188,12 @@ pub fn foreign_external(name: String) -> ByteCodeSymbol{
     ByteCodeSymbol::ForeignExternal { name }
 }
 
-pub fn absolute_external(name: String, value: u32) -> ByteCodeSymbol{
-    ByteCodeSymbol::AbsoluteExternal { name, value }
+pub fn absolute_external_32(name: String, value: u32) -> ByteCodeSymbol{
+    ByteCodeSymbol::AbsoluteExternal32 { name, value }
+}
+
+pub fn absolute_external_64(name: String, value: u64) -> ByteCodeSymbol{
+    ByteCodeSymbol::AbsoluteExternal64 { name, value }
 }
 
 pub fn external_code_label(name: String, position: u32) -> ByteCodeSymbol{

@@ -22,11 +22,11 @@ fn parse_run_directive_parses_correctly() {
                         ),
                         node(
                             position(5, 1, 6),
-                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(1, false))),
+                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(string("1")))),
                         ),
                         node(
                             position(9, 1, 10),
-                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(2, false))),
+                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(string("2")))),
                         ),
                         unresolved_resolvable_type()
                     )
@@ -76,7 +76,8 @@ fn parse_foreign_system_library_directive_parses_correctly() {
                             literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("kernel32")))),
                         )       
                     ),
-                )
+                ),
+                unresolved_resolvable_type()
             )    
         )
     );

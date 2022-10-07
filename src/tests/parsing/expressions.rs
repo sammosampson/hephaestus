@@ -35,11 +35,11 @@ fn parse_literal_expression_parses_correctly() {
                                     ),
                                     node(
                                         position(26, 2, 14),
-                                        literal_item(unresolved_resolvable_literal(unresolved_int_literal(1, false))),
+                                        literal_item(unresolved_resolvable_literal(unresolved_int_literal(string("1")))),
                                     ),
                                     node(
                                         position(30, 2, 18),
-                                        literal_item(unresolved_resolvable_literal(unresolved_int_literal(2, false))),
+                                        literal_item(unresolved_resolvable_literal(unresolved_int_literal(string("2")))),
                                     ),
                                     unresolved_resolvable_type()
                                 )

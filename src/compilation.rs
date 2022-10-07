@@ -6,7 +6,7 @@ use crate::{
     acting::*,
     file_system::*,
     intermediate_representation::*,
-    running::*
+    backends::*
 };
 
 use log::*;
@@ -23,8 +23,8 @@ pub enum CompilationMessage {
     AddResolvedType(RuntimeTypePointer),
     BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
     ByteCodeBuilt { code: IntermediateRepresentation },
-    RunByteCode { code: RunnableCompileTimeCode, compiler: CompilationActorHandle },
-    ByteCodeRan { id: CompilationUnitId },
+    BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle },
+    BackendBuilt { id: CompilationUnitId },
     CompilationComplete
 }
 
@@ -86,12 +86,12 @@ pub fn create_byte_code_built_event(code: IntermediateRepresentation) -> Compila
     CompilationMessage::ByteCodeBuilt { code }
 }
 
-pub fn create_run_byte_code_command(code: RunnableCompileTimeCode, compiler: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::RunByteCode { code, compiler }
+pub fn create_build_backend_command(code: IntermediateRepresentation, compiler: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::BuildBackend { code, compiler }
 }
 
-pub fn create_byte_code_ran_event(id: CompilationUnitId) -> CompilationMessage {
-    CompilationMessage::ByteCodeRan { id }
+pub fn create_backend_built_event(id: CompilationUnitId) -> CompilationMessage {
+    CompilationMessage::BackendBuilt { id }
 }
 
 fn create_compilation_complete_event() -> CompilationMessage {
@@ -105,15 +105,15 @@ pub fn try_get_type_found_compilation_message(message: CompilationMessage) -> Op
     None
 }
 
-pub fn compile<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
+pub fn compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     file_name: String,
     reader: TReader,
-    interpreter: TInterpreter,
+    backend: TBackend,
     message_wire_tap: TMessageWireTap
 ) {
     let (type_repository_handle, ..) = start_singleton_actor(create_type_repository_actor());
     let (compiler_handle, compiler_shutdown_notifier) = start_singleton_actor(
-        create_compiler_actor(type_repository_handle, reader, interpreter, message_wire_tap)
+        create_compiler_actor(type_repository_handle, reader, backend, message_wire_tap)
     );
     
     send_message_to_actor(
@@ -142,30 +142,30 @@ fn compilation_requested_list_is_empty(lookup: &CompilationUnitsRequestedList) -
     lookup.is_empty()
 }
 
-struct CompilerActor<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage> {
+struct CompilerActor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> {
     compilation_units_requested_list: CompilationUnitsRequestedList,
     type_repository: CompilationActorHandle,
     reader: TReader,
-    interpreter: TInterpreter,
+    backend: TBackend,
     message_wire_tap: TMessageWireTap
 }
 
-fn create_compiler_actor<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
+fn create_compiler_actor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     type_repository: CompilationActorHandle,
     reader: TReader,
-    interpreter: TInterpreter, 
+    backend: TBackend, 
     message_wire_tap: TMessageWireTap
-) -> CompilerActor<TReader, TInterpreter, TMessageWireTap> {
+) -> CompilerActor<TReader, TBackend, TMessageWireTap> {
     CompilerActor {
         compilation_units_requested_list: create_compilation_units_requested_list(),
         type_repository,
         reader,
-        interpreter,
+        backend,
         message_wire_tap
     }
 }
 
-impl <TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage> Actor<CompilationMessage> for CompilerActor<TReader, TInterpreter, TMessageWireTap> {
+impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> Actor<CompilationMessage> for CompilerActor<TReader, TBackend, TMessageWireTap> {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         self.message_wire_tap.tap(&message);
 
@@ -177,9 +177,9 @@ impl <TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompil
             CompilationMessage::UnitTyped(resolved_types, unit) => 
                 handle_unit_typed(self, unit, resolved_types, ctx),
             CompilationMessage::ByteCodeBuilt { code } => 
-                handle_byte_code_built(self, code, ctx, self.interpreter.clone()),
-            CompilationMessage::ByteCodeRan { id } => 
-                handle_byte_code_ran(self, id, ctx),
+                handle_byte_code_built(self, code, ctx, self.backend.clone()),
+            CompilationMessage::BackendBuilt { id } => 
+                handle_backend_built(self, id, ctx),
             CompilationMessage::CompilationComplete => shutdown_after_receive(),
             _ => continue_listening_after_receive()
         }
@@ -209,8 +209,8 @@ fn handle_compile<TReader: FileRead>(
     continue_listening_after_receive()
 }
 
-fn handle_file_parsed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &mut CompilerActor<TReader, TInterpreter, TMessageWireTap>,
+fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     parse_result: FileParseResult,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
@@ -221,8 +221,8 @@ fn handle_file_parsed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTa
     }
 }
 
-fn handle_unit_typed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &CompilerActor<TReader, TInterpreter, TMessageWireTap>, 
+fn handle_unit_typed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &CompilerActor<TReader, TBackend, TMessageWireTap>, 
     unit: CompilationUnit,
     resolved_types: RuntimeTypePointers,
     ctx: &CompilationMessageContext
@@ -249,34 +249,32 @@ fn handle_unit_typed<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap
     continue_listening_after_receive()
 }
 
-fn handle_byte_code_built<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
-    _compiler: &mut CompilerActor<TReader, TInterpreter, TMessageWireTap>,
+fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    _compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     code: IntermediateRepresentation,
     ctx: &CompilationMessageContext,
-    interpreter: TInterpreter
+    backend: TBackend
 ) -> AfterReceiveAction {
 
     debug!("handling byte code built for {:?} {:?}", code.top_level_symbol, code.id);
     
     let (byte_code_runner, ..) = start_actor(
         ctx, 
-        create_byte_code_runner_actor(interpreter)
+        create_backend_actor(backend)
     );
 
     let compiler_handle = create_self_handle(&ctx);
 
-    let code = create_runnable_compile_time_code(code.id);
-
     send_message_to_actor(
         &byte_code_runner, 
-        create_run_byte_code_command(code, compiler_handle)
+        create_build_backend_command(code, compiler_handle)
     );
 
     continue_listening_after_receive()
 }
 
-fn handle_byte_code_ran<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &mut CompilerActor<TReader, TInterpreter, TMessageWireTap>,
+fn handle_backend_built<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     id: CompilationUnitId,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
@@ -297,8 +295,8 @@ fn handle_byte_code_ran<TReader: FileRead, TInterpreter: Interpret, TMessageWire
     continue_listening_after_receive()
 }
 
-fn process_parsed_compilation_units<TReader: FileRead, TInterpreter: Interpret, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &mut CompilerActor<TReader, TInterpreter, TMessageWireTap>,
+fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     units: CompilationUnits,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {

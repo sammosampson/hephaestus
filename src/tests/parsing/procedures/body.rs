@@ -42,7 +42,7 @@ fn parse_procedure_body_parses_correctly() {
                             string("a"),
                             node(
                                 position(45, 2, 10),
-                                literal_item(unresolved_resolvable_literal(unresolved_int_literal(1, false)))
+                                literal_item(unresolved_resolvable_literal(unresolved_int_literal(string("1"))))
                             ),
                             unresolved_resolvable_type()
                         )
@@ -94,7 +94,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(121, 5, 12),
-                                            literal_item(unresolved_resolvable_literal(unresolved_float_32_literal(1.0, false)))
+                                            literal_item(unresolved_resolvable_literal(unresolved_float_literal(string("1.0"))))
                                         ),
                                         unresolved_resolvable_type()
                                     )
@@ -104,7 +104,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(126, 5, 17),
-                                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(2, false)))
+                                            literal_item(unresolved_resolvable_literal(unresolved_int_literal(string("2"))))
                                         ),
                                         unresolved_resolvable_type()
                                     )

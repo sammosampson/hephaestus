@@ -1,15 +1,11 @@
 use crate::parsing::*;
 
-pub fn create_int_literal_token_item(number: usize, is_negative: bool) -> SourceTokenItem {
-    SourceTokenItem::Literal(unresolved_int_literal(number, is_negative))
+pub fn create_int_literal_token_item(number: String) -> SourceTokenItem {
+    SourceTokenItem::Literal(unresolved_int_literal(number))
 }
 
-pub fn create_float_32_literal_token_item(number: f32, is_negative: bool) -> SourceTokenItem {
-    SourceTokenItem::Literal(unresolved_float_32_literal(number, is_negative))
-}
-
-pub fn create_float_64_literal_token_item(number: f64, is_negative: bool) -> SourceTokenItem {
-    SourceTokenItem::Literal(unresolved_float_64_literal(number, is_negative))
+pub fn create_float_literal_token_item(number: String) -> SourceTokenItem {
+    SourceTokenItem::Literal(unresolved_float_literal(number))
 }
 
 pub fn create_string_literal_token_item(string: String) -> SourceTokenItem {

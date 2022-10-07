@@ -4,7 +4,7 @@ mod tests;
 mod parsing;
 mod typing;
 mod intermediate_representation;
-mod running;
+mod backends;
 mod file_system;
 mod arguments;
 mod threading;
@@ -22,7 +22,7 @@ fn main() {
             compilation::compile(
                 file_name, 
                 file_system::create_file_reader(), 
-                running::create_interpreter(),
+                backends::create_x64_backend(),
                 compilation::create_null_message_wire_tap()
             );
         },

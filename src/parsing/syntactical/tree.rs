@@ -56,7 +56,8 @@ pub enum AbstractSyntaxNodeItem {
     },
     Constant {
         name: String,
-        value: AbstractSyntaxNode
+        value: AbstractSyntaxNode,
+        constant_type: ResolvableType
     },
     Assignment {
         name: String,

@@ -48,22 +48,17 @@ pub fn get_resolved_literal(literal: &ResolvableLiteral) -> ResolvedLiteral {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum UnresolvedLiteral {
-    Int { number: usize, is_negative: bool },
-    Float64 { number: f64, is_negative: bool },
-    Float32 { number: f32, is_negative: bool },
+    Int(String),
+    Float(String),
     String(String)
 }
 
-pub fn unresolved_int_literal(number: usize, is_negative: bool) -> UnresolvedLiteral {
-    UnresolvedLiteral::Int { number, is_negative }
+pub fn unresolved_int_literal(number: String) -> UnresolvedLiteral {
+    UnresolvedLiteral::Int(number)
 }
 
-pub fn unresolved_float_32_literal(number: f32, is_negative: bool) -> UnresolvedLiteral {
-    UnresolvedLiteral::Float32 { number, is_negative }
-}
-
-pub fn unresolved_float_64_literal(number: f64, is_negative: bool) -> UnresolvedLiteral {
-    UnresolvedLiteral::Float64 { number, is_negative }
+pub fn unresolved_float_literal(number: String) -> UnresolvedLiteral {
+    UnresolvedLiteral::Float(number)
 }
 
 pub fn unresolved_string_literal(string: String) -> UnresolvedLiteral {
@@ -82,8 +77,7 @@ pub enum ResolvedLiteral {
     SignedInt64(i64),
     Float32(f32),
     Float64(f64),
-    String(String),
-    Bool(bool)
+    String(String)
 }
 
 pub fn resolved_unsigned_int_8_literal(value: u8) -> ResolvedLiteral {
@@ -128,8 +122,4 @@ pub fn resolved_float_64_literal(value: f64) -> ResolvedLiteral {
 
 pub fn resolved_string_literal(value: String) -> ResolvedLiteral {
     ResolvedLiteral::String(value)
-}
-
-pub fn resolved_bool_literal(value: bool) -> ResolvedLiteral {
-    ResolvedLiteral::Bool(value)
 }

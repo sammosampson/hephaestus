@@ -6,7 +6,8 @@ pub enum ParseError {
     ExpectedLibraryName,
     ExpectedForeignLibraryIdentifier,
     ExpectedArgName,
-    ExpectedArgInitialise,
+    ExpectedAssignmentInitialise,
+    ExpectedAssignmentAssignValue,
     ExpectedArgSeparator,
     ExpectedOperator,
     ExpectedType,
@@ -40,8 +41,13 @@ pub fn expected_arg_name_error() -> ParseError {
 }
 
 pub fn expected_initialise_assignment_error() -> ParseError {
-    ParseError::ExpectedArgInitialise
+    ParseError::ExpectedAssignmentInitialise
 }
+
+pub fn expected_assign_value_assignment_error() -> ParseError {
+    ParseError::ExpectedAssignmentAssignValue
+}
+
 
 pub fn expected_arg_separator_error() -> ParseError {
     ParseError::ExpectedArgSeparator

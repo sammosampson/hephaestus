@@ -1,5 +1,6 @@
 mod procedures;
 mod constants;
+mod assignments;
 
 use crate::{
     intermediate_representation::*,

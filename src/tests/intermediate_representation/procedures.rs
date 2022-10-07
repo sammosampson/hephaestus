@@ -62,7 +62,8 @@ fn byte_code_for_procedure_call_with_args_generates_correctly() {
 }
     
 main :: () {
-    x := print(\"test\", 14);
+    len: u32 = 14;
+    x := print(\"test\", len);
 }"
     );   
     
@@ -81,16 +82,32 @@ main :: () {
     ));
     
     assert_eq!(main_body_ir.byte_code, vec!(
+        //prologue
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        
+        //reserve space for 2 local assignments
+        sub_value_from_reg_8_instruction(16, stack_pointer_register()),
+        
+        //store len
+        move_value_to_reg_plus_offset_32_instruction(14, base_pointer_register(), -8i8 as u8),
+        
+        // reserve shadow space for proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        // set call arg registers
         load_data_section_address_to_reg_64(0, call_arg_register(0)),
-        move_value_to_reg_32_instruction(14, call_arg_register(1)),
+        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -8i8 as u8, call_arg_register(1)),
+        // proc call
         call_to_symbol_instruction(2),
-        move_reg_to_reg_plus_offset_32_instruction(call_return_arg_register(0), base_pointer_register(), 0xF8),
+        // store proc call return value
+        move_reg_to_reg_plus_offset_32_instruction(call_return_arg_register(0), base_pointer_register(), -16i8 as u8),
+        // release shadow space for proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        
+        //epilogue
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
         pop_reg_64_instruction(base_pointer_register()),
+        
         ret_instruction()
     ));
 }

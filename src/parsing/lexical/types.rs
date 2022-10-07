@@ -4,13 +4,24 @@ use crate::typing::*;
 
 type TypeOption = Option<ResolvableType>;
 
-pub fn try_get_type(item: &SourceTokenItem, is_pointer: bool) -> TypeOption {
+pub fn try_parse_type(lexer: &mut Lexer) -> TypeOption {
+    let is_pointer = is_pointer(&peek_next_token(lexer).item);
+    
+    if is_pointer {
+        eat_next_token(lexer);
+    }
+
+    try_get_type(&peek_next_token(lexer).item, is_pointer)
+}
+
+fn try_get_type(item: &SourceTokenItem, is_pointer: bool) -> TypeOption {
     match item {
         SourceTokenItem::Type(t) => Some(resolved_resolvable_type(create_shareable(to_runtime_type(*t, is_pointer)))),
         SourceTokenItem::Identifier(name) => Some(unresolved_named_resolvable_type(name.clone())),
         _ => None
     }
 }
+
 fn to_runtime_type(from: BuiltInType, is_pointer: bool) -> RuntimeType {
     if !is_pointer {
         return to_runtime_non_pointer_type(from)

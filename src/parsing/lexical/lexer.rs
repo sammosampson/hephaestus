@@ -21,12 +21,12 @@ const SOURCE_SYMBOL_QUOTES: char = '"';
 
 #[derive(Clone)]
 pub struct Lexer<'a> {
-    reader: SourceFileCharacterReader<'a>,
+    reader: SourceFileCharacterReader<'a>
 }
 
 pub fn lex(input: &str) -> Lexer {
     Lexer {
-        reader: create_reader(input),
+        reader: create_reader(input)
     }
 }
 
@@ -239,26 +239,22 @@ fn parse_alphanumeric(lexer: &mut Lexer, is_negative: bool) -> SourceToken {
 
     if is_character(&next_char, SOURCE_SYMBOL_PERIOD) && is_character_alphanumeric(&next_char_after_that) {
         eat_next_character(&mut lexer.reader);
+        
         alphanumeric_string.push(SOURCE_SYMBOL_PERIOD);
         alphanumeric_string = alphanumeric_string + &read_up_until_non_alphanumeric(lexer);
-        if let Ok(number) = parse_float_32_from_string(&alphanumeric_string) {
+        
+        if is_float_string(&alphanumeric_string) {
             return create_token(
                 get_character_position(&next_character), 
-                create_float_32_literal_token_item(number, is_negative)
-            );
-        }
-        if let Ok(number) = parse_float_64_from_string(&alphanumeric_string) {
-            return create_token(
-                get_character_position(&next_character), 
-                create_float_64_literal_token_item(number, is_negative)
+                create_float_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
             );
         }
     }
 
-    if let Ok(number) = parse_number_from_string(&alphanumeric_string) {
+    if is_int_string(&alphanumeric_string) {
         return create_token(
             get_character_position(&next_character), 
-            create_int_literal_token_item(number, is_negative)
+            create_int_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
         );
     }        
 
@@ -281,6 +277,7 @@ fn parse_alphanumeric(lexer: &mut Lexer, is_negative: bool) -> SourceToken {
         create_identifier_token_item(alphanumeric_string)
     );
 }
+
 
 fn read_up_until_non_alphanumeric(lexer: &mut Lexer) -> String {
     read_characters_up_until(

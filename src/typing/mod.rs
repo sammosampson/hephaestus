@@ -124,6 +124,13 @@ pub fn void_built_in_type() -> BuiltInType {
     BuiltInType::Void
 }
 
+pub fn try_get_built_in_type(id: &RuntimeTypeId) -> Option<(BuiltInType, bool)> {
+    if let RuntimeTypeId::BuiltInType { built_in_type, is_pointer } = id {
+        return Some((*built_in_type, *is_pointer));
+    }
+    None
+}
+
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct RuntimeType {
     pub id: RuntimeTypeId,
