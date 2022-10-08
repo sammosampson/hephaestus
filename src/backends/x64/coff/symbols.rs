@@ -147,7 +147,7 @@ pub fn add_absolute_external_symbol_32(coff: &mut Coff, name: &str, value: u32) 
 }
 
 pub fn add_absolute_external_symbol_64(_coff: &mut Coff, _name: &str, _value: u64) {
-    //not sure how to do a 64bit symbol in coff
+    todo!("not sure how to do a 64bit symbol in coff")
 }
 
 pub fn add_data_section_static_symbol(coff: &mut Coff, name: &str, value: u32) {

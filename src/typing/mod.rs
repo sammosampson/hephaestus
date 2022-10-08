@@ -37,6 +37,20 @@ pub fn try_get_resolved_runtime_type_pointer(resolvable_type: &ResolvableType) -
     None
 }
 
+pub fn try_get_procedure_definition_runtime_type_item(item: &RuntimeTypeItem) -> Option<(RuntimeTypePointers, RuntimeTypePointers )> {
+    if let RuntimeTypeItem::ProcedureDefinition { return_types, arg_types } = item {
+       return Some((arg_types.clone(), return_types.clone()));
+    }
+    None
+}
+
+pub fn try_get_constant_definition_runtime_type_item(item: &RuntimeTypeItem) -> Option<RuntimeTypePointer> {
+    if let RuntimeTypeItem::ConstantDefinition { constant_type } = item {
+       return Some(constant_type.clone());
+    }
+    None
+}
+
 #[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub enum RuntimeTypeId {
     BuiltInType { built_in_type: BuiltInType, is_pointer: bool },
@@ -373,6 +387,7 @@ pub fn pointer_runtime_type(id: RuntimeTypeId, to_type: RuntimeType) -> RuntimeT
 pub enum RuntimeTypeItem {
     None,
     ProcedureDefinition { arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers },
+    ConstantDefinition { constant_type: RuntimeTypePointer },
     Pointer { to_type: Box<RuntimeType> },
     Int { is_signed: bool },
     Float,
@@ -389,6 +404,10 @@ impl Default for RuntimeTypeItem {
 
 pub fn procedure_definition_type_item(arg_types: RuntimeTypePointers, return_types: RuntimeTypePointers) -> RuntimeTypeItem {
     RuntimeTypeItem::ProcedureDefinition { arg_types, return_types }
+}
+
+pub fn constant_definition_type_item(constant_type: RuntimeTypePointer) -> RuntimeTypeItem {
+    RuntimeTypeItem::ConstantDefinition { constant_type }
 }
 
 pub fn pointer_type_item(to_type: Box<RuntimeType>) -> RuntimeTypeItem {

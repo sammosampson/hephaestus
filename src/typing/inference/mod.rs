@@ -4,8 +4,9 @@ mod constants;
 
 pub use header::*;
 pub use body::*;
-use constants::*;
+pub use constants::*;
 
+use std::collections::*;
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
@@ -25,6 +26,20 @@ impl Actor<CompilationMessage> for TypingActor {
             _ => continue_listening_after_receive()
         }
     }
+}
+
+pub type IdentifierTypeLookup = HashMap<String, RuntimeTypePointer>;
+
+pub fn add_to_identifier_type_lookup(map: &mut IdentifierTypeLookup, identifier: String, resolved_type: RuntimeTypePointer) {
+    map.insert(identifier, resolved_type);
+}
+
+pub fn get_type_for_identifier<'a>(map: &'a IdentifierTypeLookup, identifier: &str) -> Option<&'a RuntimeTypePointer> {
+    map.get(identifier)
+}
+
+pub fn create_identifier_type_lookup() -> IdentifierTypeLookup {
+    IdentifierTypeLookup::default()
 }
 
 fn handle_perform_typing(
@@ -47,10 +62,10 @@ pub fn perform_typing(
 
     match unit.tree.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } => {
-            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_local_type_map(), expr);        
+            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr);        
         },
-        AbstractSyntaxNodeItem::Constant { value, constant_type, .. } => {
-            perform_typing_for_constant(ctx, type_repository, value, constant_type);        
+        AbstractSyntaxNodeItem::Constant { name, value, constant_type } => {
+            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type);        
         },
         AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args, .. } => {
             perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args);                      

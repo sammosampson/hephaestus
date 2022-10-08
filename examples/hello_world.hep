@@ -6,12 +6,12 @@ GetStdHandle :: (handle_type: u32) -> *void #foreign Kernel32;
 
 print :: (to_print: *void, length: u32) {
     handle := GetStdHandle(STD_OUTPUT_HANDLE);
-    WriteFile(handle, to_print, length, null, null);
+    bytes_written: *void;
+    overlapped: *void;
+    WriteFile(handle, to_print, length, bytes_written, overlapped);
 }
 
 main :: () {
     length: u32 = 15;
     print("hello world!\r\0", length);
 }
-
-//#run main()

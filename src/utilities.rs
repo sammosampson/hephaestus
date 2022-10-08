@@ -102,6 +102,10 @@ pub fn u32_to_bytes(entry: &u32) -> Vec<u8> {
     any_as_u8_slice(entry).into()
 }
 
+pub fn u64_to_bytes(entry: &u64) -> Vec<u8> {
+    any_as_u8_slice(entry).into()
+}
+
 pub fn get_current_timestamp() -> u32 {
     // seconds since 1970-01-01 00:00:00 GMT
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {

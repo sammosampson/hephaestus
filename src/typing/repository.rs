@@ -3,6 +3,7 @@ use crate::acting::*;
 use crate::compilation::*;
 use super::*;
 
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct FindTypeCriteria { 
     name: String,
@@ -13,7 +14,7 @@ pub fn create_find_type_criteria(name: String, args: RuntimeTypePointers) -> Fin
     FindTypeCriteria { name, args }
 }
 
-pub fn find_type(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> RuntimeTypePointer {
+pub fn find_type_from_criteria(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> RuntimeTypePointer {
     send_find_type_request(type_repository, criteria, ctx);  
     await_type_found_response(ctx)
 }

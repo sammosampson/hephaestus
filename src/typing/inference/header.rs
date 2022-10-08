@@ -27,16 +27,23 @@ pub fn perform_typing_for_procedure_header(
         }
     }
 
-    resolved_types.push(
-        create_shareable(
-            create_type(
-                user_defined_runtime_type_id(unit_id),
-                string(&name),
-                procedure_definition_type_item(arg_types, return_arg_types),
-                not_required_type_size()
-            )
+    resolved_types.push(create_procedure_definition_type(unit_id, name, arg_types, return_arg_types));  
+}
+
+fn create_procedure_definition_type(
+    unit_id: CompilationUnitId,
+    name: &str,
+    arg_types: RuntimeTypePointers,
+    return_arg_types: RuntimeTypePointers
+) -> RuntimeTypePointer {
+    create_shareable(
+        create_type(
+            user_defined_runtime_type_id(unit_id),
+            string(&name),
+            procedure_definition_type_item(arg_types, return_arg_types),
+            not_required_type_size()
         )
-    );  
+    )
 }
 
 fn try_parse_resolved_runtime_type_pointer(arg_type: &ResolvableType, type_ids: &mut RuntimeTypePointers) {

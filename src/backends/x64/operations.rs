@@ -58,6 +58,12 @@ pub fn add_mov_dword_value_to_reg_op(coff: &mut Coff, value: u32, register: u8) 
     add_entries_to_text_section(coff, u32_to_bytes(&value));
 }
 
+//TODO: check this is right
+pub fn add_mov_qword_value_to_reg_op(coff: &mut Coff, value: u64, register: u8) {
+    add_entry_to_text_section(coff, OP_MOV_IMM_TO_R + register);
+    add_entries_to_text_section(coff, u64_to_bytes(&value));
+}
+
 pub fn add_mov_from_qword_reg_to_reg_op(coff: &mut Coff, register_from: u8, register_to: u8) {
     add_entry_to_text_section(coff, REX_W);
     add_mov_from_dword_reg_to_reg_op(coff, register_from, register_to);
@@ -75,6 +81,16 @@ pub fn add_mov_dword_value_into_reg_plus_offset_pointer_op(coff: &mut Coff, valu
     add_entry_to_text_section(coff, 0x24);
     add_entry_to_text_section(coff, address_offset);
     add_entries_to_text_section(coff, u32_to_bytes(&value));
+}
+
+//TODO: check this is right
+pub fn add_mov_qword_value_into_reg_plus_offset_pointer_op(coff: &mut Coff, value: u64, address_register: u8, address_offset: u8) {
+    add_entry_to_text_section(coff, REX_W);
+    add_entry_to_text_section(coff,OP_MOV_IMM_TO_RM);
+    add_entry_to_text_section(coff, mod_rm(MOD_REGISTER_INDIRECT, 0, address_register));
+    add_entry_to_text_section(coff, 0x24);
+    add_entry_to_text_section(coff, address_offset);
+    add_entries_to_text_section(coff, u64_to_bytes(&value));
 }
 
 pub fn add_mov_dword_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_register: u8, address_offset: u8, into_register: u8) {
