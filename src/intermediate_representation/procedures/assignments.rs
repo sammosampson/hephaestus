@@ -16,6 +16,8 @@ pub fn build_bytecode_at_assignment(
             build_bytecode_at_procedure_call_with_assignment(ir, assignment_map, assignment_name, name, args),
         AbstractSyntaxNodeItem::Literal(literal) => 
             build_bytecode_at_assignment_to_literal(ir, assignment_map, assignment_name, literal),
+        AbstractSyntaxNodeItem::Identifier(_literal) => 
+            {},
         _ => todo!()
     }
 }

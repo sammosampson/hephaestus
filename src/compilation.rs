@@ -17,7 +17,7 @@ pub enum CompilationMessage {
     ParseFile(String, CompilationActorHandle),
     FileParsed(FileParseResult),
     PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
-    UnitTyped(RuntimeTypePointers, CompilationUnit),
+    UnitTyped { resolved_types: RuntimeTypePointers, unit: CompilationUnit },
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     AddResolvedType(RuntimeTypePointer),
@@ -67,7 +67,7 @@ pub fn create_file_parsed_event(parse_result: FileParseResult) -> CompilationMes
 }
 
 pub fn create_unit_typed_event(resolved_types: RuntimeTypePointers, unit: CompilationUnit) -> CompilationMessage {
-    CompilationMessage::UnitTyped(resolved_types, unit)
+    CompilationMessage::UnitTyped { resolved_types, unit }
 }
 
 pub fn create_type_found_event(resolved_type: RuntimeTypePointer) -> CompilationMessage {
@@ -174,7 +174,7 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
                 handle_compile(file_name, ctx, self.reader.clone()),
             CompilationMessage::FileParsed(parse_result) =>
                 handle_file_parsed(self, parse_result, ctx),
-            CompilationMessage::UnitTyped(resolved_types, unit) => 
+            CompilationMessage::UnitTyped { resolved_types, unit } => 
                 handle_unit_typed(self, unit, resolved_types, ctx),
             CompilationMessage::ByteCodeBuilt { code } => 
                 handle_byte_code_built(self, code, ctx, self.backend.clone()),

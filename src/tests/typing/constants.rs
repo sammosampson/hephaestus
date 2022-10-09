@@ -15,7 +15,7 @@ fn typing_const_types_int_literal_assignment() {
     let typing_repository = start_type_repository_actor();
     let (types, unit) = run_typing_on_unit(typing_repository, constant);
 
-    assert_eq!(types.len(), 0);
+    assert_eq!(types.len(), 1);
     assert_eq!(
         unit.tree, 
         node(
@@ -41,7 +41,7 @@ fn typing_known_type_const_types_int_literal_assignment() {
     let typing_repository = start_type_repository_actor();
     let (types, unit) = run_typing_on_unit(typing_repository, constant);
 
-    assert_eq!(types.len(), 0);
+    assert_eq!(types.len(), 1);
     assert_eq!(
         unit.tree, 
         node(

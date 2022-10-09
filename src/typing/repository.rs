@@ -10,7 +10,11 @@ pub struct FindTypeCriteria {
     args: RuntimeTypePointers
 }
 
-pub fn create_find_type_criteria(name: String, args: RuntimeTypePointers) -> FindTypeCriteria {
+pub fn create_find_type_criteria_with_name(name: String) -> FindTypeCriteria {
+    create_find_type_criteria_with_name_and_args(name, vec!())
+}
+
+pub fn create_find_type_criteria_with_name_and_args(name: String, args: RuntimeTypePointers) -> FindTypeCriteria {
     FindTypeCriteria { name, args }
 }
 
@@ -134,7 +138,9 @@ fn service_find_type_request(repository: &TypeRepositoryActor, request: &FindTyp
 fn parse_find_type_criteria(resolved_type: &RuntimeTypePointer) -> FindTypeCriteria {
     match &resolved_type.item {
         RuntimeTypeItem::ProcedureDefinition { arg_types, .. } => 
-            create_find_type_criteria(resolved_type.name.clone(), arg_types.clone()),
+            create_find_type_criteria_with_name_and_args(resolved_type.name.clone(), arg_types.clone()),
+        RuntimeTypeItem::ConstantDefinition { .. } => 
+            create_find_type_criteria_with_name(resolved_type.name.clone()),
         _ => todo!("add other types")
     }
 }

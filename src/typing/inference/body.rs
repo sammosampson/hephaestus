@@ -158,7 +158,7 @@ pub fn find_type_by_name_and_args(
     arg_types: RuntimeTypePointers    
 ) -> RuntimeTypePointer {
     find_type_from_criteria(
-        create_find_type_criteria(name.to_string(), arg_types),
+        create_find_type_criteria_with_name_and_args(name.to_string(), arg_types),
         ctx,
         type_repository
     )
