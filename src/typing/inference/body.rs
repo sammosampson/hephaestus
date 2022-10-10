@@ -308,10 +308,11 @@ fn perform_typing_for_known_target_type_expression_literal(
                 }
             },
             UnresolvedLiteral::String(value) => {
-                if let RuntimeTypeItem::String = known_target_type.item {
-                    *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
-                } else {
-                    panic!("literal value is not for target type")
+                match known_target_type.item {
+                    RuntimeTypeItem::String => {
+                        *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
+                    }, 
+                    _ => panic!("literal value is not for target type")
                 }
             },
         }

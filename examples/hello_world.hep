@@ -1,10 +1,10 @@
 STD_OUTPUT_HANDLE : s32 : -11;
 
 Kernel32 :: #foreign_system_library "kernel32";
-WriteFile :: (handle: *void, to_write: *void, bytes_to_write: u32, bytes_written: *void, overlapped: *void) -> bool #foreign Kernel32;
+WriteFile :: (handle: *void, to_write: string, bytes_to_write: u32, bytes_written: *void, overlapped: *void) -> bool #foreign Kernel32;
 GetStdHandle :: (handle_type: s32) -> *void #foreign Kernel32;
 
-print :: (to_print: *void, length: u32) {
+print :: (to_print: string, length: u32) {
     handle := GetStdHandle(STD_OUTPUT_HANDLE);
     bytes_written: *void = null;
     overlapped: *void = null;

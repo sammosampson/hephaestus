@@ -23,11 +23,12 @@ pub fn find_type_from_criteria(criteria: FindTypeCriteria, ctx: &CompilationMess
     await_type_found_response(ctx)
 }
 
-fn send_find_type_request(type_repository: &ActorHandle<CompilationMessage>, criteria: FindTypeCriteria, ctx: &ActorContext<CompilationMessage>) {
+fn send_find_type_request(type_repository: &CompilationActorHandle, criteria: FindTypeCriteria, ctx: &CompilationMessageContext) {
+    println!("finding type: {:?}", criteria.name);
     send_message_to_actor(type_repository, create_find_type_request(criteria, create_self_handle(ctx)))
 }
 
-fn await_type_found_response(ctx: &ActorContext<CompilationMessage>) -> RuntimeTypePointer {    
+fn await_type_found_response(ctx: &CompilationMessageContext) -> RuntimeTypePointer {    
     let mut result = None;
     
     await_message(ctx, |message| {
@@ -135,6 +136,7 @@ fn service_find_type_request(repository: &TypeRepositoryActor, request: &FindTyp
     let resolved_type = repository.type_map.get(&request.criteria);
 
     if let Some(resolved_type) = resolved_type {
+        println!("releasing type: {:?}", &request.criteria.name);
         send_message_to_actor(&request.respond_to, create_type_found_event(resolved_type.clone()));
         return true;
     }

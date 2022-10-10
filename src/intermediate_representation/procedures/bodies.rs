@@ -10,7 +10,7 @@ pub fn build_bytecode_at_procedure_body(
     statements: &AbstractSyntaxChildNodes
 ) {
     ir.top_level_symbol = string(&name);
-    let assignment_map = get_assignment_map(statements);
+    let assignment_map = get_assignment_map(args, statements);
     store_procedure_name_as_external_symbol(ir, name);
     build_bytecode_for_procedure_prologue(ir);
     build_bytecode_for_procedure_argument_shadow_storage(args, ir);

@@ -38,6 +38,6 @@ fn build_bytecode_at_literal_const(ir: &mut IntermediateRepresentation, const_na
         ResolvedLiteral::SignedInt32(number) => {
             add_symbol(&mut ir.symbols, absolute_external_32(string(const_name), *number as u32));
         },
-        _ => todo!("const none int number literals")
+        _ => todo!("const none signed int number literals")
     }
 }

@@ -56,7 +56,7 @@ fn build_bytecode_at_assignment_to_identifier(
     _assignment_name: &str,
     _name: &str
 ) {
-    
+    println!("build_bytecode_at_assignment_to_identifier: {}, {}", _assignment_name, _name);
 }
 
 fn build_bytecode_at_assignment_to_null(
@@ -71,10 +71,17 @@ fn build_bytecode_at_assignment_to_null(
 
 pub type AssignmentMap = HashMap<String, isize>;
 
-pub fn get_assignment_map(statements: &AbstractSyntaxChildNodes) -> AssignmentMap {
-    let mut position = 0;
+pub fn get_assignment_map(args: &AbstractSyntaxChildNodes, statements: &AbstractSyntaxChildNodes) -> AssignmentMap {
     let mut assignment_map = AssignmentMap::default();
     
+    add_args_to_assignment_map(&mut assignment_map, args);
+    add_statements_to_assignment_map(&mut assignment_map, statements);
+
+    assignment_map
+}
+
+fn add_statements_to_assignment_map(assignment_map: &mut AssignmentMap, statements: &AbstractSyntaxChildNodes) {
+    let mut position = 0;
     for statement in statements {
         match statement.item_ref() {
             AbstractSyntaxNodeItem::Assignment { name, .. } => {
@@ -84,12 +91,27 @@ pub fn get_assignment_map(statements: &AbstractSyntaxChildNodes) -> AssignmentMa
         _ => {}
         }
     }
+}
 
-    assignment_map
+fn add_args_to_assignment_map(assignment_map: &mut AssignmentMap, args: &AbstractSyntaxChildNodes) {
+    let mut position = 0;
+    for statement in args {
+        match statement.item_ref() {
+            AbstractSyntaxNodeItem::ArgumentDeclaration { name, .. } => {
+                position = position + 8;
+                assignment_map.insert(name.clone(), position);
+            }
+        _ => {}
+        }
+    }
 }
 
 pub fn get_full_assignment_storage_size(assignment_map: &AssignmentMap) -> u8 {
-    (assignment_map.len() * 8) as u8
+    let statement_body_assignments = assignment_map
+        .values()
+        .filter(| position | **position < 0)
+        .count();
+    (statement_body_assignments * 8) as u8
 }
 
 pub fn get_assignment_offset(assignment_map: &AssignmentMap, assignment_name: &str) -> u8 {
