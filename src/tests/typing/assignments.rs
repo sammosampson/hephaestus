@@ -82,7 +82,7 @@ fn typing_known_type_procedure_body_assignment_types_variable_int_literal_assign
 
 
 #[test]
-fn typing_known_type_procedure_body_assignment_for_assignment_to_global_const() {
+fn typing_known_type_assignment_to_global_const() {
     let units_and_types = compile_source_and_get_types_and_unit("GLOBAL :: -11;
 SomeProcedure :: () {
     x := GLOBAL;

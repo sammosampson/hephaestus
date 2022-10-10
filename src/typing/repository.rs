@@ -113,11 +113,17 @@ fn add_find_type_request(repository: &mut TypeRepositoryActor,  request: FindTyp
 }
 
 fn service_find_type_requests(repository: &mut TypeRepositoryActor) {
+    let mut removals = vec!();
+    
     for index in 0..repository.find_type_requests.len() {
         let request = &repository.find_type_requests[index];
         if service_find_type_request(repository, request) {
-            remove_find_type_request(repository, index);
+            removals.push(index);
         }
+    }
+
+    for index in removals {
+        remove_find_type_request(repository, index);
     }
 }
 

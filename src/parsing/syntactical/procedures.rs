@@ -101,7 +101,11 @@ pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer,
 
     if is_foreign_directive(&peek_next_token(lexer).item) {
         let foreign_library_identifier = parse_foreign_library_identifier(lexer);
-        body_ref = foreign_procedure_body_reference(foreign_library_identifier);        
+        body_ref = foreign_procedure_body_reference(foreign_library_identifier);
+        
+        if is_line_terminiator(&peek_next_token(lexer).item) {
+            eat_next_token(lexer);
+        }
     }
 
     create_node(procedure_header_item(name, args, return_types, body_ref), position)

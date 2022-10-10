@@ -5,8 +5,7 @@ use crate::{
 
 #[test]
 fn byte_code_for_known_type_signed_number_assignment_generates_correctly() {
-    let irs = compile_source_and_get_intemediate_representation(
-        "main :: () {
+    let irs = compile_source_and_get_intemediate_representation("main :: () {
     x : u32 = 1;
     y : u64 = 2;
 }"

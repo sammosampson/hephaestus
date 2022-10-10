@@ -26,6 +26,25 @@ pub fn multiply_operator() -> Operator {
 }
 
 #[derive(PartialEq, Debug, Clone)]
+pub enum Scope {
+    Unknown,
+    Local,
+    Global
+}
+
+pub fn unknown_scope() -> Scope {
+    Scope::Unknown
+}
+
+pub fn local_scope() -> Scope {
+    Scope::Local
+}
+
+pub fn global_scope() -> Scope {
+    Scope::Global
+}
+
+#[derive(PartialEq, Debug, Clone)]
 pub enum ResolvableLiteral {
     Unresolved(UnresolvedLiteral),
     Resolved(ResolvedLiteral),

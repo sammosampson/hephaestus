@@ -72,7 +72,7 @@ pub enum AbstractSyntaxNodeItem {
     },
     Type(ResolvableType),
     Literal(ResolvableLiteral),
-    Identifier(String),
+    Identifier{ name: String, scope: Scope },
     Operator(Operator),
     Error(ParseError),
     Eof

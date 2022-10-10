@@ -185,7 +185,7 @@ fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
 
 #[test]
 fn parse_foreign_system_library_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
-    let units= run_parse_file_return_only_units("SomeProcedure :: (x: *float, y: *int) -> *void #foreign Kernel32");
+    let units= run_parse_file_return_only_units("SomeProcedure :: (x: *float, y: *int) -> *void #foreign Kernel32;");
 
     assert_eq!(units.len(), 1);
     assert_eq!(

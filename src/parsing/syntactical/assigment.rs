@@ -29,7 +29,16 @@ pub fn parse_value_assignment_value(lexer: &mut Lexer) -> AbstractSyntaxNode {
         SourceTokenItem::Identifier(identifier) => parse_identifier(identifier, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
+        SourceTokenItem::Keyword(keyword) => parse_value_assignment_keyword(keyword, token.position),
+        
         _ => create_error_node(unimplemented_error(), token.position),
+    }
+}
+
+fn parse_value_assignment_keyword(keyword: Keyword, position: SourceFilePosition) -> AbstractSyntaxNode {
+    match keyword {
+        Keyword::Null => create_node(null_item(), position),
+        _ => create_error_node(unimplemented_error(), position),
     }
 }
 

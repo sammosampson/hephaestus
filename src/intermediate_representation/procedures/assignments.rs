@@ -1,3 +1,4 @@
+use core::panic;
 use std::collections::HashMap;
 
 use crate::{
@@ -16,9 +17,11 @@ pub fn build_bytecode_at_assignment(
             build_bytecode_at_procedure_call_with_assignment(ir, assignment_map, assignment_name, name, args),
         AbstractSyntaxNodeItem::Literal(literal) => 
             build_bytecode_at_assignment_to_literal(ir, assignment_map, assignment_name, literal),
-        AbstractSyntaxNodeItem::Identifier(_literal) => 
-            {},
-        _ => todo!()
+        AbstractSyntaxNodeItem::Identifier { name, ..} => 
+            build_bytecode_at_assignment_to_identifier(ir, assignment_map, assignment_name, name),
+        AbstractSyntaxNodeItem::Null =>  
+            build_bytecode_at_assignment_to_null(ir, assignment_map, assignment_name),
+        item => todo!("implementation needed for {:?}", item)
     }
 }
 
@@ -29,7 +32,6 @@ fn build_bytecode_at_assignment_to_literal(
     literal: &ResolvableLiteral
 ) {
     let offset = get_assignment_offset(assignment_map, assignment_name);
-    
     let instruction = match get_resolved_literal(literal) {
         ResolvedLiteral::UnsignedInt8(_) => todo!("assignment to literal u8"),
         ResolvedLiteral::SignedInt8(_) => todo!("assignment to literal s8"),
@@ -44,6 +46,26 @@ fn build_bytecode_at_assignment_to_literal(
         ResolvedLiteral::String(_) => todo!("assignment to literal string"),
     };
 
+    add_byte_code(&mut ir.byte_code, instruction);
+}
+
+
+fn build_bytecode_at_assignment_to_identifier(
+    _ir: &mut IntermediateRepresentation,
+    _assignment_map: &AssignmentMap,
+    _assignment_name: &str,
+    _name: &str
+) {
+    
+}
+
+fn build_bytecode_at_assignment_to_null(
+    ir: &mut IntermediateRepresentation,
+    assignment_map: &AssignmentMap,
+    assignment_name: &str
+) {
+    let offset = get_assignment_offset(assignment_map, assignment_name);
+    let instruction = move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), offset);
     add_byte_code(&mut ir.byte_code, instruction);
 }
 
@@ -73,6 +95,7 @@ pub fn get_full_assignment_storage_size(assignment_map: &AssignmentMap) -> u8 {
 pub fn get_assignment_offset(assignment_map: &AssignmentMap, assignment_name: &str) -> u8 {
     if let Some(position) = assignment_map.get(assignment_name) {
         return *position as u8;
+    } else {
+        panic!("No offset found for assignment")
     }
-    panic!("Assignment not found in map")
 }

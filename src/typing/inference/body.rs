@@ -246,8 +246,8 @@ pub fn perform_typing_for_known_target_type_expression(
         AbstractSyntaxNodeItem::Literal(literal) => {
             perform_typing_for_known_target_type_expression_literal(literal, known_target_type);
         },
-        AbstractSyntaxNodeItem::Identifier(name) => {
-            perform_typing_for_expression_identifier(ctx, type_repository, name, local_type_map);
+        AbstractSyntaxNodeItem::Identifier { name, scope }  => {
+            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope);
         },
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type, ..} => {
             perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, expression_type);
@@ -397,8 +397,8 @@ pub fn perform_typing_for_inferred_type_expression(
             perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, library),
         AbstractSyntaxNodeItem::Literal(literal) =>
             perform_typing_for_inferred_type_expression_literal(literal),
-        AbstractSyntaxNodeItem::Identifier(name) =>
-            perform_typing_for_expression_identifier(ctx, type_repository, name, local_type_map),
+        AbstractSyntaxNodeItem::Identifier { name, scope} =>
+            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope),
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
             perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id),
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id } =>
@@ -430,12 +430,15 @@ fn perform_typing_for_inferred_type_expression_literal(literal: &mut ResolvableL
 fn perform_typing_for_expression_identifier(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
+    local_type_map: &IdentifierTypeLookup,
     name: &mut String,
-    local_type_map: &IdentifierTypeLookup
+    scope: &mut Scope
 ) -> OptionalRuntimeTypePointer {
     if let Some(local_identifier_type) = get_type_for_identifier(local_type_map, &name) {
+        *scope = local_scope();
         return Some(local_identifier_type.clone());
     }
+    *scope = global_scope();
     get_global_type_for_identifier(ctx, type_repository, name)
 }
 

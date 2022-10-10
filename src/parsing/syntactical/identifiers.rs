@@ -50,5 +50,5 @@ pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: 
 }
 
 pub fn identifier_item(name: String) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Identifier(name)
+    AbstractSyntaxNodeItem::Identifier { name, scope: unknown_scope() }
 }

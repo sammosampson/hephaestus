@@ -59,12 +59,11 @@ fn build_bytecode_at_procedure_call_argument_expression(
     match expr.item_ref() {
         AbstractSyntaxNodeItem::Literal(literal) =>
             build_bytecode_at_procedure_call_argument_literal(ir, &get_resolved_literal(literal), arg_index),
-        AbstractSyntaxNodeItem::Identifier(name) =>
-            build_bytecode_at_procedure_call_argument_identifier(ir, assignment_map, name, arg_type, arg_index),
+        AbstractSyntaxNodeItem::Identifier { name, scope} =>
+            build_bytecode_at_procedure_call_argument_identifier(ir, assignment_map, name, scope, arg_type, arg_index),
         _ => todo!()
     }    
 }
-
 
 fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepresentation, literal: &ResolvedLiteral, arg_index: usize) {
     match literal {
@@ -92,8 +91,22 @@ fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepres
     }
 }
 
-
 fn build_bytecode_at_procedure_call_argument_identifier(
+    ir: &mut IntermediateRepresentation,
+    assignment_map: &AssignmentMap,
+    name: &str,
+    scope: &Scope,
+    arg_type: &ResolvableType,
+    arg_index: usize
+) {
+    match scope {
+        Scope::Unknown => panic!("scope should be known at this point"),
+        Scope::Local => build_bytecode_at_procedure_call_argument_local_identifier(ir, assignment_map, name, arg_type, arg_index),
+        Scope::Global => build_bytecode_at_procedure_call_argument_global_identifier(ir, name, arg_type, arg_index),
+    }
+}
+
+fn build_bytecode_at_procedure_call_argument_local_identifier(
     ir: &mut IntermediateRepresentation,
     assignment_map: &AssignmentMap,
     identifier_name: &str,
@@ -101,9 +114,8 @@ fn build_bytecode_at_procedure_call_argument_identifier(
     arg_index: usize
 ) {
     let offset = get_assignment_offset(assignment_map, identifier_name);
-    
     if let Some(arg_type) = try_get_resolved_runtime_type_pointer(arg_type) {
-        if let Some((built_in_arg_type, _is_pointer)) = try_get_built_in_type(&arg_type.id) {
+        if let Some((built_in_arg_type, is_pointer)) = try_get_built_in_type(&arg_type.id) {
             let instruction = match built_in_arg_type {
                 BuiltInType::UnsignedInt8 => todo!("identifier call arg u8"),
                 BuiltInType::SignedInt8 => todo!("identifier call arg s8"),
@@ -117,7 +129,12 @@ fn build_bytecode_at_procedure_call_argument_identifier(
                 BuiltInType::Float64 => todo!("identifier call arg float64"),
                 BuiltInType::String => todo!("identifier call arg string"),
                 BuiltInType::Boolean => todo!(),
-                BuiltInType::Void => todo!(),
+                BuiltInType::Void => {
+                    if !is_pointer {
+                        panic!("Non pointer void arguments not allowed");
+                    }
+                    move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), offset, call_arg_register(arg_index))
+                }
             };
             add_byte_code(&mut ir.byte_code, instruction);
             return;
@@ -125,6 +142,40 @@ fn build_bytecode_at_procedure_call_argument_identifier(
         todo!("Non built in typed identifier call arg")
     }
     panic!("Unresolved type for identifier call arg")
+}
+
+
+fn build_bytecode_at_procedure_call_argument_global_identifier(
+    ir: &mut IntermediateRepresentation,
+    identifier_name: &str,
+    arg_type: &ResolvableType,
+    arg_index: usize
+) {
+    let symbol_index = add_symbol(&mut ir.symbols, foreign_external(string(identifier_name)));
+    if let Some(arg_type) = try_get_resolved_runtime_type_pointer(arg_type) {
+        if let Some((built_in_arg_type, _is_pointer)) = try_get_built_in_type(&arg_type.id) {
+            let instruction = match built_in_arg_type {
+                BuiltInType::UnsignedInt8 => todo!("identifier call arg u8"),
+                BuiltInType::SignedInt8 => todo!("identifier call arg s8"),
+                BuiltInType::UnsignedInt16 => todo!("identifier call arg u16"),
+                BuiltInType::SignedInt16 => todo!("identifier call arg s16"),
+                BuiltInType::UnsignedInt32 => move_symbol_to_reg_32_instruction(symbol_index, call_arg_register(arg_index)),
+                BuiltInType::SignedInt32 => move_symbol_to_reg_32_instruction(symbol_index, call_arg_register(arg_index)),
+                BuiltInType::UnsignedInt64 => todo!("identifier call arg u64"),
+                BuiltInType::SignedInt64 => todo!("identifier call arg s64"),
+                BuiltInType::Float32 => todo!("identifier call arg float32"),
+                BuiltInType::Float64 => todo!("identifier call arg float64"),
+                BuiltInType::String => todo!("identifier call arg string"),
+                BuiltInType::Boolean => todo!("identifier call arg bool"),
+                BuiltInType::Void => todo!("identifier call arg void"),
+            };
+            add_byte_code(&mut ir.byte_code, instruction);
+            return;
+        }
+        todo!("Non built in typed identifier call arg")
+    }
+    panic!("Unresolved type for identifier call arg")
+    
 }
 
 fn move_procedure_call_return_value_into_storage(ir: &mut IntermediateRepresentation, assignment_map: &AssignmentMap, assignment_name: &str) {
