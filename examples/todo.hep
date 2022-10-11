@@ -66,40 +66,38 @@ vid: https://www.youtube.com/watch?v=MnctEW1oL-E&t=432s
 (COMPILER DESIGN WITH CASEY)
 
 Parse->Typing->Sizing->Message Send->Message Wait->IR->Run->Machine Code Gen->Exe
-
-Typing: Type checking, Knowing types of things to do the work
-Sizing: Only does stuff for structs to work out size
-Message Send: Tells other people (eg metaprogram) about types of things
-Message Wait: Wait for people to see it and ack
-IR : Bytecode stage
-Run: For running at compile time, you can run things here that are dependent down 
-complete in lower stages, even though other things may not be complete. By complete
-we mean they must have IR rep already.
-This has to have cycle breaking in it too, because of infinite loops that can occur
-
-the pipeline above is passed compilation units, ie top level statements such as declatrations, structs, methods
-Parse splits these
-Individual compilation units will hold at points in pipe if they are dependant on something, else they will pass through
-ie will stop at typing if dep on type that is not yet passed a certain points 
-Enums for example are comp units but so are their members, as they can depend on each other
-But each line of a method is not an individual comp unit, as are only dependant top down
-
-processing of compilation units is a bit like a game loop doing systems:
-
-pipe - parse(file) { per parse(file) command in q => lex, make comp-units and put in table (comp-unit id, comp-unit), message "parse_complete" (comp unit id)  }
-pipe - typing { per perform_typing(comp-unit-id) command in q => process each compilation unit and add complete types to typing table (comp-unit id, type_info)  and send  "typing_complete" (comp unit id) for them, and wait on any incomplete items in typing table (comp-unit id) }
-pipe - sizing { per perform_sizing(comp-unit-id) command in q => process each compilation unit and add complete sizings to sizing table (comp-unit id, size  and send  "sizing_complete" (comp unit id) for them, and wait on any incomplete items in typing table (comp-unit id) }
-pipe - ir-building { per perform_ir-building(comp-unit-id) }
-
-work queues (parse, typing, sizing, ir-building, runnning) - they contain messages
-loop {
-	process work queues
-		iterate through messages sending each to pipe or handler 
-			
-}
-
-wait semaphore handler will halt executiion in a pipe until released by message
+-Sizing: Only does stuff for structs to work out size
+-- pipe - sizing { per perform_sizing(comp-unit-id) command in q => process each compilation unit and add complete sizings to sizing table (comp-unit id, size  and send  "sizing_complete" (comp unit id) for them, and wait on any incomplete items in typing table (comp-unit id) }
+-This has to have cycle breaking in it too, because of infinite loops that can occur
+-Enums for example are comp units but so are their members, as they can depend on each other
 */
 
+/*
+PRELOADS:
+- preload.hep contains primitive types fro compiler even to boot up eg:
+see string struct below
+*/
+
+//CONTEXTS:
+// context gets passed to every function (can exist in a high register) has an allocators etc, context can be pushed 
+// for a call herarchy and thus be thread safe 
+// https://www.youtube.com/watch?v=ciGQCP6HgqI&t=619s
+//https://www.youtube.com/watch?v=SSVHWrYG974
+// context in second vid gets renamed to Context_Base and contains TemporaryStorage (linear allocator) and AssertionFailed
+// 
+
+//USEFUL:
 //cargo run C:\work\other\rust-hephaestus\examples\hello_world.hep
 //dbg!(unit.tree.clone());
+
+//STRINGS:
+string :: struct {
+  count: int; // amount of characters in the string
+  data: *u8;  // pointer to the start of the characters
+}
+
+to_c_string :: (s: string) -> *u8 {
+   result: *u8 = alloc(s.count + 1);
+   memcpy(result, s.data, s.count);
+   result[s.count] = 0;
+}

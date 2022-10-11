@@ -4,6 +4,7 @@ use crate::parsing::*;
 pub enum Keyword {
     Null,
     For,
+    Cast,
     Return
 }
 
@@ -16,6 +17,7 @@ type ParseKeywordOption = Option<Keyword>;
 
 const SOURCE_KEYWORD_NULL: &str = "null";
 const SOURCE_KEYWORD_FOR: &str = "for";
+const SOURCE_KEYWORD_CAST: &str = "cast";
 const SOURCE_KEYWORD_RETURN: &str = "return";
 
 pub fn parse_keyword(from: &str) -> ParseKeywordOption {
@@ -24,6 +26,9 @@ pub fn parse_keyword(from: &str) -> ParseKeywordOption {
     }
     if from == SOURCE_KEYWORD_FOR {
         return Some(Keyword::For);
+    }
+    if from == SOURCE_KEYWORD_CAST {
+        return Some(Keyword::Cast);
     }
     if from == SOURCE_KEYWORD_RETURN {
         return Some(Keyword::Return);
