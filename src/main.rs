@@ -3,6 +3,7 @@ mod tests;
 
 mod parsing;
 mod typing;
+mod sizing;
 mod intermediate_representation;
 mod backends;
 mod file_system;

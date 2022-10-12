@@ -5,12 +5,13 @@ pub enum ParseError {
     ExpectedFileName,
     ExpectedLibraryName,
     ExpectedForeignLibraryIdentifier,
-    ExpectedArgName,
+    ExpectedDeclarationName,
     ExpectedAssignmentInitialise,
     ExpectedAssignmentAssignValue,
     ExpectedArgSeparator,
     ExpectedOperator,
     ExpectedType,
+    ExpectedLineTerminator,
     UnexpectedDirective,
     TokenisationError(SourceTokenError),
     Unimplemented
@@ -36,8 +37,8 @@ pub fn expected_foreign_library_identifier_error() -> ParseError {
     ParseError::ExpectedForeignLibraryIdentifier
 }
 
-pub fn expected_arg_name_error() -> ParseError {
-    ParseError::ExpectedArgName
+pub fn expected_declaration_name_error() -> ParseError {
+    ParseError::ExpectedDeclarationName
 }
 
 pub fn expected_initialise_assignment_error() -> ParseError {
@@ -51,6 +52,10 @@ pub fn expected_assign_value_assignment_error() -> ParseError {
 
 pub fn expected_arg_separator_error() -> ParseError {
     ParseError::ExpectedArgSeparator
+}
+
+pub fn expected_line_terminator_error() -> ParseError {
+    ParseError::ExpectedLineTerminator
 }
 
 pub fn expected_type_error() -> ParseError {

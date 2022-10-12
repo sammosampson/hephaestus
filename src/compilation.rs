@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::{
     parsing::*,
     typing::*,
+    sizing::*,
     acting::*,
     file_system::*,
     intermediate_representation::*,
@@ -18,6 +19,8 @@ pub enum CompilationMessage {
     FileParsed(FileParseResult),
     PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
     UnitTyped { resolved_types: RuntimeTypePointers, unit: CompilationUnit },
+    PerformSizing { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
+    UnitSized { unit: CompilationUnit },
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     AddResolvedType(RuntimeTypePointer),
@@ -58,6 +61,10 @@ pub fn create_perform_typing_command(unit: CompilationUnit, type_repository: Com
     CompilationMessage::PerformTyping { unit, type_repository, compiler }
 }
 
+pub fn create_perform_sizing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::PerformSizing { unit, type_repository, compiler }
+}
+
 pub fn create_find_type_request(criteria: FindTypeCriteria, respond_to: CompilationActorHandle) -> CompilationMessage {
     CompilationMessage::FindType { criteria, respond_to }
 }
@@ -68,6 +75,10 @@ pub fn create_file_parsed_event(parse_result: FileParseResult) -> CompilationMes
 
 pub fn create_unit_typed_event(resolved_types: RuntimeTypePointers, unit: CompilationUnit) -> CompilationMessage {
     CompilationMessage::UnitTyped { resolved_types, unit }
+}
+
+pub fn create_unit_sized_event(unit: CompilationUnit) -> CompilationMessage {
+    CompilationMessage::UnitSized { unit }
 }
 
 pub fn create_type_found_event(resolved_type: RuntimeTypePointer) -> CompilationMessage {
@@ -176,6 +187,8 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
                 handle_file_parsed(self, parse_result, ctx),
             CompilationMessage::UnitTyped { resolved_types, unit } => 
                 handle_unit_typed(self, unit, resolved_types, ctx),
+            CompilationMessage::UnitSized { unit } => 
+                handle_unit_sized(self, unit, ctx),
             CompilationMessage::ByteCodeBuilt { code } => 
                 handle_byte_code_built(self, code, ctx, self.backend.clone()),
             CompilationMessage::BackendBuilt { id } => 
@@ -233,6 +246,29 @@ fn handle_unit_typed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap:
     for resolved_type in resolved_types {
         send_message_to_actor(&compiler.type_repository, create_add_resolved_type_command(resolved_type));
     }
+    
+    let (sizing_handle, ..) = start_actor(
+        ctx, 
+        create_sizing_actor()
+    );
+
+    let compiler_handle = create_self_handle(&ctx);
+
+    send_message_to_actor(
+        &sizing_handle, 
+        create_perform_sizing_command(unit, compiler.type_repository.clone(), compiler_handle)
+    );
+
+    continue_listening_after_receive()
+}
+
+fn handle_unit_sized<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    _compiler: &CompilerActor<TReader, TBackend, TMessageWireTap>, 
+    unit: CompilationUnit,
+    ctx: &CompilationMessageContext
+) -> AfterReceiveAction {
+    
+    debug!("handling unit sized for {:?}", unit.id);
     
     let (intemediate_representation_handle, ..) = start_actor(
         ctx, 

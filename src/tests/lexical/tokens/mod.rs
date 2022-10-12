@@ -2,6 +2,7 @@ mod assignment;
 mod loops;
 mod functions;
 mod directives;
+mod structs;
 
 use crate::parsing::*;
 use crate::utilities::*;

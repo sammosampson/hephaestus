@@ -269,8 +269,6 @@ main :: (x: s32) {
         
         move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
         
-        sub_value_from_reg_8_instruction(8, stack_pointer_register()),
-        
         // reserve shadow space for proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
         // set call arg registers

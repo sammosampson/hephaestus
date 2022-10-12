@@ -145,6 +145,10 @@ pub fn try_get_built_in_type(id: &RuntimeTypeId) -> Option<(BuiltInType, bool)> 
     None
 }
 
+pub fn is_string_built_in_type(built_in_type: &BuiltInType) -> bool {
+    &BuiltInType::String == built_in_type
+}
+
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct RuntimeType {
     pub id: RuntimeTypeId,

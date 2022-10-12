@@ -19,7 +19,7 @@ pub fn perform_typing_for_procedure_body(
 
     for arg in args {
         match arg.item_mut() {
-            AbstractSyntaxNodeItem::ArgumentDeclaration { name, arg_type: type_id } => 
+            AbstractSyntaxNodeItem::Declaration { name, arg_type: type_id } => 
                 perform_typing_for_procedure_body_argument_declaration(&mut local_type_map, name, type_id),
             item => panic!("{:?} is not viable procedure body arg", item)
         }

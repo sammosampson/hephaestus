@@ -92,30 +92,29 @@ SomeProcedure :: () {
     let (_, global_const_types) = get_first_typed_const_unit(&units_and_types);
     let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
     
-    assert_eq!(global_const_types.len(), 1);
-    assert_eq!(proc_body_types.len(), 0);
-    assert_eq!(
-        proc_body_unit.tree, 
-        node(
-            position(35, 2, 21),
-            procedure_body_item(
-                string("SomeProcedure"),
-                vec!(),
-                vec!(),
-                vec!(                       
-                    node(
-                        position(41, 3, 5),
-                        assignment_item(
-                            string("x"),                     
-                            node(                    
-                                position(46, 3, 10),
-                                identifier_item(string("GLOBAL")),
-                            ),
-                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
-                        )
+    let expected = node(
+        position(35, 2, 21),
+        procedure_body_item(
+            string("SomeProcedure"),
+            vec!(),
+            vec!(),
+            vec!(                       
+                node(
+                    position(41, 3, 5),
+                    assignment_item(
+                        string("x"),                     
+                        node(                    
+                            position(46, 3, 10),
+                            identifier_item(string("GLOBAL"), global_scope()),
+                        ),
+                        resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                     )
                 )
             )
         )
-    )
+    );
+  
+    assert_eq!(global_const_types.len(), 1);
+    assert_eq!(proc_body_types.len(), 0);
+    assert_eq!(proc_body_unit.tree, expected);
 }

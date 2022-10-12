@@ -1,4 +1,12 @@
-use crate::parsing::*;
+use crate::{parsing::*, typing::BuiltInType};
+
+pub fn parse_top_level_type(built_in_type: &BuiltInType, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+    if is_declaration_assignment(&peek_next_token(lexer).item) {
+        eat_next_token(lexer);
+        return parse_top_level_type_declaration(built_in_type, lexer, position);
+    }
+    create_error_node(unimplemented_error(), position)
+}
 
 pub fn parse_top_level_identifier(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     if is_declaration_assignment(&peek_next_token(lexer).item) {
@@ -40,7 +48,7 @@ pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: 
         return parse_procedure_call(name, lexer, position);
     }
 
-    let node = create_node(identifier_item(name), position);
+    let node = create_node(unknown_scope_identifier_item(name), position);
     
     if is_operator(&peek_next_token(lexer).item) {
         return parse_expression(lexer, node, position);
@@ -49,6 +57,10 @@ pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: 
     node
 }
 
-pub fn identifier_item(name: String) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Identifier { name, scope: unknown_scope() }
+pub fn unknown_scope_identifier_item(name: String) -> AbstractSyntaxNodeItem {
+    identifier_item(name, unknown_scope())
+}
+
+pub fn identifier_item(name: String, scope: Scope) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Identifier { name, scope }
 }

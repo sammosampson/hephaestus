@@ -3,6 +3,7 @@ mod consts;
 mod procedures;
 mod expressions;
 mod assignments;
+mod structs;
 
 use crate::parsing::*;
 use crate::acting::*;

@@ -67,6 +67,7 @@ pub fn parse_next_node(filename: String, lexer: &mut Lexer, units: &mut Compilat
 
     match token.item {
         SourceTokenItem::Identifier(name) => parse_top_level_identifier(filename, name, lexer, token.position, units),
+        SourceTokenItem::Type(built_in_type) => parse_top_level_type(&built_in_type, lexer, token.position),
         SourceTokenItem::Directive(name) => parse_directive(name, lexer, token.position),
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),

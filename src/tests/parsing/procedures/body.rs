@@ -57,7 +57,7 @@ fn parse_procedure_body_parses_correctly() {
                                     arg_item(
                                         node(
                                             position(71, 3, 24),
-                                            identifier_item(string("a"))
+                                            unknown_scope_identifier_item(string("a"))
                                         ),
                                         unresolved_resolvable_type()
                                     )

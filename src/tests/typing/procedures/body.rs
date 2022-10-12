@@ -31,21 +31,21 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                 vec!(
                     node(
                         position(18, 1, 19),
-                        arg_declaration_item(
+                        declaration_item(
                             string("a"),
                             resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
                     ),
                     node(
                         position(26, 1, 27),
-                        arg_declaration_item(
+                        declaration_item(
                             string("b"),
                             resolved_resolvable_type(create_shareable(float_32_runtime_type()))
                         )
                     ),
                     node(
                         position(36, 1, 37),
-                        arg_declaration_item(
+                        declaration_item(
                             string("c"),
                             resolved_resolvable_type(create_shareable(string_runtime_type()))
                         )
@@ -72,7 +72,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                             string("x"), 
                             node(
                                 position(76, 2, 14),
-                                identifier_item(string("a"))
+                                identifier_item(string("a"), local_scope())
                             ),
                             resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
@@ -83,7 +83,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                             string("y"), 
                             node(
                                 position(92, 3, 14),
-                                identifier_item(string("b"))
+                                identifier_item(string("b"), local_scope())
                             ),
                             resolved_resolvable_type(create_shareable(float_32_runtime_type()))
                         )
@@ -94,7 +94,7 @@ fn typing_procedure_body_with_args_from_header_used_in_expression_gets_typed_cor
                             string("z"), 
                             node(
                                 position(108, 4, 14),
-                                identifier_item(string("c"))
+                                identifier_item(string("c"), local_scope())
                             ),
                             resolved_resolvable_type(create_shareable(string_runtime_type()))
                         )
@@ -156,14 +156,14 @@ fn typing_procedure_body_with_pointer_args_from_header_get_typed_correctly() {
                 vec!(
                     node(
                         position(18, 1, 19),
-                        arg_declaration_item(
+                        declaration_item(
                             string("a"),
                             resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))
                         )
                     ),
                     node(
                         position(27, 1, 28),
-                        arg_declaration_item(
+                        declaration_item(
                             string("b"),
                             resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))
                         )

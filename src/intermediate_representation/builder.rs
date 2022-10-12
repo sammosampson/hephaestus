@@ -36,6 +36,8 @@ fn build_bytecode_at_root(unit: &CompilationUnit, ir: &mut IntermediateRepresent
             build_bytecode_at_procedure_body(ir, name, args, statements),
         AbstractSyntaxNodeItem::Constant { name, value, ..} =>
             build_bytecode_at_top_root_const(ir, name, value),
+        AbstractSyntaxNodeItem::Struct { name, ..} =>
+            print!("struct bytecode coming soon {}", name),
         item => todo!("Other root bytecode: {:?}", item)
     }    
 }

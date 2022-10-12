@@ -37,12 +37,16 @@ pub enum AbstractSyntaxNodeItem {
         return_types: AbstractSyntaxChildNodes,
         statements: AbstractSyntaxChildNodes,
     },
+    Struct {
+        name: String,
+        fields: AbstractSyntaxChildNodes
+    },
     ProcedureCall {
         name: String,
         args: AbstractSyntaxChildNodes,
         procedure_call_type: ResolvableType
     },
-    ArgumentDeclaration {
+    Declaration {
         name: String,
         arg_type: ResolvableType
     },

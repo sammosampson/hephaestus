@@ -139,3 +139,32 @@ fn compound_get_for_typed_constant_with_initial_asignment() {
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
 }
+
+#[test]
+fn compound_get_for_assignment_to_cast() {
+    let mut lexer = lex("x := cast(s32) y;");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::InitialiseAssignValue));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Keyword(Keyword::Cast));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Open)));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Type(signed_int_32_built_in_type()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Enclosure(Enclosure::Parentheses(EnclosureType::Close)));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("y".to_string()));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
+}

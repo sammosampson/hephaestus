@@ -46,7 +46,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                 arg_item(
                                     node(                                                    
                                         position(19, 1, 20),
-                                        identifier_item(string("a"))
+                                        unknown_scope_identifier_item(string("a"))
                                     ),
                                     unresolved_resolvable_type()
                                 )
@@ -56,7 +56,7 @@ fn parse_procedure_call_with_arg_parses_correctly() {
                                 arg_item( 
                                     node(
                                         position(22, 1, 23),
-                                        identifier_item(string("b"))
+                                        unknown_scope_identifier_item(string("b"))
                                     ),
                                     unresolved_resolvable_type()
                                 )

@@ -10,6 +10,8 @@ mod tree;
 mod compilation_units;
 mod termination;
 mod assigment;
+mod constants;
+mod structs;
 
 pub use parser::*;
 pub use expressions::*;
@@ -23,3 +25,5 @@ pub use tree::*;
 pub use compilation_units::*;
 pub use termination::*;
 pub use assigment::*;
+pub use constants::*;
+pub use structs::*;

@@ -68,14 +68,14 @@ fn parse_variable_expression_parses_correctly() {
                 vec!(
                     node(
                         position(9, 1, 10),
-                        arg_declaration_item( 
+                        declaration_item( 
                             string("a"),
                             resolved_resolvable_type(create_shareable(signed_int_64_runtime_type())),
                         )
                     ),
                     node(
                         position(17, 1, 18),
-                        arg_declaration_item( 
+                        declaration_item( 
                             string("b"),
                             resolved_resolvable_type(create_shareable(signed_int_64_runtime_type())),
                         )
@@ -96,11 +96,11 @@ fn parse_variable_expression_parses_correctly() {
                                     ),
                                     node(
                                         position(36, 2, 10),
-                                        identifier_item(string("a")),
+                                        unknown_scope_identifier_item(string("a")),
                                     ),
                                     node(
                                         position(40, 2, 14),
-                                        identifier_item(string("b")),
+                                        unknown_scope_identifier_item(string("b")),
                                     ),
                                     unresolved_resolvable_type()
                                 )

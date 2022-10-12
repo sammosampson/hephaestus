@@ -119,7 +119,7 @@ fn parse_procedure_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     }
 
     loop {
-        args.push(parse_procedure_arg(lexer));
+        args.push(parse_declaration(lexer));
 
         let next_token = peek_next_token(lexer);
         
@@ -134,28 +134,6 @@ fn parse_procedure_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
             return args;
         }
     }
-}
-
-fn parse_procedure_arg(lexer: &mut Lexer) -> AbstractSyntaxNode {
-    let name_token = peek_next_token(lexer);
-    if let Some(name) = try_get_identifier(name_token.item) {
-        eat_next_token(lexer);
-        
-        if is_initialise_assignment(&peek_next_token(lexer).item) {
-            eat_next_token(lexer);
-
-            if let Some(arg_type) = try_parse_type(lexer) {
-                eat_next_token(lexer);
-                return create_node(arg_declaration_item(name, arg_type), name_token.position)
-            }
-
-            return create_error_node(unimplemented_error(), peek_next_token(lexer).position);        
-        }
-
-        return create_error_node(expected_initialise_assignment_error(), peek_next_token(lexer).position);        
-    }
-    
-    create_error_node(expected_arg_name_error(), peek_next_token(lexer).position)
 }
 
 fn parse_procedure_return_types(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
@@ -226,7 +204,7 @@ fn parse_foreign_library_identifier(lexer: &mut Lexer) -> AbstractSyntaxNode {
         
     if let Some(foreign_library) = try_get_identifier(token.item) {
         eat_next_token(lexer);
-        return create_node(identifier_item(foreign_library), token.position)
+        return create_node(unknown_scope_identifier_item(foreign_library), token.position)
     }
     create_error_node(expected_foreign_library_identifier_error(), token.position)
 }
@@ -341,10 +319,6 @@ pub fn procedure_call_item(
     type_id: ResolvableType
 ) -> AbstractSyntaxNodeItem {
     AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id }
-}
-
-pub fn arg_declaration_item(name: String, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::ArgumentDeclaration { name, arg_type: type_id }
 }
 
 pub fn arg_item(expr: AbstractSyntaxNode, type_id: ResolvableType) -> AbstractSyntaxNodeItem {

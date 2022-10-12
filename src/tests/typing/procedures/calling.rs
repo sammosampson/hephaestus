@@ -262,7 +262,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_arg_from_prior_expres
                                     arg_item( 
                                         node(
                                             position(61, 3, 27),  
-                                            identifier_item(string("a"))
+                                            identifier_item(string("a"), local_scope())
                                         ),
                                         resolved_resolvable_type(create_shareable(signed_int_64_runtime_type())) 
                                     )

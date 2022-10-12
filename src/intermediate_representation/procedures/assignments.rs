@@ -32,21 +32,19 @@ fn build_bytecode_at_assignment_to_literal(
     literal: &ResolvableLiteral
 ) {
     let offset = get_assignment_offset(assignment_map, assignment_name);
-    let instruction = match get_resolved_literal(literal) {
+    match get_resolved_literal(literal) {
         ResolvedLiteral::UnsignedInt8(_) => todo!("assignment to literal u8"),
         ResolvedLiteral::SignedInt8(_) => todo!("assignment to literal s8"),
         ResolvedLiteral::UnsignedInt16(_) => todo!("assignment to literal u16"),
         ResolvedLiteral::SignedInt16(_) => todo!("assignment to literal s16"),
-        ResolvedLiteral::UnsignedInt32(value) => move_value_to_reg_plus_offset_32_instruction(value, base_pointer_register(), offset),
-        ResolvedLiteral::SignedInt32(value) => move_value_to_reg_plus_offset_32_instruction(value as u32, base_pointer_register(), offset),
-        ResolvedLiteral::UnsignedInt64(value) => move_value_to_reg_plus_offset_64_instruction(value, base_pointer_register(), offset),
-        ResolvedLiteral::SignedInt64(value) => move_value_to_reg_plus_offset_64_instruction(value as u64, base_pointer_register(), offset),
+        ResolvedLiteral::UnsignedInt32(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_32_instruction(value, base_pointer_register(), offset)),
+        ResolvedLiteral::SignedInt32(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_32_instruction(value as u32, base_pointer_register(), offset)),
+        ResolvedLiteral::UnsignedInt64(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_64_instruction(value, base_pointer_register(), offset)),
+        ResolvedLiteral::SignedInt64(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_64_instruction(value as u64, base_pointer_register(), offset)),
         ResolvedLiteral::Float32(_) => todo!("assignment to literal float32"),
         ResolvedLiteral::Float64(_) => todo!("assignment to literal float64"),
-        ResolvedLiteral::String(_) => todo!("assignment to literal string"),
+        ResolvedLiteral::String(_) => println!("assignment to literal string"),
     };
-
-    add_byte_code(&mut ir.byte_code, instruction);
 }
 
 
@@ -97,7 +95,7 @@ fn add_args_to_assignment_map(assignment_map: &mut AssignmentMap, args: &Abstrac
     let mut position = 0;
     for statement in args {
         match statement.item_ref() {
-            AbstractSyntaxNodeItem::ArgumentDeclaration { name, .. } => {
+            AbstractSyntaxNodeItem::Declaration { name, .. } => {
                 position = position + 8;
                 assignment_map.insert(name.clone(), position);
             }
