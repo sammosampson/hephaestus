@@ -68,6 +68,10 @@ pub enum AbstractSyntaxNodeItem {
         value: AbstractSyntaxNode,
         assignment_type: ResolvableType
     },
+    Cast {
+        cast_type: ResolvableType,
+        expr: AbstractSyntaxNode
+    },
     BinaryExpr {
         op: AbstractSyntaxNode,
         lhs: AbstractSyntaxNode,

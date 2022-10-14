@@ -11,17 +11,17 @@ Kernel32 :: #foreign_system_library \"kernel32\";
 WriteFile :: (handle: *void, to_write: *void, bytes_to_write: u32, bytes_written: *void, overlapped: *void) -> bool #foreign Kernel32;
 GetStdHandle :: (handle_type: s32) -> *void #foreign Kernel32;
 
-print :: (to_print: string, length: u32) {
+print :: (to_print: string) {
     handle := GetStdHandle(STD_OUTPUT_HANDLE);
+    to_write := cast(*void) to_print.data;
+    length := cast(u32) to_print.len
     bytes_written: *void = null;
     overlapped: *void = null;
-    to_write: *void = to_print;
     WriteFile(handle, to_write, length, bytes_written, overlapped);
 }
 
 main :: () {
-    length: u32 = 15;
-    print(\"hello world!\r\0\", length);
+    print(\"hello world!\r\0\");
 }"
     );   
     

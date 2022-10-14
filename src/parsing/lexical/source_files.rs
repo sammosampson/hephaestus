@@ -128,6 +128,13 @@ pub fn is_character_alphanumeric(character: &SourceFileCharacter) -> bool {
     false
 }
 
+pub fn is_character_numeric(character: &SourceFileCharacter) -> bool {
+    if let Some(character) = get_character_value(character) {
+        return character.is_numeric();
+    }
+    false
+}
+
 pub fn is_character_whitespace(character: &SourceFileCharacter) -> bool {
     if let Some(character) = get_character_value(character) {
         return character.is_whitespace();

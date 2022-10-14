@@ -118,3 +118,83 @@ SomeProcedure :: () {
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(proc_body_unit.tree, expected);
 }
+
+#[test]
+fn typing_string_assignment_types_sucessfully() {
+    let units_and_types = compile_source_and_get_types_and_unit("main :: () {
+    s := \"hello\"
+}");
+
+    
+    assert_eq!(units_and_types.len(), 2);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+
+    assert_eq!(proc_body_types.len(), 0);
+    assert_eq!(
+        proc_body_unit.tree, 
+        node(
+            position(11, 1, 12),
+            procedure_body_item(
+                string("main"),
+                vec!(),
+                vec!(),
+                vec!(                       
+                    node(
+                        position(17, 2, 5),
+                        assignment_item(
+                            string("s"),                     
+                            node(                    
+                                position(22, 2, 10),
+                                literal_item(resolved_resolvable_literal(resolved_string_literal(string("hello")))),
+                            ),
+                            resolved_resolvable_type(create_shareable(string_runtime_type()))
+                        )
+                    )
+                )
+            )
+        )
+    )
+}
+
+#[test]
+fn typing_cast_assignment_types_sucessfully() {
+    let units_and_types = compile_source_and_get_types_and_unit("main :: () {
+    x := cast(u32) 1;
+}");
+
+    
+    assert_eq!(units_and_types.len(), 2);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+
+    assert_eq!(proc_body_types.len(), 0);
+    assert_eq!(
+        proc_body_unit.tree, 
+        node(
+            position(11, 1, 12),
+            procedure_body_item(
+                string("main"),
+                vec!(),
+                vec!(),
+                vec!(
+                    node(
+                        position(17, 2, 5),
+                        assignment_item(            
+                            string("x"),                     
+                            node(
+                                position(22, 2, 10),
+                                cast_item(
+                                    resolved_resolvable_type(create_shareable(unsigned_int_32_runtime_type())),
+                                    node(
+                                        position(32, 2, 20),
+                                        literal_item(resolved_resolvable_literal(resolved_unsigned_int_32_literal(1))),
+                                    )
+                                )
+                            ),
+                            resolved_resolvable_type(create_shareable(unsigned_int_32_runtime_type()))
+                        )
+                    )
+                )
+            )
+        )
+    )
+}

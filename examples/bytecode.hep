@@ -1,5 +1,6 @@
 /*
 https://www.youtube.com/watch?v=KCWVusIztlY&t=3945s 46:30 for bytecode example
+and https://www.youtube.com/watch?v=UTqZNujQOlA&t=2738s 1:12:12
 
 Instructions:
 
@@ -54,5 +55,11 @@ NullPointerCheck
 Respecialise
 DebugPrintRegister
 DebugPushLexicalBlock
-DebugPopLexicalBlock
+DebugPopLexicalBlock,
+*/
+
+/* call a proc:
+MakeCallingRecord
+PokeArgument
+CallProcedure
 */

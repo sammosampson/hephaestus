@@ -8,7 +8,8 @@ use std::mem::*;
 
 use crate::{
     parsing::*,
-    threading::*
+    threading::*,
+    utilities::*
 };
 
 #[derive(PartialEq, Debug, Clone)]
@@ -145,8 +146,26 @@ pub fn try_get_built_in_type(id: &RuntimeTypeId) -> Option<(BuiltInType, bool)> 
     None
 }
 
-pub fn is_string_built_in_type(built_in_type: &BuiltInType) -> bool {
-    &BuiltInType::String == built_in_type
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+pub struct RuntimeTypeField {
+    pub name: String,
+    pub field_type: RuntimeTypePointer,
+}
+
+fn runtime_type_field(name: String, field_type: RuntimeTypePointer) -> RuntimeTypeField {
+    RuntimeTypeField {
+        name,
+        field_type
+    }
+}
+
+pub type RuntimeTypeFields = Vec<RuntimeTypeField>;
+
+fn string_runtime_type_fields() -> RuntimeTypeFields {
+    vec!(
+        runtime_type_field(string("len"), create_shareable(signed_int_64_runtime_type())),
+        runtime_type_field(string("data"), create_shareable(unsigned_int_8_pointer_runtime_type()))
+    )
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -172,7 +191,7 @@ pub fn create_type(id: RuntimeTypeId, name: String, item: RuntimeTypeItem, size:
 
 pub fn unsigned_int_8_runtime_type() -> RuntimeType {
     create_type(
-        built_in_type_runtime_type_id(signed_int_8_built_in_type()),
+        built_in_type_runtime_type_id(unsigned_int_8_built_in_type()),
         SOURCE_TYPE_U8.to_string(),
         unsigned_integer_type_item(),
         resolved_type_size(1)
@@ -190,7 +209,7 @@ pub fn signed_int_8_runtime_type() -> RuntimeType {
 
 pub fn unsigned_int_16_runtime_type() -> RuntimeType {
     create_type(
-        built_in_type_runtime_type_id(signed_int_16_built_in_type()),
+        built_in_type_runtime_type_id(unsigned_int_16_built_in_type()),
         SOURCE_TYPE_U16.to_string(),
         unsigned_integer_type_item(),
         resolved_type_size(2)
@@ -208,7 +227,7 @@ pub fn signed_int_16_runtime_type() -> RuntimeType {
 
 pub fn unsigned_int_32_runtime_type() -> RuntimeType {
     create_type(
-        built_in_type_runtime_type_id(signed_int_32_built_in_type()),
+        built_in_type_runtime_type_id(unsigned_int_32_built_in_type()),
         SOURCE_TYPE_U32.to_string(),
         unsigned_integer_type_item(),
         resolved_type_size(4)
@@ -264,8 +283,8 @@ pub fn string_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(string_built_in_type()),
         SOURCE_TYPE_STRING.to_string(),
-        string_type_item(),
-        resolved_type_size(4)
+        string_type_item(string_runtime_type_fields()),
+        resolved_type_size(16)
     )
 }
 
@@ -395,7 +414,7 @@ pub enum RuntimeTypeItem {
     Pointer { to_type: Box<RuntimeType> },
     Int { is_signed: bool },
     Float,
-    String,
+    String { fields: RuntimeTypeFields },
     Bool,
     Void
 }
@@ -430,8 +449,8 @@ fn float_type_item() -> RuntimeTypeItem {
     RuntimeTypeItem::Float
 }
 
-fn string_type_item() -> RuntimeTypeItem {
-    RuntimeTypeItem::String
+fn string_type_item(fields: RuntimeTypeFields) -> RuntimeTypeItem {
+    RuntimeTypeItem::String { fields }
 }
 
 fn bool_type_item() -> RuntimeTypeItem {

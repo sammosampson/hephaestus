@@ -309,7 +309,7 @@ fn perform_typing_for_known_target_type_expression_literal(
             },
             UnresolvedLiteral::String(value) => {
                 match known_target_type.item {
-                    RuntimeTypeItem::String => {
+                    RuntimeTypeItem::String { .. }  => {
                         *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
                     }, 
                     _ => panic!("literal value is not for target type")
@@ -404,10 +404,11 @@ pub fn perform_typing_for_inferred_type_expression(
             perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id),
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id } =>
             perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id),
+        AbstractSyntaxNodeItem::Cast { cast_type, expr} =>
+            perform_typing_for_expression_cast(ctx, type_repository, local_type_map, cast_type, expr),
         _ => None
     }
 }
-
 fn perform_typing_for_inferred_type_expression_literal(literal: &mut ResolvableLiteral) -> OptionalRuntimeTypePointer {
     if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
         match unresolved_literal {
@@ -496,4 +497,18 @@ fn perform_typing_for_expression_procedure_call(
     }
 
     todo!()
+}
+
+fn perform_typing_for_expression_cast(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &IdentifierTypeLookup,
+    cast_type: &mut ResolvableType,
+    expr: &mut AbstractSyntaxNode
+) -> OptionalRuntimeTypePointer {
+    if let Some(resolved_cast_type) = try_get_resolved_runtime_type_pointer(&cast_type) {
+        perform_typing_for_known_target_type_expression(ctx, type_repository, local_type_map, expr, &resolved_cast_type);
+        return Some(resolved_cast_type.clone());
+    }
+    None
 }

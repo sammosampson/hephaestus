@@ -9,6 +9,7 @@ pub enum ParseError {
     ExpectedAssignmentInitialise,
     ExpectedAssignmentAssignValue,
     ExpectedArgSeparator,
+    ExpectedEnclosure(Enclosure),
     ExpectedOperator,
     ExpectedType,
     ExpectedLineTerminator,
@@ -49,9 +50,16 @@ pub fn expected_assign_value_assignment_error() -> ParseError {
     ParseError::ExpectedAssignmentAssignValue
 }
 
-
 pub fn expected_arg_separator_error() -> ParseError {
     ParseError::ExpectedArgSeparator
+}
+
+pub fn expected_open_paren_error() -> ParseError {
+    ParseError::ExpectedEnclosure(Enclosure::Parentheses(EnclosureType::Open))
+}
+
+pub fn expected_close_paren_error() -> ParseError {
+    ParseError::ExpectedEnclosure(Enclosure::Parentheses(EnclosureType::Close))
 }
 
 pub fn expected_line_terminator_error() -> ParseError {

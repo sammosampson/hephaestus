@@ -172,6 +172,8 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
                 get_character_position(&next_character), 
                 create_range_token_item(create_left_inclusive_range())
             );
+        } else {
+            return create_token(get_character_position(&next_character), create_period_token_item());
         }
     }
 
@@ -233,49 +235,59 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
 
 fn parse_alphanumeric(lexer: &mut Lexer, is_negative: bool) -> SourceToken {
     let next_character = peek_next_character(&mut lexer.reader);
+    
+    if is_character_numeric(&next_character) {
+        let mut alphanumeric_string = read_up_until_non_alphanumeric(lexer);
+        let (next_char, next_char_after_that) = peek_next_two_characters(&mut lexer.reader);
 
-    let mut alphanumeric_string = read_up_until_non_alphanumeric(lexer);
-    let (next_char, next_char_after_that) = peek_next_two_characters(&mut lexer.reader);
+        if is_character(&next_char, SOURCE_SYMBOL_PERIOD) && is_character_numeric(&next_char_after_that) {
+            eat_next_character(&mut lexer.reader);
+            
+            alphanumeric_string.push(SOURCE_SYMBOL_PERIOD);
+            alphanumeric_string = alphanumeric_string + &read_up_until_non_alphanumeric(lexer);
+            
+            if is_float_string(&alphanumeric_string) {
+                return create_token(
+                    get_character_position(&next_character), 
+                    create_float_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
+                );
+            }
+        }
 
-    if is_character(&next_char, SOURCE_SYMBOL_PERIOD) && is_character_alphanumeric(&next_char_after_that) {
-        eat_next_character(&mut lexer.reader);
-        
-        alphanumeric_string.push(SOURCE_SYMBOL_PERIOD);
-        alphanumeric_string = alphanumeric_string + &read_up_until_non_alphanumeric(lexer);
-        
-        if is_float_string(&alphanumeric_string) {
+        if is_int_string(&alphanumeric_string) {
             return create_token(
                 get_character_position(&next_character), 
-                create_float_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
+                create_int_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
+            );
+        }     
+
+        create_token(
+            get_character_position(&next_character), 
+            create_error_token_item(create_unknown_token_error(get_unwrapped_character_value(&next_character)))
+        )
+    
+    } else {
+        let alphanumeric_string = read_up_until_non_alphanumeric(lexer);
+
+        if let Some(built_in_type) = parse_built_in_type(&alphanumeric_string) {
+            return create_token(
+                get_character_position(&next_character), 
+                create_type_token_item(built_in_type)
             );
         }
-    }
 
-    if is_int_string(&alphanumeric_string) {
+        if let Some(keyword) = parse_keyword(&alphanumeric_string) {
+            return create_token(
+                get_character_position(&next_character), 
+                create_keyword_token_item(keyword)
+            );
+        }
+
         return create_token(
             get_character_position(&next_character), 
-            create_int_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
-        );
-    }        
-
-    if let Some(built_in_type) = parse_built_in_type(&alphanumeric_string) {
-        return create_token(
-            get_character_position(&next_character), 
-            create_type_token_item(built_in_type)
+            create_identifier_token_item(alphanumeric_string)
         );
     }
-
-    if let Some(keyword) = parse_keyword(&alphanumeric_string) {
-        return create_token(
-            get_character_position(&next_character), 
-            create_keyword_token_item(keyword)
-        );
-    }
-
-    return create_token(
-        get_character_position(&next_character), 
-        create_identifier_token_item(alphanumeric_string)
-    );
 }
 
 

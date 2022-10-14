@@ -49,3 +49,7 @@ fn parse_struct_fields(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
         }
     }
 }
+
+pub fn parse_struct_instance_field_access(_name: String, _lexer: &mut Lexer, _position: SourceFilePosition) -> AbstractSyntaxNode {
+    todo!()
+}

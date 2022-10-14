@@ -21,6 +21,8 @@ pub fn build_bytecode_at_assignment(
             build_bytecode_at_assignment_to_identifier(ir, assignment_map, assignment_name, name),
         AbstractSyntaxNodeItem::Null =>  
             build_bytecode_at_assignment_to_null(ir, assignment_map, assignment_name),
+        AbstractSyntaxNodeItem::Cast { expr, .. } =>  
+            build_bytecode_at_assignment(ir, assignment_map, assignment_name, expr),
         item => todo!("implementation needed for {:?}", item)
     }
 }
@@ -46,7 +48,6 @@ fn build_bytecode_at_assignment_to_literal(
         ResolvedLiteral::String(_) => println!("assignment to literal string"),
     };
 }
-
 
 fn build_bytecode_at_assignment_to_identifier(
     _ir: &mut IntermediateRepresentation,

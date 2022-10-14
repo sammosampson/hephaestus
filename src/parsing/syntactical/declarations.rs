@@ -1,6 +1,5 @@
 use crate::parsing::*;
 use crate::typing::*;
-use crate::utilities::*;
 
 pub fn parse_top_level_declaration(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     if is_struct_keyword(&peek_next_token(lexer).item) {
@@ -14,16 +13,6 @@ pub fn parse_top_level_declaration(filename: String, name: String, lexer: &mut L
     }
     
     parse_inferred_constant(name, lexer, position)
-}
-
-pub fn parse_top_level_type_declaration(built_in_type: &BuiltInType, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    if is_struct_keyword(&peek_next_token(lexer).item) {
-        eat_next_token(lexer);
-        if is_string_built_in_type(built_in_type) {
-            return parse_struct(string(SOURCE_TYPE_STRING), lexer, position);
-        }
-    }
-    create_error_node(unimplemented_error(), get_next_token(lexer).position)
 }
 
 pub fn parse_known_type_top_level_declaration(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {

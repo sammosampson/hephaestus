@@ -38,13 +38,12 @@ fn parse_struct_parses_correctly() {
             )
         )
     )
-}                       
+}
 
 #[test]
-fn parse_built_in_type_struct_parses_correctly() {        
-    let units = run_parse_file_return_only_units("string :: struct {
-    len: int;
-    data: *u8;
+fn parse_struct_field_access_parses_correctly() {        
+    let units = run_parse_file_return_only_units("SomeProcedure :: (s: string) {
+    x := s.len;
 }");
 
     assert_eq!(units.len(), 1);
@@ -53,24 +52,24 @@ fn parse_built_in_type_struct_parses_correctly() {
         node(
             position(0, 1, 1),
             struct_item(
-                string("string"),
+                string("SomeStruct"),
                 vec!(
                     node(
-                        position(23, 2, 5),
+                        position(27, 2, 5),
                         declaration_item(            
-                            string("len"),
-                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
+                            string("x"),
+                            resolved_resolvable_type(create_shareable(float_32_runtime_type()))
                         )
                     ),
                     node(
-                        position(37, 3, 5),
+                        position(41, 3, 5),
                         declaration_item(            
-                            string("data"),
-                            resolved_resolvable_type(create_shareable(unsigned_int_8_pointer_runtime_type()))
+                            string("y"),
+                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                         )
                     )
                 )
             )
         )
     )
-}                       
+}

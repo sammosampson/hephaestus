@@ -15,6 +15,7 @@ pub fn create_token(position: SourceFilePosition, item: SourceTokenItem) -> Sour
 pub enum SourceTokenItem {
     Directive(Directive),
     Pointer,
+    Period,
     Identifier(String),
     Type(BuiltInType),
     Keyword(Keyword),
