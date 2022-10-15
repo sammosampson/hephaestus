@@ -5,6 +5,7 @@ pub enum ParseError {
     ExpectedFileName,
     ExpectedLibraryName,
     ExpectedForeignLibraryIdentifier,
+    ExpectedIdentifier,
     ExpectedDeclarationName,
     ExpectedAssignmentInitialise,
     ExpectedAssignmentAssignValue,
@@ -36,6 +37,10 @@ pub fn expected_operator_error() -> ParseError {
 
 pub fn expected_foreign_library_identifier_error() -> ParseError {
     ParseError::ExpectedForeignLibraryIdentifier
+}
+
+pub fn expected_identifier_error() -> ParseError {
+    ParseError::ExpectedIdentifier
 }
 
 pub fn expected_declaration_name_error() -> ParseError {

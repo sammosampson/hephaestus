@@ -23,9 +23,12 @@ pub fn build_bytecode_at_assignment(
             build_bytecode_at_assignment_to_null(ir, assignment_map, assignment_name),
         AbstractSyntaxNodeItem::Cast { expr, .. } =>  
             build_bytecode_at_assignment(ir, assignment_map, assignment_name, expr),
+        AbstractSyntaxNodeItem::MemberExpr { instance, member, .. } =>  
+            build_bytecode_at_assignment_to_member_expr(ir, assignment_map, assignment_name, instance, member),
         item => todo!("implementation needed for {:?}", item)
     }
 }
+
 
 fn build_bytecode_at_assignment_to_literal(
     ir: &mut IntermediateRepresentation,
@@ -68,6 +71,17 @@ fn build_bytecode_at_assignment_to_null(
     add_byte_code(&mut ir.byte_code, instruction);
 }
 
+
+fn build_bytecode_at_assignment_to_member_expr(
+    _ir: &mut IntermediateRepresentation,
+    _assignment_map: &AssignmentMap,
+    _assignment_name: &str,
+    _instance: &AbstractSyntaxNode,
+    _member: &AbstractSyntaxNode
+) {
+    println!("build_bytecode_at_assignment_to_member_expr: {}", _assignment_name);
+}
+
 pub type AssignmentMap = HashMap<String, isize>;
 
 pub fn get_assignment_map(args: &AbstractSyntaxChildNodes, statements: &AbstractSyntaxChildNodes) -> AssignmentMap {
@@ -83,7 +97,7 @@ fn add_statements_to_assignment_map(assignment_map: &mut AssignmentMap, statemen
     let mut position = 0;
     for statement in statements {
         match statement.item_ref() {
-            AbstractSyntaxNodeItem::Assignment { name, .. } => {
+            AbstractSyntaxNodeItem::VariableDeclaration { name, .. } => {
                 position = position - 8;
                 assignment_map.insert(name.clone(), position);
             }
@@ -96,7 +110,7 @@ fn add_args_to_assignment_map(assignment_map: &mut AssignmentMap, args: &Abstrac
     let mut position = 0;
     for statement in args {
         match statement.item_ref() {
-            AbstractSyntaxNodeItem::Declaration { name, .. } => {
+            AbstractSyntaxNodeItem::MemberDeclaration { name, .. } => {
                 position = position + 8;
                 assignment_map.insert(name.clone(), position);
             }

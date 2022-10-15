@@ -13,7 +13,7 @@ pub fn perform_typing_for_procedure_header(
     
     for arg in args {
         match arg.item_mut() {
-            AbstractSyntaxNodeItem::Declaration { arg_type: type_id, .. } => 
+            AbstractSyntaxNodeItem::MemberDeclaration { member_type: type_id, .. } => 
                 try_parse_resolved_runtime_type_pointer(type_id, &mut arg_types),
             item => panic!("{:?} is not viable procedure header arg", item)
         }

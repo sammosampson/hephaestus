@@ -6,7 +6,7 @@ pub fn parse_inferred_value_assignment(name: String, lexer: &mut Lexer, position
 }
 
 fn parse_value_assignment(name: String, lexer: &mut Lexer, position: SourceFilePosition, resolvable_type: ResolvableType) -> AbstractSyntaxNode {
-    create_node(assignment_item(name, parse_value_assignment_value(lexer), resolvable_type), position)
+    create_node(variable_declaration_item(name, parse_value_assignment_value(lexer), resolvable_type), position)
 }
 
 pub fn parse_initialise_assignment(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
@@ -64,8 +64,8 @@ fn parse_value_assignment_cast(lexer: &mut Lexer, position: SourceFilePosition) 
     create_error_node(expected_type_error(), get_next_token(lexer).position)
 }
 
-pub fn assignment_item(name: String, value: AbstractSyntaxNode, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Assignment { name, value, assignment_type: type_id }
+pub fn variable_declaration_item(name: String, value: AbstractSyntaxNode, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::VariableDeclaration { name, value, variable_type: type_id }
 }
 
 pub fn cast_item(cast_type: ResolvableType, expr: AbstractSyntaxNode) -> AbstractSyntaxNodeItem {

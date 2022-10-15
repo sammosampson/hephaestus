@@ -1,4 +1,7 @@
-use crate::parsing::*;
+use crate::{
+    parsing::*,
+    typing::*
+};
 
 pub fn struct_item(
     name: String,
@@ -50,6 +53,39 @@ fn parse_struct_fields(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     }
 }
 
-pub fn parse_struct_instance_field_access(_name: String, _lexer: &mut Lexer, _position: SourceFilePosition) -> AbstractSyntaxNode {
-    todo!()
+pub fn parse_struct_instance_access(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+    let instance = create_node(identifier_item(name, unknown_scope()), position);
+    let member = parse_struct_instance_member(lexer);
+    create_node(member_expr_item(instance, member, unresolved_resolvable_type()), position)
+}
+
+pub fn parse_struct_instance_member(lexer: &mut Lexer) -> AbstractSyntaxNode {
+    let token = get_next_token(lexer);
+
+    match token.item {
+        SourceTokenItem::Identifier(name) => create_node(member_item(name, unresolved_resolvable_type()), token.position),
+        _ => create_error_node(expected_identifier_error(), token.position),
+    }
+}
+
+pub fn member_expr_item(
+    instance: AbstractSyntaxNode,
+    member: AbstractSyntaxNode,
+    member_expression_type: ResolvableType
+) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::MemberExpr {
+        instance,
+        member,
+        member_expression_type
+    }
+}
+
+pub fn member_item(
+    name: String,
+    member_type: ResolvableType
+) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Member {
+        name,
+        member_type
+    }
 }

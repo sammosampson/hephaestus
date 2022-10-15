@@ -33,7 +33,7 @@ pub fn parse_identifier(name: String, lexer: &mut Lexer, position: SourceFilePos
 
     if is_period(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
-        return parse_struct_instance_field_access(name, lexer, position)
+        return parse_struct_instance_access(name, lexer, position)
     }
 
     parse_remainder_of_identifier(name, lexer, position)

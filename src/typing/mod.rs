@@ -147,25 +147,37 @@ pub fn try_get_built_in_type(id: &RuntimeTypeId) -> Option<(BuiltInType, bool)> 
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub struct RuntimeTypeField {
+pub struct RuntimeTypeMember {
     pub name: String,
     pub field_type: RuntimeTypePointer,
 }
 
-fn runtime_type_field(name: String, field_type: RuntimeTypePointer) -> RuntimeTypeField {
-    RuntimeTypeField {
+fn runtime_type_member(name: String, field_type: RuntimeTypePointer) -> RuntimeTypeMember {
+    RuntimeTypeMember {
         name,
         field_type
     }
 }
 
-pub type RuntimeTypeFields = Vec<RuntimeTypeField>;
+pub type RuntimeTypeMembers = Vec<RuntimeTypeMember>;
 
-fn string_runtime_type_fields() -> RuntimeTypeFields {
+fn string_runtime_type_members() -> RuntimeTypeMembers {
     vec!(
-        runtime_type_field(string("len"), create_shareable(signed_int_64_runtime_type())),
-        runtime_type_field(string("data"), create_shareable(unsigned_int_8_pointer_runtime_type()))
+        runtime_type_member(string("len"), create_shareable(signed_int_64_runtime_type())),
+        runtime_type_member(string("data"), create_shareable(unsigned_int_8_pointer_runtime_type()))
     )
+}
+
+pub fn get_type_of_member_by_member_name(fields: &RuntimeTypeMembers, name: &str) -> OptionalRuntimeTypePointer {
+    let member = fields
+        .iter()
+        .filter(|member| member.name == name)
+        .next();
+
+    if let Some(field) = member {
+        return Some(field.field_type.clone());
+    }
+    None
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -283,7 +295,7 @@ pub fn string_runtime_type() -> RuntimeType {
     create_type(
         built_in_type_runtime_type_id(string_built_in_type()),
         SOURCE_TYPE_STRING.to_string(),
-        string_type_item(string_runtime_type_fields()),
+        string_type_item(string_runtime_type_members()),
         resolved_type_size(16)
     )
 }
@@ -414,7 +426,7 @@ pub enum RuntimeTypeItem {
     Pointer { to_type: Box<RuntimeType> },
     Int { is_signed: bool },
     Float,
-    String { fields: RuntimeTypeFields },
+    String { members: RuntimeTypeMembers },
     Bool,
     Void
 }
@@ -449,8 +461,8 @@ fn float_type_item() -> RuntimeTypeItem {
     RuntimeTypeItem::Float
 }
 
-fn string_type_item(fields: RuntimeTypeFields) -> RuntimeTypeItem {
-    RuntimeTypeItem::String { fields }
+fn string_type_item(fields: RuntimeTypeMembers) -> RuntimeTypeItem {
+    RuntimeTypeItem::String { members: fields }
 }
 
 fn bool_type_item() -> RuntimeTypeItem {

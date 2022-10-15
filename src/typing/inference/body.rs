@@ -19,7 +19,7 @@ pub fn perform_typing_for_procedure_body(
 
     for arg in args {
         match arg.item_mut() {
-            AbstractSyntaxNodeItem::Declaration { name, arg_type: type_id } => 
+            AbstractSyntaxNodeItem::MemberDeclaration { name, member_type: type_id } => 
                 perform_typing_for_procedure_body_argument_declaration(&mut local_type_map, name, type_id),
             item => panic!("{:?} is not viable procedure body arg", item)
         }
@@ -37,7 +37,7 @@ pub fn perform_typing_for_procedure_body(
         match statement.item_mut() {
             AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id} => 
                 perform_typing_for_procedure_body_procedure_call(ctx, type_repository, &mut local_type_map, name, args, type_id),
-            AbstractSyntaxNodeItem::Assignment { name, value, assignment_type: type_id } => 
+            AbstractSyntaxNodeItem::VariableDeclaration { name, value, variable_type: type_id } => 
                 perform_typing_for_procedure_body_assignment(ctx, type_repository, &mut local_type_map, name, value, type_id),
             AbstractSyntaxNodeItem::Return { args } => {
                 perform_typing_for_procedure_body_return_args(ctx, type_repository, &mut local_type_map, args, &local_return_types);
@@ -406,6 +406,8 @@ pub fn perform_typing_for_inferred_type_expression(
             perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id),
         AbstractSyntaxNodeItem::Cast { cast_type, expr} =>
             perform_typing_for_expression_cast(ctx, type_repository, local_type_map, cast_type, expr),
+        AbstractSyntaxNodeItem::MemberExpr { instance, member, member_expression_type } =>
+            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type),
         _ => None
     }
 }
@@ -511,4 +513,71 @@ fn perform_typing_for_expression_cast(
         return Some(resolved_cast_type.clone());
     }
     None
+}
+
+fn perform_typing_for_member_expression(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &IdentifierTypeLookup,
+    instance: &mut AbstractSyntaxNode,
+    member: &mut AbstractSyntaxNode,
+    member_expression_type: &mut ResolvableType
+) -> OptionalRuntimeTypePointer {
+    
+    if let Some(instance_type) = perform_typing_for_member_expression_instance(
+        ctx,
+        type_repository,
+        local_type_map,
+        instance
+    ) {
+        if let Some(resolved_member_expression_type) = perform_typing_for_member_expression_member(&instance_type, member) {
+            *member_expression_type = resolved_resolvable_type(resolved_member_expression_type.clone());
+            return Some(resolved_member_expression_type);
+        }
+    }
+    None
+}
+
+fn perform_typing_for_member_expression_instance(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    local_type_map: &IdentifierTypeLookup,
+    instance: &mut AbstractSyntaxNode
+) -> OptionalRuntimeTypePointer {
+    
+    match instance.item_mut() {
+        AbstractSyntaxNodeItem::Identifier { name, scope} =>
+            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope),
+        _ => None
+    }
+}
+
+fn perform_typing_for_member_expression_member(
+    instance_type: &RuntimeTypePointer,
+    member: &mut AbstractSyntaxNode
+) -> OptionalRuntimeTypePointer {
+    
+    match member.item_mut() {
+        AbstractSyntaxNodeItem::Member { name, member_type } =>
+        perform_typing_for_member_expression_member_member(instance_type, name, member_type),
+        _ => None
+    }
+}
+
+fn perform_typing_for_member_expression_member_member(
+    instance_type: &RuntimeTypePointer,
+    name: &mut String,
+    member_type: &mut ResolvableType
+) -> OptionalRuntimeTypePointer {
+    match &instance_type.item {
+        RuntimeTypeItem::String { members } => {
+            if let Some(field_type) = get_type_of_member_by_member_name(members, name) {
+                *member_type = resolved_resolvable_type(field_type.clone());
+                return Some(field_type);
+            }
+            None
+
+        },
+        _ => None
+    }
 }

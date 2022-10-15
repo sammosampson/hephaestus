@@ -37,18 +37,27 @@ pub enum AbstractSyntaxNodeItem {
         return_types: AbstractSyntaxChildNodes,
         statements: AbstractSyntaxChildNodes,
     },
-    Struct {
-        name: String,
-        fields: AbstractSyntaxChildNodes
-    },
     ProcedureCall {
         name: String,
         args: AbstractSyntaxChildNodes,
         procedure_call_type: ResolvableType
     },
-    Declaration {
+    Struct {
         name: String,
-        arg_type: ResolvableType
+        fields: AbstractSyntaxChildNodes
+    },
+    MemberDeclaration {
+        name: String,
+        member_type: ResolvableType
+    },
+    MemberExpr {
+        instance: AbstractSyntaxNode,
+        member: AbstractSyntaxNode,
+        member_expression_type: ResolvableType
+    },
+    Member {
+        name: String,
+        member_type: ResolvableType
     },
     Argument {
         expr: AbstractSyntaxNode,
@@ -63,10 +72,10 @@ pub enum AbstractSyntaxNodeItem {
         value: AbstractSyntaxNode,
         constant_type: ResolvableType
     },
-    Assignment {
+    VariableDeclaration {
         name: String,
         value: AbstractSyntaxNode,
-        assignment_type: ResolvableType
+        variable_type: ResolvableType
     },
     Cast {
         cast_type: ResolvableType,

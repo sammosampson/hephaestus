@@ -30,7 +30,7 @@ fn typing_procedure_body_types_variable_number_expression_assignment() {
                 vec!(                       
                     node(
                         position(26, 2, 5),
-                        assignment_item(
+                        variable_declaration_item(
                             string("x"),                     
                             node(
                                 position(31, 2, 10),

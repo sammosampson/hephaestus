@@ -94,7 +94,7 @@ fn parse_procedure_header_with_arg_parses_correctly() {
                 vec!(
                     node(
                         position(18, 1, 19),
-                        declaration_item( 
+                        member_declaration_item( 
                             string("x"),
                             resolved_resolvable_type(create_shareable(signed_int_64_runtime_type())),
                         )
@@ -122,15 +122,15 @@ fn parse_procedure_header_with_args_and_return_type_parses_correctly() {
                 vec!(
                     node(
                         position(18, 1, 19),
-                        declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_runtime_type()))),
+                        member_declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_runtime_type()))),
                     ),
                     node(
                         position(28, 1, 29),
-                        declaration_item(string("y"), unresolved_named_resolvable_type(string("SomeType"))),
+                        member_declaration_item(string("y"), unresolved_named_resolvable_type(string("SomeType"))),
                     ),
                     node(
                         position(41, 1, 42),
-                        declaration_item(string("z"), resolved_resolvable_type(create_shareable(string_runtime_type()))),
+                        member_declaration_item(string("z"), resolved_resolvable_type(create_shareable(string_runtime_type()))),
                     )
                 ),
                 vec!(
@@ -159,15 +159,15 @@ fn parse_procedure_header_with_pointer_args_and_return_type_parses_correctly() {
                 vec!(
                     node(
                         position(18, 1, 19),
-                        declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))),
+                        member_declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))),
                     ),
                     node(
                         position(29, 1, 30),
-                        declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))),
+                        member_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))),
                     ),
                     node(
                         position(38, 1, 39),
-                        declaration_item(string("z"), resolved_resolvable_type(create_shareable(string_pointer_runtime_type()))),
+                        member_declaration_item(string("z"), resolved_resolvable_type(create_shareable(string_pointer_runtime_type()))),
                     )
                 ),
                 vec!(
@@ -197,11 +197,11 @@ fn parse_foreign_system_library_procedure_header_with_pointer_args_and_return_ty
                 vec!(
                     node(
                         position(18, 1, 19),
-                        declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))),
+                        member_declaration_item(string("x"), resolved_resolvable_type(create_shareable(float_32_pointer_runtime_type()))),
                     ),
                     node(
                         position(29, 1, 30),
-                        declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))),
+                        member_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_64_pointer_runtime_type()))),
                     )
                 ),
                 vec!(
@@ -236,15 +236,15 @@ fn parse_procedure_header_with_other_built_in_args_types_parses_correctly() {
                 vec!(
                     node(
                         position(18, 1, 19),
-                        declaration_item(string("x"), resolved_resolvable_type(create_shareable(unsigned_int_32_runtime_type()))),
+                        member_declaration_item(string("x"), resolved_resolvable_type(create_shareable(unsigned_int_32_runtime_type()))),
                     ),
                     node(
                         position(26, 1, 27),
-                        declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))),
+                        member_declaration_item(string("y"), resolved_resolvable_type(create_shareable(signed_int_32_runtime_type()))),
                     ),
                     node(
                         position(34, 1, 35),
-                        declaration_item(string("z"), resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))),
+                        member_declaration_item(string("z"), resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))),
                     )
                 ),
                 vec!(),

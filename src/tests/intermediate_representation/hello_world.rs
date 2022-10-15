@@ -32,7 +32,7 @@ main :: () {
     
     assert_eq!(main_body_ir.symbols.len(), 3);
     assert_eq!(main_body_ir.data.len(), 1);
-    assert_eq!(main_body_ir.byte_code.len(), 12);
+    assert_eq!(main_body_ir.byte_code.len(), 9);
     assert_eq!(main_body_ir.foreign_libraries.len(), 0);
 
     assert_eq!(print_body_ir.symbols.len(), 4);
@@ -44,10 +44,9 @@ main :: () {
 
         // move call args to shadow
         move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(1), base_pointer_register(), 24),
-
+        
         // make storage for 4 local assignments in statement body
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_8_instruction(40, stack_pointer_register()),
         
         // reserve shadow space for GetStdHandle proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),

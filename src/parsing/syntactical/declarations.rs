@@ -37,7 +37,7 @@ pub fn parse_declaration(lexer: &mut Lexer) -> AbstractSyntaxNode {
 
             if let Some(arg_type) = try_parse_type(lexer) {
                 eat_next_token(lexer);
-                return create_node(declaration_item(name, arg_type), name_token.position)
+                return create_node(member_declaration_item(name, arg_type), name_token.position)
             }
 
             return create_error_node(unimplemented_error(), peek_next_token(lexer).position);        
@@ -49,6 +49,6 @@ pub fn parse_declaration(lexer: &mut Lexer) -> AbstractSyntaxNode {
     create_error_node(expected_declaration_name_error(), peek_next_token(lexer).position)     
 }
 
-pub fn declaration_item(name: String, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Declaration { name, arg_type: type_id }
+pub fn member_declaration_item(name: String, type_id: ResolvableType) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::MemberDeclaration { name, member_type: type_id }
 }

@@ -38,7 +38,7 @@ fn parse_procedure_body_parses_correctly() {
                 vec!(
                     node( 
                         position(40, 2, 5),
-                        assignment_item(
+                        variable_declaration_item(
                             string("a"),
                             node(
                                 position(45, 2, 10),
