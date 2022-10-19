@@ -1,0 +1,11 @@
+//SRC FILE LOADING:
+#load "filename.jai" rename_type #unshared
+rename_type :: (x:string) -> string {
+	//this allows renaming of types
+}
+#load "filename" x => concatenate(x, "t1")  #unshared;
+#load "filename" x => concatenate(x, "t2")  #unshared;
+/*
+because of #unshared these are seperate instances of the imported filename
+without unshared they point to the same thing and data
+*/

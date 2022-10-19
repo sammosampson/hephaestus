@@ -1,0 +1,12 @@
+/*
+COMPILER DESIGN:
+
+vid: https://www.youtube.com/watch?v=MnctEW1oL-E&t=432s
+(COMPILER DESIGN WITH CASEY)
+
+Parse->Typing->Sizing->Message Send->Message Wait->IR->Run->Machine Code Gen->Exe
+-Sizing: Only does stuff for structs to work out size
+-- pipe - sizing { per perform_sizing(comp-unit-id) command in q => process each compilation unit and add complete sizings to sizing table (comp-unit id, size  and send  "sizing_complete" (comp unit id) for them, and wait on any incomplete items in typing table (comp-unit id) }
+-This has to have cycle breaking in it too, because of infinite loops that can occur
+-Enums for example are comp units but so are their members, as they can depend on each other
+*/

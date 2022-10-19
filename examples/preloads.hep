@@ -1,0 +1,5 @@
+/*
+PRELOADS:
+- preload.hep contains primitive types fro compiler even to boot up eg:
+see string struct below
+*/
