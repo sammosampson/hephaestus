@@ -69,3 +69,35 @@ fn byte_code_for_cast_type_assignment_generates_correctly() {
     ));
     assert_eq!(main_body_ir.foreign_libraries.len(), 0);
 }
+
+#[test]
+fn byte_code_for_string_field_assignment_generates_correctly() {
+    let irs = compile_source_and_get_intemediate_representation("some_proc :: (s: string) {
+    x := s.len;
+}"
+    );   
+    
+    assert_eq!(irs.len(), 2);
+
+    let some_proc_body_ir = get_first_ir_with_byte_code_named(&irs, "some_proc");
+    
+    assert_eq!(some_proc_body_ir.symbols.len(), 1);
+    assert_eq!(some_proc_body_ir.data.len(), 0);
+    assert_eq!(some_proc_body_ir.byte_code, vec!(
+        //prologue
+        push_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        
+        //reserve space for 1 local assignments
+        sub_value_from_reg_8_instruction(8, stack_pointer_register()),
+        //store x
+        move_value_to_reg_plus_offset_32_instruction(1, base_pointer_register(), -8i8 as u8),
+        
+        //epilogue
+        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
+        pop_reg_64_instruction(base_pointer_register()),
+        
+        ret_instruction()
+    ));
+    assert_eq!(some_proc_body_ir.foreign_libraries.len(), 0);
+}

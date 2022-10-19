@@ -3,3 +3,7 @@ PRELOADS:
 - preload.hep contains primitive types fro compiler even to boot up eg:
 see string struct below
 */
+string :: struct {
+  count: int; // amount of characters in the string
+  data: *u8;  // pointer to the start of the characters
+}
