@@ -4,7 +4,7 @@ use crate::{
     typing::*
 };
 
-pub fn build_bytecode_at_procedure_call_with_assignment(
+pub fn build_bytecode_at_variable_assignment_to_procedure_call(
     ir: &mut IntermediateRepresentation,
     assignment_map: &AssignmentMap,
     assignment_name: &str,

@@ -209,7 +209,6 @@ pub fn data_section_item_name(data_item_pointer: u32) -> String {
     format!("ds{}", data_item_pointer)
 }
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ByteCodeDataItem {
     String { value: String }

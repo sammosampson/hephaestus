@@ -60,7 +60,7 @@ fn build_bytecode_at_procedure_body_statement(ir: &mut IntermediateRepresentatio
         AbstractSyntaxNodeItem::ProcedureCall { name, args, .. } => 
             build_bytecode_at_procedure_call(ir, assignment_map, name, args),
         AbstractSyntaxNodeItem::VariableDeclaration { name, value, .. } => 
-            build_bytecode_at_assignment(ir, assignment_map, name, value),
+            build_bytecode_at_variable_declaration(ir, assignment_map, name, value),
         _ => todo!()
     }
 }

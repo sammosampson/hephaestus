@@ -29,7 +29,7 @@ main :: () {
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
 
-        //reserve space for 2 local assignments
+        //reserve space for 1 local assignments
         sub_value_from_reg_8_instruction(8, stack_pointer_register()),
         
         // reserve shadow space for proc call
@@ -80,15 +80,15 @@ main :: () {
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
         
         //reserve space for 1 local assignment
-        sub_value_from_reg_8_instruction(8, stack_pointer_register()),
+        sub_value_from_reg_8_instruction(4, stack_pointer_register()),
         
         //store x
-        move_value_to_reg_plus_offset_32_instruction(14, base_pointer_register(), -8i8 as u8),
+        move_value_to_reg_plus_offset_32_instruction(14, base_pointer_register(), -4i8 as u8),
         
         // reserve shadow space for proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
         // set call arg registers
-        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -8i8 as u8, call_arg_register(0)),
+        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -4i8 as u8, call_arg_register(0)),
         // proc call
         call_to_symbol_instruction(1),
         // release shadow space for proc call
