@@ -181,12 +181,23 @@ main :: () {
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
         
+        //reserve space for 1 temp string call arg { count: int (8 bytes) + data *u8 (8 bytes) }
+        sub_value_from_reg_8_instruction(16, stack_pointer_register()),
+        //store temp string call arg
+        move_value_to_reg_plus_offset_64_instruction(4, base_pointer_register(), -8i8 as u8),
+        load_data_section_address_to_reg_64(0, call_arg_register(0)),
+        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), -16i8 as u8),
+
         // reserve shadow space for proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
-        // set call arg registers
-        load_data_section_address_to_reg_64(0, call_arg_register(0)),
+        // set call arg register to point at
+        //load_address_in_reg_plus_offset_to_reg_64(stack_pointer_register(), -16i8 as u8, call_arg_register(0)),
+
         // proc call
         call_to_symbol_instruction(2),
+        
+        // release space for string arg
+        add_value_to_reg_8_instruction(16, stack_pointer_register()),
         // release shadow space for proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),
         
