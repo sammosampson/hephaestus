@@ -3,10 +3,12 @@
 mod builder;
 mod procedures;
 mod constants;
+mod strings;
 
 pub use builder::*;
 pub use procedures::*;
 pub use constants::*;
+pub use strings::*;
 
 use crate::{
     parsing::CompilationUnitId,
@@ -37,7 +39,7 @@ pub fn create_intermediate_representation(id: CompilationUnitId, filename: Strin
         top_level_symbol: string(""),
         byte_code: vec!(),
         symbols: vec!(),
-        data: vec!(),
+        data: ByteCodeData::default(),
         foreign_libraries: vec!()
     }
 }
@@ -82,6 +84,7 @@ pub enum ByteCodeInstruction {
     MoveRegPlusOffsetToReg32 { from: ByteCodeRegister, offset: u8, to: ByteCodeRegister },
     MoveRegPlusOffsetToReg64 { from: ByteCodeRegister, offset: u8, to: ByteCodeRegister },
     LoadDataSectionAddressToReg64 { data_section_offset: u32, to: ByteCodeRegister },
+    LoadAddressInRegPlusOffsetToReg64 { from: ByteCodeRegister, offset: u8, to: ByteCodeRegister },
     PushReg64(ByteCodeRegister),
     PopReg64(ByteCodeRegister),
     ZeroReg64(ByteCodeRegister),
@@ -152,8 +155,8 @@ pub fn load_data_section_address_to_reg_64(data_section_offset: u32, to: ByteCod
     ByteCodeInstruction::LoadDataSectionAddressToReg64 { data_section_offset, to }
 }
 
-pub fn zero_reg_64_instruction(register: ByteCodeRegister) -> ByteCodeInstruction {
-    ByteCodeInstruction::ZeroReg64(register)
+pub fn load_address_in_reg_plus_offset_to_reg_64(from: ByteCodeRegister, offset: u8, to: ByteCodeRegister) -> ByteCodeInstruction {
+    ByteCodeInstruction::LoadAddressInRegPlusOffsetToReg64 { from, offset, to }
 }
 
 pub fn ret_instruction() -> ByteCodeInstruction {
@@ -211,16 +214,35 @@ pub fn data_section_item_name(data_item_pointer: u32) -> String {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ByteCodeDataItem {
-    String { value: String }
+    String { value: String },
+    QuadWord { value: u64 }
 }
 
-pub type ByteCodeData = Vec<ByteCodeDataItem>;
+pub type ByteCodeDataItems = Vec<ByteCodeDataItem>;
+
+#[derive(Default, Debug, Clone)]
+pub struct ByteCodeData {
+    size: u32,
+    pub items: ByteCodeDataItems
+}
 
 pub fn string_data_item(value: String) -> ByteCodeDataItem{
     ByteCodeDataItem::String { value }
 }
+pub fn quad_word_data_item(value: u64) -> ByteCodeDataItem{
+    ByteCodeDataItem::QuadWord { value }
+}
 
 pub fn add_data_item(data: &mut ByteCodeData, item: ByteCodeDataItem) -> u32 {
-    data.push(item);
-    (data.len() - 1) as u32
+    let pointer = data.size;
+    data.size += get_byte_code_data_item_size(&item);
+    data.items.push(item);
+    pointer
+}
+
+fn get_byte_code_data_item_size(item: &ByteCodeDataItem) -> u32 {
+    match item {
+        ByteCodeDataItem::String { value } => value.len() as u32,
+        ByteCodeDataItem::QuadWord { .. } => 8,
+    }
 }

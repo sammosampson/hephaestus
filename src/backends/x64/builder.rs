@@ -66,18 +66,26 @@ fn build_x64_object(coff: &mut Coff, ir: IntermediateRepresentation) -> String {
                 add_xor_qword_reg_into_reg_op(coff, get_register(register), get_register(register)),
             ByteCodeInstruction::Return => add_ret_op(coff),
             ByteCodeInstruction::LoadDataSectionAddressToReg64 { data_section_offset, to } => 
-                add_lea_reg_plus_offset_pointer_to_reg_op(
+                add_lea_reg_plus_relocatable_offset_pointer_to_reg_op(
                     coff, 
                     REG_IP, 
                     relocatable_value(0x02, data_section_offset), 
                     get_register(to)
                 ),
+            ByteCodeInstruction::LoadAddressInRegPlusOffsetToReg64 { from, offset, to } =>
+                add_lea_reg_plus_offset_pointer_to_reg_op(
+                    coff, 
+                    get_register(from), 
+                    offset, 
+                    get_register(to)
+                ),
         }
     }
 
-    for data_item in ir.data {
+    for data_item in ir.data.items {
         match data_item {
             ByteCodeDataItem::String { value } => add_string_to_data_section(coff, &value),
+            ByteCodeDataItem::QuadWord { value } => add_quad_word_to_data_section(coff, &value),
         };
     }
 

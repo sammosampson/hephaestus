@@ -18,6 +18,14 @@ pub fn add_string_to_data_section(coff: &mut Coff, to_add: &str) -> u32 {
     pointer
 }
 
+pub fn add_quad_word_to_data_section(coff: &mut Coff, to_add: &u64) -> u32 {
+    let pointer = coff.data_section_header.size_of_section; 
+    let mut bytes = u64_to_bytes(to_add);
+    advance_data_section(coff, bytes.len() as u32);
+    coff.data_section.append(&mut bytes);
+    pointer
+}
+
 pub fn add_entry_to_text_section(coff: &mut Coff, entry: u8) {
     coff.text_section.push(entry);
     coff.text_section_header.size_of_section += 1;

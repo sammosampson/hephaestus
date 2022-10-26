@@ -58,20 +58,26 @@ fn build_bytecode_at_variable_assignment_to_literal_string(
     assignment_offset: u8,
     value: String,
 ) {    
+    store_string_count_member_value(ir, &value, assignment_offset);
+    let data_item_pointer = store_string_literal_in_data_section_and_add_symbol(ir, &value);
+    store_string_data_member_value(ir, data_item_pointer, assignment_offset);
+}
+
+fn store_string_count_member_value(ir: &mut IntermediateRepresentation, value: &str, assignment_offset: u8) {
     add_byte_code(
         &mut ir.byte_code, 
-        move_value_to_reg_plus_offset_64_instruction(value.len() as u64, base_pointer_register(), assignment_offset + 8)
-    );
-    let data_item_pointer = add_data_item(&mut ir.data, string_data_item(string(&value)));
-    add_symbol(&mut ir.symbols, data_section_item(data_section_item_name(data_item_pointer), data_item_pointer));
+        move_value_to_reg_plus_offset_64_instruction(value.len() as u64, base_pointer_register(), assignment_offset)
+    )
+}
+
+fn store_string_data_member_value(ir: &mut IntermediateRepresentation, data_item_pointer: u32, assignment_offset: u8) {
     add_byte_code(
         &mut ir.byte_code, 
         load_data_section_address_to_reg_64(data_item_pointer, call_arg_register(0))
     );
-
     add_byte_code(
         &mut ir.byte_code, 
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), assignment_offset)
+        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), assignment_offset + 8)
     );
 }
 

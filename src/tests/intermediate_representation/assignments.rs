@@ -17,7 +17,7 @@ fn byte_code_for_known_type_signed_number_assignment_generates_correctly() {
     let main_body_ir = get_first_ir_with_byte_code_named(&irs, "main");
     
     assert_eq!(main_body_ir.symbols.len(), 1);
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
         push_reg_64_instruction(base_pointer_register()),
@@ -51,7 +51,7 @@ fn byte_code_for_cast_type_assignment_generates_correctly() {
     let main_body_ir = get_first_ir_with_byte_code_named(&irs, "main");
     
     assert_eq!(main_body_ir.symbols.len(), 1);
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
         push_reg_64_instruction(base_pointer_register()),
@@ -84,7 +84,7 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
     
     assert_eq!(some_proc_body_ir.symbols.len(), 2);
 
-    assert_eq!(some_proc_body_ir.data, vec!(
+    assert_eq!(some_proc_body_ir.data.items, vec!(
         string_data_item(string("test"))
     ));
 
@@ -96,9 +96,9 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
         //reserve space for 1 local of string struct { count: int (8 bytes) + data *u8 (8 bytes) }
         sub_value_from_reg_8_instruction(16, stack_pointer_register()),
         //store x
-        move_value_to_reg_plus_offset_64_instruction(4, base_pointer_register(), -8i8 as u8),
+        move_value_to_reg_plus_offset_64_instruction(4, base_pointer_register(), -16i8 as u8),
         load_data_section_address_to_reg_64(0, call_arg_register(0)),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), -16i8 as u8),
+        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), -8i8 as u8),
         
         //epilogue
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),

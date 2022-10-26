@@ -31,12 +31,12 @@ main :: () {
     let print_body_ir = get_first_ir_with_byte_code_named(&irs, "print");
     
     assert_eq!(main_body_ir.symbols.len(), 3);
-    assert_eq!(main_body_ir.data.len(), 1);
+    assert_eq!(main_body_ir.data.items.len(), 1);
     assert_eq!(main_body_ir.byte_code.len(), 9);
     assert_eq!(main_body_ir.foreign_libraries.len(), 0);
 
     assert_eq!(print_body_ir.symbols.len(), 4);
-    assert_eq!(print_body_ir.data.len(), 0);
+    assert_eq!(print_body_ir.data.items.len(), 0);
     assert_eq!(print_body_ir.byte_code, vec!(
         //prologue
         push_reg_64_instruction(base_pointer_register()),

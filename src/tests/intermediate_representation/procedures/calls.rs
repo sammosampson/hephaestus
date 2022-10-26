@@ -22,7 +22,7 @@ main :: () {
         foreign_external(string("some_procedure"))
     ));
 
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
@@ -72,7 +72,7 @@ main :: () {
         foreign_external(string("some_procedure"))
     ));
 
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
@@ -122,7 +122,7 @@ main :: () {
         foreign_external(string("some_procedure"))
     ));
 
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
@@ -169,11 +169,14 @@ main :: () {
     assert_eq!(main_body_ir.symbols, vec!(
         external_code_label(string("main"), 0),
         data_section_item(string("ds0"), 0),
+        data_section_item(string("ds4"), 4),
         foreign_external(string("some_procedure"))
     ));
 
-    assert_eq!(main_body_ir.data, vec!(
-        string_data_item(string("test"))
+    assert_eq!(main_body_ir.data.items, vec!(
+        string_data_item(string("test")),
+        quad_word_data_item(4),
+        quad_word_data_item(0)
     ));
     
     assert_eq!(main_body_ir.byte_code, vec!(
@@ -181,23 +184,14 @@ main :: () {
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
         
-        //reserve space for 1 temp string call arg { count: int (8 bytes) + data *u8 (8 bytes) }
-        sub_value_from_reg_8_instruction(16, stack_pointer_register()),
-        //store temp string call arg
-        move_value_to_reg_plus_offset_64_instruction(4, base_pointer_register(), -8i8 as u8),
-        load_data_section_address_to_reg_64(0, call_arg_register(0)),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), -16i8 as u8),
-
         // reserve shadow space for proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
         // set call arg register to point at
-        //load_address_in_reg_plus_offset_to_reg_64(stack_pointer_register(), -16i8 as u8, call_arg_register(0)),
-
-        // proc call
-        call_to_symbol_instruction(2),
+        load_data_section_address_to_reg_64(4, call_arg_register(0)),
         
-        // release space for string arg
-        add_value_to_reg_8_instruction(16, stack_pointer_register()),
+        // proc call
+        call_to_symbol_instruction(3),
+        
         // release shadow space for proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),
         
@@ -229,7 +223,7 @@ main :: () {
         foreign_external(string("some_procedure"))
     ));
 
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
@@ -271,7 +265,7 @@ main :: (x: s32) {
         foreign_external(string("some_procedure"))
     ));
 
-    assert_eq!(main_body_ir.data.len(), 0);
+    assert_eq!(main_body_ir.data.items.len(), 0);
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue

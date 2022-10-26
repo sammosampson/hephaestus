@@ -80,11 +80,11 @@ fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepres
             );
         },
         ResolvedLiteral::String(value) => {
-            let data_item_pointer = add_data_item(&mut ir.data, string_data_item(string(&value)));
-            add_symbol(&mut ir.symbols, data_section_item(data_section_item_name(data_item_pointer), data_item_pointer));
+            let string_literal_data_item_pointer = store_string_literal_in_data_section_and_add_symbol(ir, value);
+            let string_data_item_pointer = store_string_in_data_section_and_add_symbol(ir, value.len(), string_literal_data_item_pointer);
             add_byte_code(
                 &mut ir.byte_code, 
-                load_data_section_address_to_reg_64(data_item_pointer, call_arg_register(arg_index))
+                load_data_section_address_to_reg_64(string_data_item_pointer, call_arg_register(arg_index))
             );
         },
         _ =>  todo!("Other literals as call args")

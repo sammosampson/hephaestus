@@ -127,11 +127,18 @@ pub fn add_call_relocatable_addr_op(coff: &mut Coff, relocatable_address: Reloca
     add_relocatable_entry_and_text_section_inital_entry(coff, relocatable_address, IMAGE_REL_AMD64_REL32);
 }
 
-pub fn add_lea_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_register: u8, relocatable_address_offset: RelocatableValue, into_register: u8) {
+pub fn add_lea_reg_plus_relocatable_offset_pointer_to_reg_op(coff: &mut Coff, address_register: u8, relocatable_address_offset: RelocatableValue, into_register: u8) {
     add_entry_to_text_section(coff, REX_W);
     add_entry_to_text_section(coff, OP_LEA);
     add_entry_to_text_section(coff, mod_rm(0, into_register, address_register));
     add_relocatable_entry_and_text_section_inital_entry(coff, relocatable_address_offset, IMAGE_REL_AMD64_REL32);
+}
+
+pub fn add_lea_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_register: u8, into_address_offset: u8, into_register: u8) {
+    add_entry_to_text_section(coff, REX_W);
+    add_entry_to_text_section(coff, OP_LEA);
+    add_entry_to_text_section(coff, mod_rm(0, into_register, address_register));
+    add_entry_to_text_section(coff, into_address_offset);
 }
 
 pub fn add_xor_qword_reg_into_reg_op(coff: &mut Coff, register_from: u8, register_into: u8) {
@@ -141,7 +148,10 @@ pub fn add_xor_qword_reg_into_reg_op(coff: &mut Coff, register_from: u8, registe
     }
     add_entry_to_text_section(coff, rex);
     add_entry_to_text_section(coff, OP_XOR);
-    add_entry_to_text_section(coff, mod_rm(MOD_REGISTER_DIRECT, remove_register_high_bit(register_from), remove_register_high_bit(register_into)));
+    add_entry_to_text_section(
+        coff, 
+        mod_rm(MOD_REGISTER_DIRECT, remove_register_high_bit(register_from), remove_register_high_bit(register_into))
+    );
 }
 
 pub fn add_ret_op(coff: &mut Coff) {
