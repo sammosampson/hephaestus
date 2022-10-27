@@ -50,7 +50,7 @@ fn compound_get_for_struct_declaration() {
 
 #[test]
 fn compound_get_for_struct_field_access() {
-    let mut lexer = lex("s.len");
+    let mut lexer = lex("s.count");
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Identifier("s".to_string()));
@@ -59,5 +59,5 @@ fn compound_get_for_struct_field_access() {
     assert_eq!(token.item, SourceTokenItem::Period);
 
     let token = get_next_token(&mut lexer);
-    assert_eq!(token.item, SourceTokenItem::Identifier("len".to_string()));
+    assert_eq!(token.item, SourceTokenItem::Identifier("count".to_string()));
 }

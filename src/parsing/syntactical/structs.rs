@@ -54,7 +54,10 @@ fn parse_struct_fields(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
 }
 
 pub fn parse_struct_instance_access(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    let instance = create_node(identifier_item(name, unknown_scope()), position);
+    let instance = create_node(
+        instance_item(name, unresolved_resolvable_type(), unknown_scope()),
+        position
+    );
     let member = parse_struct_instance_member(lexer);
     create_node(member_expr_item(instance, member, unresolved_resolvable_type()), position)
 }
@@ -63,7 +66,8 @@ pub fn parse_struct_instance_member(lexer: &mut Lexer) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Identifier(name) => create_node(member_item(name, unresolved_resolvable_type()), token.position),
+        SourceTokenItem::Identifier(name) =>
+            create_node(member_item(name, unresolved_resolvable_type()), token.position),
         _ => create_error_node(expected_identifier_error(), token.position),
     }
 }
@@ -87,5 +91,17 @@ pub fn member_item(
     AbstractSyntaxNodeItem::Member {
         name,
         member_type
+    }
+}
+
+pub fn instance_item(
+    name: String,
+    instance_type: ResolvableType,
+    scope: Scope
+) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Instance {
+        name,
+        instance_type,
+        scope
     }
 }

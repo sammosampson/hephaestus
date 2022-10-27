@@ -203,7 +203,7 @@ fn typing_cast_assignment_types_sucessfully() {
 #[test]
 fn typing_struct_member_access_assignment_types_sucessfully() {
     let units_and_types = compile_source_and_get_types_and_unit("proc :: (s: string) {
-    x := s.len;
+    x := s.count;
 }");
 
     assert_eq!(units_and_types.len(), 2);
@@ -236,12 +236,16 @@ fn typing_struct_member_access_assignment_types_sucessfully() {
                                 member_expr_item(
                                     node(
                                         position(31, 2, 10),
-                                        identifier_item(string("s"), local_scope())        
+                                        instance_item(
+                                            string("s"),
+                                            resolved_resolvable_type(create_shareable(string_runtime_type())),
+                                            local_scope()
+                                        )        
                                     ),
                                     node(
                                         position(33, 2, 12),
                                         member_item(
-                                            string("len"),
+                                            string("count"),
                                             resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
                                         )        
                                     ),  

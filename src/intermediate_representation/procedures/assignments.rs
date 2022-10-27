@@ -102,13 +102,36 @@ fn build_bytecode_at_variable_assignment_to_null(
 
 
 fn build_bytecode_at_variable_assignment_to_member_expr(
-    _ir: &mut IntermediateRepresentation,
-    _assignment_map: &AssignmentMap,
-    _assignment_name: &str,
-    _instance: &AbstractSyntaxNode,
-    _member: &AbstractSyntaxNode
+    ir: &mut IntermediateRepresentation,
+    assignment_map: &AssignmentMap,
+    assignment_name: &str,
+    instance: &AbstractSyntaxNode,
+    member: &AbstractSyntaxNode
 ) {
-    println!("build_bytecode_at_assignment_to_member_expr: {}", _assignment_name);
+    if let AbstractSyntaxNodeItem::Instance { name, instance_type, .. } = instance.item_ref() {
+        let instance_offset = get_assignment_offset(assignment_map, name);
+        add_byte_code(
+            &mut ir.byte_code, 
+            move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), instance_offset, standard_register(0))
+        );
+
+        if let AbstractSyntaxNodeItem::Member { name, .. } = member.item_ref() {
+            
+            let member_offset = get_instance_member_offset(instance_type, name) as u8;
+            add_byte_code(
+                &mut ir.byte_code, 
+                move_reg_plus_offset_to_reg_64_instruction(standard_register(0), member_offset, standard_register(1))
+            );
+
+            let assignment_offset = get_assignment_offset(assignment_map, assignment_name);
+            add_byte_code(
+                &mut ir.byte_code, 
+                move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment_offset)
+            );
+        }
+    } else {
+        panic!("member expr instance is not instance");
+    }
 }
 
 pub type Assignments = HashMap<String, isize>;

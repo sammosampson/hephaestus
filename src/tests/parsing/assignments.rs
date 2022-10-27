@@ -112,7 +112,11 @@ fn parse_struct_member_access_assignment_parses_correctly() {
                                 member_expr_item(
                                     node(
                                         position(31, 2, 10),
-                                        identifier_item(string("s"), unknown_scope())        
+                                        instance_item(
+                                            string("s"),
+                                            unresolved_resolvable_type(),
+                                            unknown_scope()
+                                        )        
                                     ),
                                     node(
                                         position(33, 2, 12),

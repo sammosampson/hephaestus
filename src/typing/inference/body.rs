@@ -546,8 +546,13 @@ fn perform_typing_for_member_expression_instance(
 ) -> OptionalRuntimeTypePointer {
     
     match instance.item_mut() {
-        AbstractSyntaxNodeItem::Identifier { name, scope} =>
-            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope),
+        AbstractSyntaxNodeItem::Instance { name, instance_type, scope} => {
+            if let Some(resolved_member_instance_type) = perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope) {
+                *instance_type = resolved_resolvable_type(resolved_member_instance_type.clone());
+                return Some(resolved_member_instance_type);
+            }
+            return None;
+        },
         _ => None
     }
 }

@@ -46,10 +46,15 @@ pub fn create_intermediate_representation(id: CompilationUnitId, filename: Strin
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ByteCodeRegister {
+    Standard(usize),
     CallArg(usize),
     CallReturnArg(usize),
     StackPointer,
     BasePointer
+}
+
+pub fn standard_register(number: usize) -> ByteCodeRegister {
+    ByteCodeRegister::Standard(number)
 }
 
 pub fn call_arg_register(number: usize) -> ByteCodeRegister {

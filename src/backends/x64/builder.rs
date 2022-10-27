@@ -115,7 +115,20 @@ fn convert_byte_code_to_coff_symbol_index(number_of_symbols: usize, symbol_index
 
 fn get_register(register: ByteCodeRegister) -> u8 {
     match register {
-        ByteCodeRegister::CallArg(number) => match number {
+        ByteCodeRegister::Standard(number) => match number {
+            0 => REG_AX,
+            1 => REG_CX,
+            2 => REG_DX,
+            3 => REG_R8,
+            4 => REG_R9,
+            5 => REG_R10,
+            6 => REG_R11,
+            7 => REG_R12,
+            8 => REG_R13,
+            9 => REG_R14,
+            10 => REG_R15,
+            r => panic!("std register {} not available. Too many registers used", r)
+        },ByteCodeRegister::CallArg(number) => match number {
             0 => REG_CX,
             1 => REG_DX,
             2 => REG_R8,

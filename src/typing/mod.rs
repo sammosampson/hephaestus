@@ -31,7 +31,32 @@ pub fn resolved_resolvable_type(type_pointer: RuntimeTypePointer) -> ResolvableT
     ResolvableType::Resolved(type_pointer)
 }
 
-pub fn try_get_resolved_runtime_type_pointer(resolvable_type: &ResolvableType) -> Option<RuntimeTypePointer> {
+pub fn get_instance_member_offset(instance_type: &ResolvableType, member_name: &str) -> usize {
+    if let Some(pointer) = try_get_resolved_runtime_type_pointer(instance_type) {
+        return match &pointer.item {
+            RuntimeTypeItem::String { members } => get_member_offset(members, member_name),
+            //RuntimeTypeItem::Struct { members } => get_member_offset(members, member_name),
+            _ => panic!()
+        }
+    }
+    panic!()
+}
+
+fn get_member_offset(members: &RuntimeTypeMembers, member_name: &str) -> usize {
+    let mut offset = 0;
+    for member in members {
+        if member.name == member_name {
+            break;
+        }
+        
+        if let Some(type_size) = try_get_resolved_type_size(&member.field_type.size) {
+            offset += type_size
+        }
+    }
+    offset
+}
+
+pub fn try_get_resolved_runtime_type_pointer(resolvable_type: &ResolvableType) -> OptionalRuntimeTypePointer {
     if let ResolvableType::Resolved(pointer) = resolvable_type {
        return Some(pointer.clone());
     }
@@ -163,7 +188,7 @@ pub type RuntimeTypeMembers = Vec<RuntimeTypeMember>;
 
 fn string_runtime_type_members() -> RuntimeTypeMembers {
     vec!(
-        runtime_type_member(string("len"), create_shareable(signed_int_64_runtime_type())),
+        runtime_type_member(string("count"), create_shareable(signed_int_64_runtime_type())),
         runtime_type_member(string("data"), create_shareable(unsigned_int_8_pointer_runtime_type()))
     )
 }

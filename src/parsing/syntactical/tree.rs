@@ -59,6 +59,11 @@ pub enum AbstractSyntaxNodeItem {
         name: String,
         member_type: ResolvableType
     },
+    Instance {
+        name: String,
+        instance_type: ResolvableType,
+        scope: Scope
+    },
     Argument {
         expr: AbstractSyntaxNode,
         arg_type: ResolvableType
