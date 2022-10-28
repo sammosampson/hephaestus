@@ -167,12 +167,12 @@ fn add_statements_to_assignment_map(assignment_map: &mut AssignmentMap, statemen
 }
 
 fn add_args_to_assignment_map(assignment_map: &mut AssignmentMap, args: &AbstractSyntaxChildNodes) {
-    let mut position = 0;
+    let mut position = 16;
     for statement in args {
         match statement.item_ref() {
             AbstractSyntaxNodeItem::MemberDeclaration { name, .. } => {
-                position = position + 8;
                 add_assignment_to_map(assignment_map, name.clone(), position);
+                position = position + 8;
             }
         _ => {}
         }

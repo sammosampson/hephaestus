@@ -14,7 +14,7 @@ GetStdHandle :: (handle_type: s32) -> *void #foreign Kernel32;
 print :: (to_print: string) {
     handle := GetStdHandle(STD_OUTPUT_HANDLE);
     to_write := cast(*void) to_print.data;
-    length := cast(u32) to_print.len
+    length := cast(u32) to_print.count
     bytes_written: *void = null;
     overlapped: *void = null;
     WriteFile(handle, to_write, length, bytes_written, overlapped);
