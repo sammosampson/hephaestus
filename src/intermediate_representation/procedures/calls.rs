@@ -66,6 +66,10 @@ fn build_bytecode_at_procedure_call_argument_expression(
 }
 
 fn build_bytecode_at_procedure_call_argument_literal(ir: &mut IntermediateRepresentation, literal: &ResolvedLiteral, arg_index: usize) {
+    if arg_index > 3 {
+        todo!("Move fourth or more argument to shadow space");
+    }
+    
     match literal {
         ResolvedLiteral::UnsignedInt32(value) => {
             add_byte_code(
@@ -121,10 +125,10 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
                 BuiltInType::SignedInt8 => todo!("identifier call arg s8"),
                 BuiltInType::UnsignedInt16 => todo!("identifier call arg u16"),
                 BuiltInType::SignedInt16 => todo!("identifier call arg s16"),
-                BuiltInType::UnsignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir, offset, arg_index),
-                BuiltInType::SignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir, offset, arg_index),
-                BuiltInType::UnsignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index),
-                BuiltInType::SignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index),
+                BuiltInType::UnsignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_location(ir, offset, arg_index),
+                BuiltInType::SignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_location(ir, offset, arg_index),
+                BuiltInType::UnsignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset, arg_index),
+                BuiltInType::SignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset, arg_index),
                 BuiltInType::Float32 => todo!("identifier call arg float32"),
                 BuiltInType::Float64 => todo!("identifier call arg float64"),
                 BuiltInType::String => todo!("identifier call arg string"),
@@ -133,8 +137,7 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
                     if !is_pointer {
                         panic!("Non pointer void arguments not allowed");
                     }
-                    build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index);
-                    build_bytecode_for_move_call_arg_to_shadow_space_if_fourth_or_more(ir, arg_index);
+                    build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset, arg_index);
                 }
             };
             return;
@@ -142,6 +145,16 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
         todo!("Non built in typed identifier call arg")
     }
     panic!("Unresolved type for identifier call arg")
+}
+
+fn build_bytecode_for_move_variable_32_to_call_arg_location(ir: &mut IntermediateRepresentation, offset: u8, arg_index: usize) {
+    build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir, offset, arg_index);
+    build_bytecode_for_move_call_arg_32_to_shadow_space_if_fourth_or_more(ir, arg_index);
+}
+
+fn build_bytecode_for_move_variable_64_to_call_arg_location(ir: &mut IntermediateRepresentation, offset: u8, arg_index: usize) {
+    build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index);
+    build_bytecode_for_move_call_arg_64_to_shadow_space_if_fourth_or_more(ir, arg_index);
 }
 
 fn build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir: &mut IntermediateRepresentation, offset: u8, arg_index: usize) {
@@ -152,9 +165,20 @@ fn build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir: &mut
     add_byte_code(&mut ir.byte_code, move_variable_64_to_call_arg_register_instruction(offset, arg_index))
 }
 
-fn build_bytecode_for_move_call_arg_to_shadow_space_if_fourth_or_more(ir: &mut IntermediateRepresentation, arg_index: usize) {
+fn build_bytecode_for_move_call_arg_32_to_shadow_space_if_fourth_or_more(ir: &mut IntermediateRepresentation, arg_index: usize) {
     if arg_index > 3 {
-        add_byte_code(&mut ir.byte_code, move_reg_to_reg_plus_offset_64_instruction(call_arg_register(arg_index), stack_pointer_register(), (arg_index * 8) as u8));
+        add_byte_code(
+            &mut ir.byte_code, 
+            move_reg_to_reg_plus_offset_32_instruction(call_arg_register(arg_index),  stack_pointer_register(), (arg_index * 8) as u8)
+        );
+    }
+}
+
+fn build_bytecode_for_move_call_arg_64_to_shadow_space_if_fourth_or_more(ir: &mut IntermediateRepresentation, arg_index: usize) {
+    if arg_index > 3 {
+        add_byte_code(
+            &mut ir.byte_code,
+            move_reg_to_reg_plus_offset_64_instruction(call_arg_register(arg_index), stack_pointer_register(), (arg_index * 8) as u8));
     }
 }
 
@@ -173,6 +197,10 @@ fn build_bytecode_at_procedure_call_argument_global_identifier(
     arg_type: &ResolvableType,
     arg_index: usize
 ) {
+    if arg_index > 3 {
+        todo!("Move fourth or more argument to shadow space");
+    }
+
     let symbol_index = add_symbol(&mut ir.symbols, foreign_external(string(identifier_name)));
     if let Some(arg_type) = try_get_resolved_runtime_type_pointer(arg_type) {
         if let Some((built_in_arg_type, _is_pointer)) = try_get_built_in_type(&arg_type.id) {
