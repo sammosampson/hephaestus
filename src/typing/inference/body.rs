@@ -255,6 +255,9 @@ pub fn perform_typing_for_known_target_type_expression(
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type } => {
             perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, procedure_call_type);
         },
+        AbstractSyntaxNodeItem::MemberExpr { instance, member, member_expression_type } => {
+            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type);
+        },
         _ => {}
     }
 }

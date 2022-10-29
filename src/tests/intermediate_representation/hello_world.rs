@@ -1,6 +1,6 @@
 
 use crate::{
-    tests::intermediate_representation::*
+    tests::intermediate_representation::*, utilities::string
 };
 
 #[test]
@@ -24,16 +24,45 @@ main :: () {
     print(\"hello world!\r\0\");
 }"
     );   
-    
     assert_eq!(irs.len(), 8);
 
     let main_body_ir = get_first_ir_with_byte_code_named(&irs, "main");
     let print_body_ir = get_first_ir_with_byte_code_named(&irs, "print");
     
-    assert_eq!(main_body_ir.symbols.len(), 3);
-    assert_eq!(main_body_ir.data.items.len(), 1);
-    assert_eq!(main_body_ir.byte_code.len(), 9);
+    assert_eq!(main_body_ir.symbols.len(), 4);
+    assert_eq!(main_body_ir.data.items, vec!(
+        // string lit
+        string_data_item(string("hello world!\r\0")),
+        // string instance
+        // length
+        quad_word_data_item(14),
+        // data (ptr to item 0)
+        quad_word_data_item(0),
+    ));
+    assert_eq!(main_body_ir.byte_code, vec!(
+        //prologue
+        push_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+
+        // reserve shadow space for print proc call
+        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        // set call arg registers for GetStdHandle proc call
+        load_data_section_address_to_reg_64(14, call_arg_register(0)),
+        // call print
+        call_to_symbol_instruction(3),
+        // release shadow space for print proc call
+        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        
+        //epilogue
+        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
+        pop_reg_64_instruction(base_pointer_register()),
+        
+        ret_instruction()
+        
+    ));
     assert_eq!(main_body_ir.foreign_libraries.len(), 0);
+
+    //dbg!(main_body_ir.byte_code.clone());
 
     assert_eq!(print_body_ir.symbols.len(), 4);
     assert_eq!(print_body_ir.data.items.len(), 0);
@@ -42,11 +71,11 @@ main :: () {
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
 
-        // move call args to shadow
+        // move call arg to shadow
         move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
         
-        // make storage for 4 local assignments in statement body
-        sub_value_from_reg_8_instruction(40, stack_pointer_register()),
+        // make storage for 4 * 8 byte and 1 * 4 byte local assignments in statement body
+        sub_value_from_reg_8_instruction(36, stack_pointer_register()),
         
         // reserve shadow space for GetStdHandle proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
@@ -59,19 +88,34 @@ main :: () {
         // release shadow space for GetStdHandle proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),
         
+        // to_write := cast(*void) to_print.data;
+        // get string instance pointer
+        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
+        // to_print.data
+        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 8, standard_register(1)),
+        // into to_write
+        move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -16i8 as u8),
+        
+        //length := cast(u32) to_print.count
+        // get string instance pointer
+        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
+        // to_print.count
+        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 0, standard_register(1)),
+        // into length
+        move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -20i8 as u8),
+        
         // store bytes_written
-        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -16i8 as u8),
+        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -28i8 as u8),
         // store overlapped
-        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -24i8 as u8),
-        //////// to_write: *void = to_print; here \\\\\\\\
+        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -36i8 as u8),
         
         // reserve shadow space for WriteFile proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -8i8 as u8, call_arg_register(0)),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -32i8 as u8, call_arg_register(1)),
-        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), 16, call_arg_register(2)),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -16i8 as u8, call_arg_register(3)),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -24i8 as u8, call_arg_register(4)),
+        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -16i8 as u8, call_arg_register(1)),
+        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -20i8 as u8, call_arg_register(2)),
+        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -28i8 as u8, call_arg_register(3)),
+        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -36i8 as u8, call_arg_register(4)),
         call_to_symbol_instruction(3),
         // release shadow space for WriteFile proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),

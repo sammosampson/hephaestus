@@ -260,3 +260,70 @@ fn typing_struct_member_access_assignment_types_sucessfully() {
         )
     )
 }
+
+#[test]
+fn typing_struct_member_access_with_cast_assignment_types_sucessfully() {
+    let units_and_types = compile_source_and_get_types_and_unit("proc :: (s: string) {
+    x := cast(*void) s.count;
+}");
+
+    assert_eq!(units_and_types.len(), 2);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+
+    assert_eq!(proc_body_types.len(), 0);
+    assert_eq!(
+        proc_body_unit.tree, 
+        node(
+            position(20, 1, 21),
+            procedure_body_item(
+                string("proc"),
+                vec!(
+                    node(
+                        position(9, 1, 10),
+                        member_declaration_item(
+                            string("s"),
+                            resolved_resolvable_type(create_shareable(string_runtime_type()))
+                        )
+                    )
+                ),
+                vec!(),
+                vec!(
+                    node(
+                        position(26, 2, 5),
+                        variable_declaration_item(            
+                            string("x"),                     
+                            node(
+                                position(31, 2, 10),
+                                cast_item(
+                                    resolved_resolvable_type(create_shareable(void_pointer_runtime_type())),
+                                    node(
+                                        position(43, 2, 22),                                
+                                        member_expr_item(
+                                            node(
+                                                position(43, 2, 22),
+                                                instance_item(
+                                                    string("s"),
+                                                    resolved_resolvable_type(create_shareable(string_runtime_type())),
+                                                    local_scope()
+                                                )        
+                                            ),
+                                            node(
+                                                position(45, 2, 24),
+                                                member_item(
+                                                    string("count"),
+                                                    resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
+                                                )        
+                                            ),  
+                                            resolved_resolvable_type(create_shareable(signed_int_64_runtime_type()))
+                                        )
+                                    )
+                                )
+                            ),
+                            resolved_resolvable_type(create_shareable(void_pointer_runtime_type()))
+                        )
+                    )
+                )
+            )
+        )
+    )
+}

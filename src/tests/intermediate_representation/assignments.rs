@@ -114,7 +114,7 @@ fn byte_code_for_string_assignment_generates_correctly() {
 fn byte_code_for_string_field_assignment_generates_correctly() {
     let irs = compile_source_and_get_intemediate_representation("some_proc :: (s: string) {
     x := s.count;
-    y := s.data;
+    y := cast(*void) s.data;
 }"
     );   
     
@@ -150,7 +150,7 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
         // get data pointer value from string
         move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 8, standard_register(1)),
-        // stroe data pointer value in y space
+        // store data pointer value in y space
         move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -16i8 as u8),
         
         //epilogue
