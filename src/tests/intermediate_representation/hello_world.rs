@@ -57,12 +57,9 @@ main :: () {
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
         pop_reg_64_instruction(base_pointer_register()),
         
-        ret_instruction()
-        
+        ret_instruction()        
     ));
     assert_eq!(main_body_ir.foreign_libraries.len(), 0);
-
-    //dbg!(main_body_ir.byte_code.clone());
 
     assert_eq!(print_body_ir.symbols.len(), 4);
     assert_eq!(print_body_ir.data.items.len(), 0);
@@ -110,7 +107,7 @@ main :: () {
         move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -36i8 as u8),
         
         // reserve shadow space for WriteFile proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_8_instruction(40, stack_pointer_register()),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -8i8 as u8, call_arg_register(0)),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -16i8 as u8, call_arg_register(1)),
         move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -20i8 as u8, call_arg_register(2)),
@@ -118,7 +115,7 @@ main :: () {
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -36i8 as u8, call_arg_register(4)),
         call_to_symbol_instruction(3),
         // release shadow space for WriteFile proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_8_instruction(40, stack_pointer_register()),
         
         //epilogue
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),

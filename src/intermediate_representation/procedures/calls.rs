@@ -11,11 +11,11 @@ pub fn build_bytecode_at_variable_assignment_to_procedure_call(
     call_name: &str,
     args: &AbstractSyntaxChildNodes
 ) {
-    reserve_shadow_stack_space(ir);
+    reserve_shadow_stack_space(ir, args.len());
     build_bytecode_at_procedure_call_arguments(args, assignment_map, ir);
     call_external_function(ir, call_name);
     move_procedure_call_return_value_into_storage(ir, assignment_map, assignment_name);
-    release_shadow_stack_space(ir);
+    release_shadow_stack_space(ir, args.len());
 }
 
 pub fn build_bytecode_at_procedure_call(
@@ -24,10 +24,10 @@ pub fn build_bytecode_at_procedure_call(
     name: &str,
     args: &AbstractSyntaxChildNodes
 ) {
-    reserve_shadow_stack_space(ir);
+    reserve_shadow_stack_space(ir, args.len());
     build_bytecode_at_procedure_call_arguments(args, assignment_map, ir);
     call_external_function(ir, name);
-    release_shadow_stack_space(ir);
+    release_shadow_stack_space(ir, args.len());
 }
 
 fn build_bytecode_at_procedure_call_arguments(args: &AbstractSyntaxChildNodes, assignment_map: &AssignmentMap, ir: &mut IntermediateRepresentation) {
@@ -197,16 +197,20 @@ fn call_external_function(ir: &mut IntermediateRepresentation, name: &str) {
     );
 }
 
-fn reserve_shadow_stack_space(ir: &mut IntermediateRepresentation) {
+fn reserve_shadow_stack_space(ir: &mut IntermediateRepresentation, arg_count: usize) {
     add_byte_code(
         &mut ir.byte_code,
-        sub_value_from_reg_8_instruction(32, stack_pointer_register())
+        sub_value_from_reg_8_instruction(get_shadow_space_size(arg_count), stack_pointer_register())
     );
 }
 
-fn release_shadow_stack_space(ir: &mut IntermediateRepresentation) {
+fn release_shadow_stack_space(ir: &mut IntermediateRepresentation, arg_count: usize) {
     add_byte_code(
         &mut ir.byte_code,
-        add_value_to_reg_8_instruction(32, stack_pointer_register())
+        add_value_to_reg_8_instruction(get_shadow_space_size(arg_count), stack_pointer_register())
     );
+}
+
+fn get_shadow_space_size(arg_count: usize) -> u8 {
+    std::cmp::max(8 * arg_count as u8, 32)
 }
