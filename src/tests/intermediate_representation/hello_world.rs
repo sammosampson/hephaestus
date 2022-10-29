@@ -113,6 +113,7 @@ main :: () {
         move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -20i8 as u8, call_arg_register(2)),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -28i8 as u8, call_arg_register(3)),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -36i8 as u8, call_arg_register(4)),
+        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(4), stack_pointer_register(), 32),
         call_to_symbol_instruction(3),
         // release shadow space for WriteFile proc call
         add_value_to_reg_8_instruction(40, stack_pointer_register()),

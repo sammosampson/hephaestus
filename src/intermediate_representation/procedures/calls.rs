@@ -116,15 +116,15 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
     let offset = get_assignment_offset(assignment_map, identifier_name);
     if let Some(arg_type) = try_get_resolved_runtime_type_pointer(arg_type) {
         if let Some((built_in_arg_type, is_pointer)) = try_get_built_in_type(&arg_type.id) {
-            let instruction = match built_in_arg_type {
+            match built_in_arg_type {
                 BuiltInType::UnsignedInt8 => todo!("identifier call arg u8"),
                 BuiltInType::SignedInt8 => todo!("identifier call arg s8"),
                 BuiltInType::UnsignedInt16 => todo!("identifier call arg u16"),
                 BuiltInType::SignedInt16 => todo!("identifier call arg s16"),
-                BuiltInType::UnsignedInt32 => move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), offset, call_arg_register(arg_index)),
-                BuiltInType::SignedInt32 => move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), offset, call_arg_register(arg_index)),
-                BuiltInType::UnsignedInt64 => move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), offset, call_arg_register(arg_index)),
-                BuiltInType::SignedInt64 => move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), offset, call_arg_register(arg_index)),
+                BuiltInType::UnsignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir, offset, arg_index),
+                BuiltInType::SignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir, offset, arg_index),
+                BuiltInType::UnsignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index),
+                BuiltInType::SignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index),
                 BuiltInType::Float32 => todo!("identifier call arg float32"),
                 BuiltInType::Float64 => todo!("identifier call arg float64"),
                 BuiltInType::String => todo!("identifier call arg string"),
@@ -133,15 +133,37 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
                     if !is_pointer {
                         panic!("Non pointer void arguments not allowed");
                     }
-                    move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), offset, call_arg_register(arg_index))
+                    build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir, offset, arg_index);
+                    build_bytecode_for_move_call_arg_to_shadow_space_if_fourth_or_more(ir, arg_index);
                 }
             };
-            add_byte_code(&mut ir.byte_code, instruction);
             return;
         }
         todo!("Non built in typed identifier call arg")
     }
     panic!("Unresolved type for identifier call arg")
+}
+
+fn build_bytecode_for_move_variable_32_to_call_arg_register_instruction(ir: &mut IntermediateRepresentation, offset: u8, arg_index: usize) {
+    add_byte_code(&mut ir.byte_code, move_variable_32_to_call_arg_register_instruction(offset, arg_index))
+}
+
+fn build_bytecode_for_move_variable_64_to_call_arg_register_instruction(ir: &mut IntermediateRepresentation, offset: u8, arg_index: usize) {
+    add_byte_code(&mut ir.byte_code, move_variable_64_to_call_arg_register_instruction(offset, arg_index))
+}
+
+fn build_bytecode_for_move_call_arg_to_shadow_space_if_fourth_or_more(ir: &mut IntermediateRepresentation, arg_index: usize) {
+    if arg_index > 3 {
+        add_byte_code(&mut ir.byte_code, move_reg_to_reg_plus_offset_64_instruction(call_arg_register(arg_index), stack_pointer_register(), (arg_index * 8) as u8));
+    }
+}
+
+fn move_variable_32_to_call_arg_register_instruction(offset: u8, arg_index: usize) -> ByteCodeInstruction {
+    move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), offset, call_arg_register(arg_index))
+}
+
+fn move_variable_64_to_call_arg_register_instruction(offset: u8, arg_index: usize) -> ByteCodeInstruction {
+    move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), offset, call_arg_register(arg_index))
 }
 
 
