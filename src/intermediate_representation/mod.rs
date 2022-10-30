@@ -12,7 +12,8 @@ pub use strings::*;
 
 use crate::{
     parsing::CompilationUnitId,
-    utilities::*
+    utilities::*, 
+    strings::*
 };
 
 pub type ForeignLibraryReferences = Vec<String>;
@@ -219,7 +220,8 @@ pub fn data_section_item_name(data_item_pointer: u32) -> String {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ByteCodeDataItem {
-    String { value: String },
+    String { value: ByteString },
+    Pointer { value: u64 },
     QuadWord { value: u64 }
 }
 
@@ -231,11 +233,15 @@ pub struct ByteCodeData {
     pub items: ByteCodeDataItems
 }
 
-pub fn string_data_item(value: String) -> ByteCodeDataItem{
+pub fn string_data_item(value: ByteString) -> ByteCodeDataItem{
     ByteCodeDataItem::String { value }
 }
 pub fn quad_word_data_item(value: u64) -> ByteCodeDataItem{
     ByteCodeDataItem::QuadWord { value }
+}
+
+pub fn pointer_data_item(value: u64) -> ByteCodeDataItem{
+    ByteCodeDataItem::Pointer { value }
 }
 
 pub fn add_data_item(data: &mut ByteCodeData, item: ByteCodeDataItem) -> u32 {
@@ -248,6 +254,7 @@ pub fn add_data_item(data: &mut ByteCodeData, item: ByteCodeDataItem) -> u32 {
 fn get_byte_code_data_item_size(item: &ByteCodeDataItem) -> u32 {
     match item {
         ByteCodeDataItem::String { value } => value.len() as u32,
+        ByteCodeDataItem::Pointer { .. } => 8,
         ByteCodeDataItem::QuadWord { .. } => 8,
     }
 }

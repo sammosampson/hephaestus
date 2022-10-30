@@ -6,6 +6,8 @@ pub use syntactical::*;
 pub use lexical::*;
 pub use source_files::*;
 
+use crate::strings::*;
+
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Operator {
     Add,
@@ -69,7 +71,7 @@ pub fn get_resolved_literal(literal: &ResolvableLiteral) -> ResolvedLiteral {
 pub enum UnresolvedLiteral {
     Int(String),
     Float(String),
-    String(String)
+    String(ByteString)
 }
 
 pub fn unresolved_int_literal(number: String) -> UnresolvedLiteral {
@@ -80,7 +82,7 @@ pub fn unresolved_float_literal(number: String) -> UnresolvedLiteral {
     UnresolvedLiteral::Float(number)
 }
 
-pub fn unresolved_string_literal(string: String) -> UnresolvedLiteral {
+pub fn unresolved_string_literal(string: ByteString) -> UnresolvedLiteral {
     UnresolvedLiteral::String(string)
 }
 
@@ -96,7 +98,7 @@ pub enum ResolvedLiteral {
     SignedInt64(i64),
     Float32(f32),
     Float64(f64),
-    String(String)
+    String(ByteString)
 }
 
 pub fn resolved_unsigned_int_8_literal(value: u8) -> ResolvedLiteral {
@@ -139,6 +141,6 @@ pub fn resolved_float_64_literal(value: f64) -> ResolvedLiteral {
     ResolvedLiteral::Float64(value)
 }
 
-pub fn resolved_string_literal(value: String) -> ResolvedLiteral {
+pub fn resolved_string_literal(value: ByteString) -> ResolvedLiteral {
     ResolvedLiteral::String(value)
 }

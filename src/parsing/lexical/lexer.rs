@@ -1,6 +1,7 @@
 use crate::{
     parsing::*,
-    utilities::*
+    utilities::*,
+    strings::*
 };
 
 const SOURCE_SYMBOL_DIRECTIVE: char = '#';
@@ -215,7 +216,7 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         eat_next_character(&mut lexer.reader);
         return create_token(
             get_character_position(&next_character), 
-            create_string_literal_token_item(string)
+            create_string_literal_token_item(to_byte_string(&string))
         );
     }
 

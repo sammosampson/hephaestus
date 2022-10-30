@@ -13,6 +13,7 @@ mod compilation;
 mod collections;
 mod acting;
 mod utilities;
+mod strings;
 
 fn main() {
     std::env::set_var("RUST_LOG", "debug");

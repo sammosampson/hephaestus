@@ -86,6 +86,7 @@ fn build_x64_object(coff: &mut Coff, ir: IntermediateRepresentation) -> String {
         match data_item {
             ByteCodeDataItem::String { value } => add_string_to_data_section(coff, &value),
             ByteCodeDataItem::QuadWord { value } => add_quad_word_to_data_section(coff, &value),
+            ByteCodeDataItem::Pointer { value } => add_pointer_to_data_section_and_make_relocation(coff, &value),
         };
     }
 
@@ -128,12 +129,19 @@ fn get_register(register: ByteCodeRegister) -> u8 {
             9 => REG_R14,
             10 => REG_R15,
             r => panic!("std register {} not available. Too many registers used", r)
-        },ByteCodeRegister::CallArg(number) => match number {
+        },
+        ByteCodeRegister::CallArg(number) => match number {
             0 => REG_CX,
             1 => REG_DX,
             2 => REG_R8,
             3 => REG_R9,
-            r => panic!("call register {} should be passed on stack", r)
+            4 => REG_R10,
+            5 => REG_R11,
+            6 => REG_R12,
+            7 => REG_R13,
+            8 => REG_R14,
+            9 => REG_R15,
+            r => panic!("call register {} not available. Too many registers used", r)
         },
         ByteCodeRegister::CallReturnArg(number) => match number {
             0 => REG_AX,

@@ -1,7 +1,7 @@
 
 use crate::{
     tests::intermediate_representation::*,
-    utilities::*
+    strings::*
 };
 
 #[test]
@@ -85,7 +85,7 @@ fn byte_code_for_string_assignment_generates_correctly() {
     assert_eq!(some_proc_body_ir.symbols.len(), 2);
 
     assert_eq!(some_proc_body_ir.data.items, vec!(
-        string_data_item(string("test"))
+        string_data_item(to_byte_string("test"))
     ));
 
     assert_eq!(some_proc_body_ir.byte_code, vec!(

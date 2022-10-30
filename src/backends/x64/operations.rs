@@ -18,6 +18,7 @@ const OP_MOV_IMM_TO_R: u8 = 0xB8;
 const OP_MOV_IMM_TO_RM: u8 = 0xC7;
 const OP_CALL: u8 = 0xE8;
 const OP_RET: u8 = 0xC3;
+const RSP_SIB_BYTE: u8 = 0x24;
 
 const SECONDARY_ADD_OP_SUB: u8 = 0x5;
 const SECONDARY_OP_NONE: u8 = 0x0;
@@ -58,7 +59,6 @@ pub fn add_mov_dword_value_to_reg_op(coff: &mut Coff, value: u32, register: u8) 
     add_entries_to_text_section(coff, u32_to_bytes(&value));
 }
 
-//TODO: check this is right
 pub fn add_mov_qword_value_to_reg_op(coff: &mut Coff, value: u64, register: u8) {
     add_entry_to_text_section(coff, OP_MOV_IMM_TO_R + register);
     add_entries_to_text_section(coff, u64_to_bytes(&value));
@@ -78,19 +78,18 @@ pub fn add_mov_dword_value_into_reg_plus_offset_pointer_op(coff: &mut Coff, valu
     add_entry_to_text_section(coff, REX_W);
     add_entry_to_text_section(coff,OP_MOV_IMM_TO_RM);
     add_entry_to_text_section(coff, mod_rm(MOD_REGISTER_INDIRECT, 0, address_register));
-    add_entry_to_text_section(coff, 0x24);
+    add_sib_byte_entry_to_text_section_if_rsp_register(coff, address_register);
     add_entry_to_text_section(coff, address_offset);
     add_entries_to_text_section(coff, u32_to_bytes(&value));
 }
 
-//TODO: check this is right
 pub fn add_mov_qword_value_into_reg_plus_offset_pointer_op(coff: &mut Coff, value: u64, address_register: u8, address_offset: u8) {
     add_entry_to_text_section(coff, REX_W);
     add_entry_to_text_section(coff,OP_MOV_IMM_TO_RM);
     add_entry_to_text_section(coff, mod_rm(MOD_REGISTER_INDIRECT, 0, address_register));
-    add_entry_to_text_section(coff, 0x24);
     add_entry_to_text_section(coff, address_offset);
-    add_entries_to_text_section(coff, u64_to_bytes(&value));
+    //TODO:y does this have to be dword???
+    add_entries_to_text_section(coff, u32_to_bytes(&(value as u32)));
 }
 
 pub fn add_mov_dword_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_register: u8, address_offset: u8, into_register: u8) {
@@ -103,16 +102,19 @@ pub fn add_mov_dword_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_
 }
 
 pub fn add_mov_qword_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_register: u8, address_offset: u8, into_register: u8) {
-    add_entry_to_text_section(coff, REX_W);
+    let rex = add_rex_r_for_high_bit_register(into_register, REX_W);
+    add_entry_to_text_section(coff, rex);
     add_entry_to_text_section(coff, OP_MOV_RM_TO_R);
     add_entry_to_text_section(coff, mod_rm(MOD_REGISTER_INDIRECT, into_register, address_register));
     add_entry_to_text_section(coff, address_offset);
 }
 
 pub fn add_mov_reg_to_reg_plus_offset_qword_pointer_op(coff: &mut Coff, from_register: u8, into_address_register: u8, into_address_offset: u8) {
-    add_entry_to_text_section(coff, REX_W);
+    let rex = add_rex_r_for_high_bit_register(from_register, REX_W);
+    add_entry_to_text_section(coff, rex);
     add_entry_to_text_section(coff, OP_MOV_R_TO_RM);
     add_entry_to_text_section(coff, mod_rm(MOD_REGISTER_INDIRECT, from_register, into_address_register));
+    add_sib_byte_entry_to_text_section_if_rsp_register(coff, into_address_register );
     add_entry_to_text_section(coff, into_address_offset);
 }
 
@@ -142,10 +144,7 @@ pub fn add_lea_reg_plus_offset_pointer_to_reg_op(coff: &mut Coff, address_regist
 }
 
 pub fn add_xor_qword_reg_into_reg_op(coff: &mut Coff, register_from: u8, register_into: u8) {
-    let mut rex = REX_W | REX_B;
-    if register_has_high_bit(register_from) {
-        rex = rex | REX_R
-    }
+    let rex = add_rex_r_for_high_bit_register(register_from, REX_W | REX_B);
     add_entry_to_text_section(coff, rex);
     add_entry_to_text_section(coff, OP_XOR);
     add_entry_to_text_section(
@@ -156,4 +155,17 @@ pub fn add_xor_qword_reg_into_reg_op(coff: &mut Coff, register_from: u8, registe
 
 pub fn add_ret_op(coff: &mut Coff) {
     add_entry_to_text_section(coff, OP_RET);
+}
+
+fn add_rex_r_for_high_bit_register(register: u8, rex: u8) -> u8{
+    if register_has_high_bit(register) {
+        return rex | REX_R
+    }
+    rex
+}
+
+fn add_sib_byte_entry_to_text_section_if_rsp_register(coff: &mut Coff, register: u8) {
+    if register == REG_SP {
+        add_entry_to_text_section(coff, RSP_SIB_BYTE);
+    }
 }

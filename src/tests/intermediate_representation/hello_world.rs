@@ -1,6 +1,7 @@
 
 use crate::{
-    tests::intermediate_representation::*, utilities::string
+    tests::intermediate_representation::*,
+    strings::*
 };
 
 #[test]
@@ -21,7 +22,7 @@ print :: (to_print: string) {
 }
 
 main :: () {
-    print(\"hello world!\r\0\");
+    print(\"hello world!\\r\\n\\0\");
 }"
     );   
     assert_eq!(irs.len(), 8);
@@ -32,12 +33,12 @@ main :: () {
     assert_eq!(main_body_ir.symbols.len(), 4);
     assert_eq!(main_body_ir.data.items, vec!(
         // string lit
-        string_data_item(string("hello world!\r\0")),
+        string_data_item(to_byte_string("hello world!\\r\\n\\0")),
         // string instance
         // length
-        quad_word_data_item(14),
+        quad_word_data_item(15),
         // data (ptr to item 0)
-        quad_word_data_item(0),
+        pointer_data_item(0),
     ));
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
@@ -47,7 +48,7 @@ main :: () {
         // reserve shadow space for print proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),
         // set call arg registers for GetStdHandle proc call
-        load_data_section_address_to_reg_64(14, call_arg_register(0)),
+        load_data_section_address_to_reg_64(15, call_arg_register(0)),
         // call print
         call_to_symbol_instruction(3),
         // release shadow space for print proc call

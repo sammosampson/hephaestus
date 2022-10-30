@@ -1,4 +1,5 @@
 
+use crate::strings::*;
 use crate::threading::*;
 use crate::typing::*;
 use crate::parsing::*;
@@ -145,7 +146,7 @@ fn typing_string_assignment_types_sucessfully() {
                             string("s"),                     
                             node(                    
                                 position(22, 2, 10),
-                                literal_item(resolved_resolvable_literal(resolved_string_literal(string("hello")))),
+                                literal_item(resolved_resolvable_literal(resolved_string_literal(to_byte_string("hello")))),
                             ),
                             resolved_resolvable_type(create_shareable(string_runtime_type()))
                         )

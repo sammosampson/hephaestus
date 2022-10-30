@@ -1,6 +1,7 @@
 use crate::{
     tests::intermediate_representation::*, 
-    utilities::*
+    utilities::*,
+    strings::*
 };
 
 #[test]
@@ -174,9 +175,9 @@ main :: () {
     ));
 
     assert_eq!(main_body_ir.data.items, vec!(
-        string_data_item(string("test")),
+        string_data_item(to_byte_string("test")),
         quad_word_data_item(4),
-        quad_word_data_item(0)
+        pointer_data_item(0)
     ));
     
     assert_eq!(main_body_ir.byte_code, vec!(

@@ -1,6 +1,7 @@
 use crate::{
     parsing::*,
-    intermediate_representation::*
+    intermediate_representation::*,
+    strings::*
 };
 
 pub fn build_bytecode_at_top_root_const(ir: &mut IntermediateRepresentation, name: &str, value: &AbstractSyntaxNode) {
@@ -25,7 +26,7 @@ fn build_bytecode_at_foreign_system_library_const(ir: &mut IntermediateRepresent
 fn build_bytecode_at_foreign_system_library_literal_const(ir: &mut IntermediateRepresentation, library: &ResolvedLiteral) {
     match library {
         ResolvedLiteral::String(value) =>
-            add_foreign_library_reference(&mut ir.foreign_libraries, string(value)),
+            add_foreign_library_reference(&mut ir.foreign_libraries, byte_string_to_string(value)),
         _ => todo!("foreign system library none string literals")
     }
 }

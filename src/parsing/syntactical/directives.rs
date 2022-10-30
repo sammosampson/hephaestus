@@ -1,4 +1,4 @@
-use crate::parsing::*;
+use crate::{parsing::*, strings::*};
 
 pub fn parse_directive(directive: Directive, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
     match directive {
@@ -55,7 +55,7 @@ pub fn parse_foreign_system_library(lexer: &mut Lexer) -> AbstractSyntaxNode {
     create_error_node(expected_library_name_error(), token.position)
 }
 
-fn parse_ending_string_literal(lexer: &mut Lexer, literal: String, position: SourceFilePosition) -> AbstractSyntaxNode {
+fn parse_ending_string_literal(lexer: &mut Lexer, literal: ByteString, position: SourceFilePosition) -> AbstractSyntaxNode {
     if is_line_terminiator(&peek_next_token(lexer).item) {
         eat_next_token(lexer)
     }

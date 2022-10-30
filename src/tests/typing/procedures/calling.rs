@@ -1,4 +1,5 @@
 
+use crate::strings::*;
 use crate::threading::*;
 use crate::typing::*;
 use crate::parsing::*;
@@ -134,7 +135,7 @@ fn typing_procedure_body_waits_for_external_procedure_with_string_arg() {
                                     arg_item( 
                                         node(
                                             position(48, 2, 27),
-                                            literal_item(resolved_resolvable_literal(resolved_string_literal(string("Hello"))))
+                                            literal_item(resolved_resolvable_literal(resolved_string_literal(to_byte_string("Hello"))))
                                         ),
                                         resolved_resolvable_type(create_shareable(string_runtime_type())) 
                                     )

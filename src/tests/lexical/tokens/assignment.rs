@@ -168,3 +168,22 @@ fn compound_get_for_assignment_to_cast() {
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
 }
+
+
+#[test]
+fn compound_get_for_assignment_to_string() {
+    let mut lexer = lex("x := \"hello\\r\\n\\0\";");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::InitialiseAssignValue));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Literal(unresolved_string_literal(vec!(104, 101, 108, 108, 111, 13, 10, 0))));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
+}
+ 

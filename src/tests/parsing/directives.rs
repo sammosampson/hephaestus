@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::strings::*;
 use crate::typing::*;
 use crate::utilities::*;
 use crate::tests::parsing::*;
@@ -48,7 +49,7 @@ fn parse_load_directive_parses_correctly() {
             load_directive_item(
                 node(
                     position(6, 1, 7),
-                    literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("test.jai")))),
+                    literal_item(unresolved_resolvable_literal(unresolved_string_literal(to_byte_string("test.jai")))),
                 )
             )
         )
@@ -73,7 +74,7 @@ fn parse_foreign_system_library_directive_parses_correctly() {
                     foreign_system_library_directive_item(
                         node(
                             position(36, 1, 37),
-                            literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("kernel32")))),
+                            literal_item(unresolved_resolvable_literal(unresolved_string_literal(to_byte_string("kernel32")))),
                         )       
                     ),
                 ),

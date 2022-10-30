@@ -1,4 +1,5 @@
 use crate::parsing::*;
+use crate::strings::*;
 use crate::typing::*;
 use crate::utilities::*;
 use crate::tests::parsing::*;
@@ -125,7 +126,7 @@ fn parse_procedure_call_with_string_arg_parses_correctly() {
                                 arg_item(
                                     node(                                                    
                                         position(19, 1, 20),
-                                        literal_item(unresolved_resolvable_literal(unresolved_string_literal(string("Hello"))))
+                                        literal_item(unresolved_resolvable_literal(unresolved_string_literal(to_byte_string("Hello"))))
                                     ),
                                     unresolved_resolvable_type()
                                 )
