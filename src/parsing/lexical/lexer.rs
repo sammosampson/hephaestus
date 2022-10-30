@@ -1,6 +1,11 @@
-use crate::parsing::*;
+use crate::{
+    parsing::*,
+    utilities::*,
+    strings::*
+};
 
 const SOURCE_SYMBOL_DIRECTIVE: char = '#';
+const SOURCE_SYMBOL_ASTERISK: char = '*';
 const SOURCE_SYMBOL_SEMICOLON: char = ';';
 const SOURCE_SYMBOL_COMMA: char = ',';
 const SOURCE_SYMBOL_COLON: char = ':';
@@ -17,12 +22,12 @@ const SOURCE_SYMBOL_QUOTES: char = '"';
 
 #[derive(Clone)]
 pub struct Lexer<'a> {
-    reader: SourceFileCharacterReader<'a>,
+    reader: SourceFileCharacterReader<'a>
 }
 
 pub fn lex(input: &str) -> Lexer {
     Lexer {
-        reader: create_reader(input),
+        reader: create_reader(input)
     }
 }
 
@@ -51,6 +56,21 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
     
     let next_character = peek_next_character(&lexer.reader);
     
+    if is_character(&next_character, SOURCE_SYMBOL_ASTERISK) {
+        eat_next_character(&mut lexer.reader);
+        if is_character_whitespace(&peek_next_character(&mut lexer.reader)) {
+            return create_token(
+                get_character_position(&next_character), 
+                create_operator_token_item(multiply_operator())
+            );    
+        }
+        return create_token(
+            get_character_position(&next_character), 
+            create_pointer_token_item()
+        );    
+
+    }
+
     if is_character(&next_character, SOURCE_SYMBOL_SEMICOLON) {
         eat_next_character(&mut lexer.reader);
         return create_token(
@@ -92,17 +112,25 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
 
     if is_character(&next_character, SOURCE_SYMBOL_SUBTRACT) {
         eat_next_character(&mut lexer.reader);
+        
         if is_character(&peek_next_character(&mut lexer.reader), SOURCE_SYMBOL_GREATER_THAN) {
             eat_next_character(&mut lexer.reader);
             return create_token(
                 get_character_position(&next_character), 
                 create_assignment_token_item(create_goes_to_assignment())
             );
+        } 
+        
+        if is_character_whitespace(&peek_next_character(&mut lexer.reader)) {
+            return create_token(
+                get_character_position(&next_character), 
+                create_operator_token_item(subtract_operator())
+            );
         }
-        return create_token(
-            get_character_position(&next_character), 
-            create_operator_token_item(subtract_operator())
-        );
+        
+        if is_character_alphanumeric(&peek_next_character(&mut lexer.reader)) {
+            return parse_alphanumeric(lexer, true);
+        }
     }
 
     if is_character(&next_character, SOURCE_SYMBOL_EQUALS) {
@@ -145,6 +173,8 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
                 get_character_position(&next_character), 
                 create_range_token_item(create_left_inclusive_range())
             );
+        } else {
+            return create_token(get_character_position(&next_character), create_period_token_item());
         }
     }
 
@@ -186,32 +216,59 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
         eat_next_character(&mut lexer.reader);
         return create_token(
             get_character_position(&next_character), 
-            create_string_literal_token_item(string)
+            create_string_literal_token_item(to_byte_string(&string))
         );
     }
 
     if is_character_alphanumeric(&next_character) {
-        let mut alphanumeric_string = read_up_until_non_alphanumeric(lexer);
+        return parse_alphanumeric(lexer, false);
+    }
+    
+    if is_character_eof(&next_character) {
+        return create_token(get_character_position(&next_character), create_eof_token_item())
+    }
 
+    create_token(
+        get_character_position(&next_character), 
+        create_error_token_item(create_unknown_token_error(get_unwrapped_character_value(&next_character)))
+    )
+}
+
+fn parse_alphanumeric(lexer: &mut Lexer, is_negative: bool) -> SourceToken {
+    let next_character = peek_next_character(&mut lexer.reader);
+    
+    if is_character_numeric(&next_character) {
+        let mut alphanumeric_string = read_up_until_non_alphanumeric(lexer);
         let (next_char, next_char_after_that) = peek_next_two_characters(&mut lexer.reader);
-        if is_character(&next_char, SOURCE_SYMBOL_PERIOD) && is_character_alphanumeric(&next_char_after_that) {
+
+        if is_character(&next_char, SOURCE_SYMBOL_PERIOD) && is_character_numeric(&next_char_after_that) {
             eat_next_character(&mut lexer.reader);
+            
             alphanumeric_string.push(SOURCE_SYMBOL_PERIOD);
             alphanumeric_string = alphanumeric_string + &read_up_until_non_alphanumeric(lexer);
-            if let Ok(number) = parse_float(&alphanumeric_string) {
+            
+            if is_float_string(&alphanumeric_string) {
                 return create_token(
                     get_character_position(&next_character), 
-                    create_float_literal_token_item(number)
+                    create_float_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
                 );
             }
         }
 
-        if let Ok(number) = parse_unsigned_int(&alphanumeric_string) {
+        if is_int_string(&alphanumeric_string) {
             return create_token(
                 get_character_position(&next_character), 
-                create_unsigned_int_literal_token_item(number)
+                create_int_literal_token_item(add_negative_if_needed(&alphanumeric_string, is_negative))
             );
-        }        
+        }     
+
+        create_token(
+            get_character_position(&next_character), 
+            create_error_token_item(create_unknown_token_error(get_unwrapped_character_value(&next_character)))
+        )
+    
+    } else {
+        let alphanumeric_string = read_up_until_non_alphanumeric(lexer);
 
         if let Some(built_in_type) = parse_built_in_type(&alphanumeric_string) {
             return create_token(
@@ -226,27 +283,19 @@ fn read_next_token(lexer: &mut Lexer) -> SourceToken {
                 create_keyword_token_item(keyword)
             );
         }
-    
+
         return create_token(
             get_character_position(&next_character), 
             create_identifier_token_item(alphanumeric_string)
         );
     }
-    
-    if is_character_eof(&next_character) {
-        return create_token(get_character_position(&next_character), create_eof_token_item())
-    }
-
-    create_token(
-        get_character_position(&next_character), 
-        create_error_token_item(create_unknown_token_error(get_unwrapped_character_value(&next_character)))
-    )
 }
+
 
 fn read_up_until_non_alphanumeric(lexer: &mut Lexer) -> String {
     read_characters_up_until(
         &mut lexer.reader, 
-        |c| !is_character_alphanumeric(c) 
+        |c| !is_character_alphanumeric(c) && !is_character(c, '_')
     )
 }
 

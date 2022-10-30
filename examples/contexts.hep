@@ -1,0 +1,7 @@
+//CONTEXTS:
+// context gets passed to every function (can exist in a high register) has an allocators etc, context can be pushed 
+// for a call herarchy and thus be thread safe 
+// https://www.youtube.com/watch?v=ciGQCP6HgqI&t=619s
+//https://www.youtube.com/watch?v=SSVHWrYG974
+// context in second vid gets renamed to Context_Base and contains TemporaryStorage (linear allocator) and AssertionFailed
+// 

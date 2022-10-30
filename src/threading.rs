@@ -2,6 +2,9 @@ use std::sync::atomic::*;
 use std::sync::mpsc::*;
 use std::sync::*;
 use std::thread;
+use core::fmt::Debug;
+use log::*;
+
 use crate::collections::*;
 
 pub type Lockable<T> = Mutex<T>;
@@ -33,9 +36,10 @@ pub fn create_concurrent<T>(to_wrap: T) -> Concurrent<T> {
     create_shareable(create_lockable(to_wrap))
 }
 
-fn send<T>(sender: &Sender<T>, to_send: T) {
+fn send<T : ParallelisableClone>(sender: &Sender<T>, to_send: T) {
+    let to_send_dbg = format!("{:?}", &to_send);
     if let Err(error) = sender.send(to_send) {
-        println!("error sending message in threading: {}", error)
+        trace!("error sending message in threading: {}, message was: {}", error, to_send_dbg)
     }
 }
 
@@ -64,7 +68,7 @@ pub fn set_concurrent_bool(to_set: &ConcurrentBool, to: bool) {
 }
 
 
-pub trait ParallelisableClone: Parallelisable + Clone {
+pub trait ParallelisableClone: Parallelisable + Clone + Debug {
 }
 
 pub trait Parallelisable: Send + 'static {
@@ -75,7 +79,7 @@ impl<T> Parallelisable for T
 }
 
 impl<T> ParallelisableClone for T 
-    where T: Parallelisable + Clone {
+    where T: Parallelisable + Clone + Debug {
 }
 
 pub type ParallelisableRunner<T> = Box<dyn FnOnce() -> T + Send>;

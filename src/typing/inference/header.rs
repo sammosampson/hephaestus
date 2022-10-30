@@ -1,23 +1,49 @@
-use crate::parsing::*;
 use crate::typing::*;
+use crate::utilities::*;
 
-pub struct ProcedureHeaderInferenceVisitor {
-    pub arg_types: RuntimeTypePointers,
-    pub return_types: RuntimeTypePointers
-}
-
-pub fn create_procedure_header_visitor() -> ProcedureHeaderInferenceVisitor {
-    ProcedureHeaderInferenceVisitor { arg_types: vec!(), return_types: vec!() }
-}
-
-impl AbstractSyntaxProcedureHeaderNodeVisitor for ProcedureHeaderInferenceVisitor {
-    fn visit_argument_declaration(&mut self, _name: &mut String, arg_type: &mut ResolvableType) {
-        try_parse_resolved_runtime_type_pointer(arg_type, &mut self.arg_types);
+pub fn perform_typing_for_procedure_header(
+    unit_id: CompilationUnitId,
+    name: &str,
+    resolved_types: &mut RuntimeTypePointers,
+    args: &mut AbstractSyntaxChildNodes,
+    return_args: &mut AbstractSyntaxChildNodes
+) {
+    let mut arg_types = vec!();
+    let mut return_arg_types = vec!();
+    
+    for arg in args {
+        match arg.item_mut() {
+            AbstractSyntaxNodeItem::MemberDeclaration { member_type: type_id, .. } => 
+                try_parse_resolved_runtime_type_pointer(type_id, &mut arg_types),
+            item => panic!("{:?} is not viable procedure header arg", item)
+        }
     }
 
-    fn visit_return_type_declaration(&mut self, return_type: &mut ResolvableType) {
-        try_parse_resolved_runtime_type_pointer(return_type, &mut self.return_types);
+    for return_type in return_args {
+        match return_type.item_mut() {
+            AbstractSyntaxNodeItem::Type(resolvable_type) => 
+                try_parse_resolved_runtime_type_pointer(resolvable_type, &mut return_arg_types),
+            item => panic!("{:?} is not viable procedure header return arg", item)
+        }
     }
+
+    resolved_types.push(create_procedure_definition_type(unit_id, name, arg_types, return_arg_types));  
+}
+
+fn create_procedure_definition_type(
+    unit_id: CompilationUnitId,
+    name: &str,
+    arg_types: RuntimeTypePointers,
+    return_arg_types: RuntimeTypePointers
+) -> RuntimeTypePointer {
+    create_shareable(
+        create_type(
+            user_defined_runtime_type_id(unit_id),
+            string(&name),
+            procedure_definition_type_item(arg_types, return_arg_types),
+            not_required_type_size()
+        )
+    )
 }
 
 fn try_parse_resolved_runtime_type_pointer(arg_type: &ResolvableType, type_ids: &mut RuntimeTypePointers) {

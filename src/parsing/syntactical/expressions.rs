@@ -39,7 +39,7 @@ pub fn binary_expression_item(
         op,
         lhs,
         rhs,
-        type_id
+        expression_type: type_id
     }
 }
 

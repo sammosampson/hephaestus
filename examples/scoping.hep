@@ -1,0 +1,6 @@
+//SCOPING:
+#scope_file
+// things only scoped to the file here
+#scope_export 
+// things scoped globally here. this is the default
+

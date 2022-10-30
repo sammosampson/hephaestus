@@ -1,0 +1,146 @@
+/*
+-------------------------------
+REGISTERS:
+-------------------------------
+
+GEN PURPOSE
+---------
+RAX  R0     
+EAX  R0D  
+AX   R0W
+AL   R0B
+
+RBX  R1     
+EBX  R1D
+BX   R1W    HAVE TO PUSH AND POP AT EOF AS USED BY C IF CALLING FROM C
+BL   R1B
+
+RCX  R2     
+ECX  R2D
+CX   R2W    OFTEN USED IN LOOPS
+CL   R2B
+
+RDX  R3 
+EDX  R3D
+DX   R3W
+DL   R3B
+
+RSI  R4 
+ESI  R4D
+SI   R4W     SOURCE INDEX REGISTER (was used in string comp)
+SIL  R4B
+
+RDI  R5
+EDI  R5D
+DI   R5W     DEST INDEX REGISTER (was used in string comp)
+DIL  R5B
+---------
+
+NON GEN PURP
+---------
+
+RSP  R6
+ESP  R6D
+SP   R6W     STACK POINTER
+SPL  R6B
+
+RBP  R7 
+EBP  R7D
+BP   R7W     BASE POINTER
+BPL  R7B
+
+R8 - R15 SAME PATTERN
+
+
+
+DATA TYPES
+INTS:
+BYTE WORD DWORD QWORD
+
+FLOATS
+REAL4 REAL8 REAL10
+
+SIMD
+XMMWORD YMMWORD ZMMWORD
+
+OPS ON DATA TYPES:
+IDIV IMUL FOR SIGNED INTS
+DIV MUL FOR UNSIGNED
+ADD AND SUB DONT HAVE THIS AS THE BITS ARE THE SAME
+
+NOTES
+rbp is the frame pointer on x86_64. In your generated code:
+
+pushq   %rbp
+movq    %rsp, %rbp
+subq    $16, %rsp
+
+it gets a snapshot of the stack pointer (rsp) so that when adjustments are made to rsp
+(i.e. reserving space for local variables or pushing values on to the stack),
+local variables and function parameters are still accessible from a constant offset from rbp.
+
+The base pointer rbp (and its predecessor ebp on x86), being a stable "anchor"
+ to the beginning of the stack frame throughout the execution of a function, 
+ is very convenient for manual assembly coding and for debugging [5]. 
+ However, some time ago it was noticed that compiler-generated code doesn't really need it (the compiler can easily keep track of offsets from rsp), and the DWARF debugging format provides means 
+ (CFI) to access stack frames without the base pointer.
+
+ PUSH X = 
+   MOV PTR [RSP - SIZEOF(X)], X
+   SUB RSP, SIZEOF(X) 
+
+and POP is opposite
+
+PUSHF/PUSHFQ and POP equivs = Push/pop 16/64bit flags register. PUSH RAX, POPFQ will set the falgs register to RAX, v useful
+
+CALL = pushes address of next instruction (RIP) on to stack and then jumps (sets RIP) to where CALL wants to globally
+RET POPs the RIP
+
+NEG = negates (2's comp)
+INC/DEC incs/decs by 1
+dec can be used with flags reg eg JNZ if not 0. ADD SUB etc aslo set flags
+
+XCHG - Exchange or swap operands
+
+
+-------------------------------
+HELLO WORLD:
+-------------------------------
+BITS 64
+DEFAULT REL
+
+GLOBAL main
+
+EXTERN WriteFile
+EXTERN GetStdHandle
+
+STD_OUTPUT_HANDLE   EQU -11
+
+SECTION .data
+
+ l1  db "Hello world!", 13, 10, 0
+ l2  dd $-l1
+
+SECTION .text
+
+main:
+ sub rsp, 30h
+
+ mov ecx, STD_OUTPUT_HANDLE
+ call GetStdHandle
+ 
+ mov ecx, eax
+ lea rdx, [l1]
+ mov r8d, DWORD [l2]
+ xor r9, r9
+ mov QWORD [rsp+20h], r9
+ call WriteFile
+
+ add rsp, 30h
+ ret  
+*/
+//nasm -fwin64 hello.asm -o hello.obj
+//link @cmd-file.txt
+//C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\bin\Hostx64\x64
+//link /MACHINE:X64 /SUBSYSTEM:CONSOLE /OUT:hello.exe /NODEFAULTLIB /ENTRY:main "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\kernel32.lib" hello.obj
+//"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\kernel32.lib"

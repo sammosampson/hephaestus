@@ -2,6 +2,7 @@ use crate::file_system::*;
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
+use crate::utilities::*;
 
 pub struct ParserActor<T: FileRead> { file_reader: T }
 
@@ -24,34 +25,34 @@ fn handle_parse_file<T: FileRead>(file_reader: &T, file_name: String, compiler_h
     shutdown_after_receive()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum FileParseResult {
     CompilationUnits { file_name: String, units: CompilationUnits },
     NotFound(String),
 }
 
-pub fn parse_file<T: FileRead>(file_reader: &T, file_name: &str) -> FileParseResult {
-    match file_reader.read_file_to_string(file_name) {
+pub fn parse_file<T: FileRead>(file_reader: &T, filename: &str) -> FileParseResult {
+    match file_reader.read_file_to_string(filename) {
         Ok(file_content) => FileParseResult::CompilationUnits { 
-            file_name: file_name.to_string(), 
-            units: parse(&file_content) 
+            file_name: filename.to_string(), 
+            units: parse(string(filename), &file_content) 
         },
-        Err(_) => FileParseResult::NotFound(file_name.to_string())
+        Err(_) => FileParseResult::NotFound(string(filename))
     }
 }
 
-pub fn parse(input: &str) -> CompilationUnits {
+pub fn parse(filename: String, input: &str) -> CompilationUnits {
     let mut lexer = lex(input);
     let mut units = vec!();
 
     loop {
-        let node = parse_next_node(&mut lexer, &mut units);
+        let node = parse_next_node(filename.clone(), &mut lexer, &mut units);
         
         if is_eof_node(&node) {
             break;
         }      
         
-        units.push(create_unit(node))
+        units.push(create_unit(filename.clone(), node))
     }
 
     units
@@ -61,11 +62,11 @@ fn is_eof_node(node: &AbstractSyntaxNode) -> bool {
     node.item_ref() == &AbstractSyntaxNodeItem::Eof
 }
 
-pub fn parse_next_node(lexer: &mut Lexer, units: &mut CompilationUnits) -> AbstractSyntaxNode {
+pub fn parse_next_node(filename: String, lexer: &mut Lexer, units: &mut CompilationUnits) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Identifier(name) => parse_top_level_identifier(name, lexer, token.position, units),
+        SourceTokenItem::Identifier(name) => parse_top_level_identifier(filename, name, lexer, token.position, units),
         SourceTokenItem::Directive(name) => parse_directive(name, lexer, token.position),
         SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
         SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),

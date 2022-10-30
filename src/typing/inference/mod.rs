@@ -1,8 +1,12 @@
 mod header;
 mod body;
+mod constants;
+
 pub use header::*;
 pub use body::*;
+pub use constants::*;
 
+use std::collections::*;
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
@@ -24,6 +28,20 @@ impl Actor<CompilationMessage> for TypingActor {
     }
 }
 
+pub type IdentifierTypeLookup = HashMap<String, RuntimeTypePointer>;
+
+pub fn add_to_identifier_type_lookup(map: &mut IdentifierTypeLookup, identifier: String, resolved_type: RuntimeTypePointer) {
+    map.insert(identifier, resolved_type);
+}
+
+pub fn get_type_for_identifier<'a>(map: &'a IdentifierTypeLookup, identifier: &str) -> Option<&'a RuntimeTypePointer> {
+    map.get(identifier)
+}
+
+pub fn create_identifier_type_lookup() -> IdentifierTypeLookup {
+    IdentifierTypeLookup::default()
+}
+
 fn handle_perform_typing(
     mut unit: CompilationUnit, 
     ctx: &CompilationMessageContext,
@@ -31,7 +49,7 @@ fn handle_perform_typing(
     compiler: CompilationActorHandle
 ) -> AfterReceiveAction {
     let resolved_types = perform_typing(ctx, type_repository, &mut unit);
-    send_message_to_actor(&compiler, create_unit_typed_event(resolved_types, unit));
+    send_message_to_actor(&compiler, create_unit_typed_event(resolved_types, unit));    
     shutdown_after_receive()
 }
 
@@ -40,66 +58,23 @@ pub fn perform_typing(
     type_repository: &CompilationActorHandle,
     unit: &mut CompilationUnit
 ) -> RuntimeTypePointers {
-    let mut visitor = create_root_visitor(ctx, type_repository, unit.id);
-    apply_visitor_to_ast_root(&mut unit.tree, &mut visitor);
-    visitor.resolved_types
-}
+    let mut resolved_types = vec!();
 
-pub struct RootInferenceVisitor<'a> { 
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    unit_id: CompilationUnitId,
-    resolved_types: RuntimeTypePointers
-}
-
-fn create_root_visitor<'a>(
-    ctx: &'a CompilationMessageContext,
-    type_repository: &'a CompilationActorHandle,
-    unit_id: CompilationUnitId
-) -> RootInferenceVisitor<'a> {
-    RootInferenceVisitor {
-        ctx,
-        type_repository,
-        unit_id,
-        resolved_types: vec!()
-    }
-}
-
-impl <'a> AbstractSyntaxRootNodeVisitor for RootInferenceVisitor<'a> {
-    fn visit_run(&mut self, expr: &mut AbstractSyntaxNode) {
-        let local_type_map = create_local_type_map();
-        let mut visitor = create_expression_visitor(self.ctx, self.type_repository, &local_type_map);
-        apply_visitor_to_ast_expression(expr, &mut visitor);
-        dbg!(expr);
-    }
-
-    fn visit_procedure_header(
-        &mut self,
-        name: &mut String,
-        args: &mut AbstractSyntaxChildNodes,
-        return_types: &mut AbstractSyntaxChildNodes,
-        _body: &mut CompilationUnitReference
-    ) {
-        let mut visitor = create_procedure_header_visitor();
-        apply_visitor_to_ast_procedure_header(args, return_types, &mut visitor);        
-
-        let resolved_type = create_type(
-            user_defined_runtime_type_id(self.unit_id),
-            name.clone(),
-            procedure_definition_type_item(visitor.arg_types, visitor.return_types),
-            not_required_type_size()
-        );
-        
-        self.resolved_types.push(create_shareable(resolved_type));
-    }
-
-    fn visit_procedure_body(
-        &mut self,
-        args: &mut AbstractSyntaxChildNodes,
-        return_types: &mut AbstractSyntaxChildNodes,
-        statements: &mut AbstractSyntaxChildNodes
-    ) {
-        let mut visitor = create_procedure_body_visitor(self.ctx, self.type_repository);
-        apply_visitor_to_ast_procedure_body(args, return_types, statements, &mut visitor);
-    }
+    match unit.tree.item_mut() {
+        AbstractSyntaxNodeItem::Run { expr } => {
+            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr);        
+        },
+        AbstractSyntaxNodeItem::Constant { name, value, constant_type } => {
+            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type);        
+        },
+        AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args, .. } => {
+            perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args);                      
+        },
+        AbstractSyntaxNodeItem::ProcedureBody { args, return_types, statements, .. } => {
+            perform_typing_for_procedure_body(ctx, type_repository, args, return_types, statements);
+        },
+        _ => {}
+    };
+    resolved_types
+    
 }

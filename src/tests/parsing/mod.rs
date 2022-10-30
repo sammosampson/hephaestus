@@ -2,16 +2,14 @@ mod directives;
 mod consts;
 mod procedures;
 mod expressions;
+mod assignments;
+mod structs;
 
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::tests::file_system::*;
 use crate::tests::acting::*;
-
-pub fn string(value: &str) -> String {
-    value.to_string()
-}
 
 pub fn node(position: SourceFilePosition, item: AbstractSyntaxNodeItem) -> AbstractSyntaxNode {
     create_node(item, position)
@@ -23,7 +21,7 @@ pub fn position(absolute: usize, line: usize, col: usize) -> SourceFilePosition 
 
 pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<CompilationUnit>) {
     let mut reader = create_mock_file_reader();
-    add_mock_file(&mut reader, file_path.to_string(), content.to_string());
+    add_mock_file(&mut reader, file_path, content);
 
     let (message_receiver_handle, message_receiver) = create_test_message_receiver_actor();
     

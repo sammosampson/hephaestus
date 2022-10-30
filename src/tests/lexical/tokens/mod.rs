@@ -2,8 +2,10 @@ mod assignment;
 mod loops;
 mod functions;
 mod directives;
+mod structs;
 
 use crate::parsing::*;
+use crate::utilities::*;
 
 #[test]
 fn peek_next_token_peeks_correctly() {
@@ -30,7 +32,7 @@ fn compound_get_next_token_gets_correctly_with_positioning() {
     assert_eq!(token.position.absolute, 5);
     assert_eq!(token.position.col, 6);
     assert_eq!(token.position.line, 1);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(1)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int(string("1"))));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.position.absolute, 7);
@@ -42,7 +44,7 @@ fn compound_get_next_token_gets_correctly_with_positioning() {
     assert_eq!(token.position.absolute, 9);
     assert_eq!(token.position.col, 10);
     assert_eq!(token.position.line, 1);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(2)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int(string("2"))));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.position.absolute, 11);
@@ -54,7 +56,7 @@ fn compound_get_next_token_gets_correctly_with_positioning() {
     assert_eq!(token.position.absolute, 13);
     assert_eq!(token.position.col, 14);
     assert_eq!(token.position.line, 1);
-    assert_eq!(token.item, SourceTokenItem::Literal(Literal::UnsignedInt(5)));
+    assert_eq!(token.item, SourceTokenItem::Literal(UnresolvedLiteral::Int(string("5"))));
 
     let token = get_next_token(&mut lexer);
     assert_eq!(token.position.absolute, 0);

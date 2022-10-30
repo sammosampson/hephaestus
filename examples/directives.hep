@@ -1,0 +1,13 @@
+/*
+STATIC IF:
+static if = regular if requires if boday and else body to be compiled, but static doesnt, only the compile time
+branch needs to compile, this is only true syntactally not semantically - so that identifiers dont have to exist instances
+none evaluating branch but it has to parse
+Can also be used in the middle of structs to conditionally add fields
+Same with functions
+*/
+#if OS_WIN {
+//declare one thing
+} else {
+//declare another thing
+}

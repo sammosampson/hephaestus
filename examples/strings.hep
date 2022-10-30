@@ -1,0 +1,11 @@
+//STRINGS:
+string :: struct {
+  count: int; // amount of characters in the string
+  data: *u8;  // pointer to the start of the characters
+}
+
+to_c_string :: (s: string) -> *u8 {
+   result: *u8 = alloc(s.count + 1);
+   memcpy(result, s.data, s.count);
+   result[s.count] = 0;
+}
