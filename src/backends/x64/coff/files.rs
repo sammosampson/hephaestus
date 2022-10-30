@@ -13,8 +13,11 @@ pub fn write_coff_to_file(coff: &Coff, file: &mut File) -> io::Result<()> {
     file.write_all(any_as_u8_slice(&coff.data_section_header))?;
     file.write_all(any_as_u8_slice(&coff.text_section_header))?;
     file.write_all(&coff.data_section)?;
+    for relocation in &coff.data_section_relocations {
+        file.write_all(any_as_u8_slice(relocation))?;
+    }
     file.write_all(&coff.text_section)?;
-    for relocation in &coff.relocations {
+    for relocation in &coff.text_section_relocations {
         file.write_all(any_as_u8_slice(relocation))?;
     }
     for symbol in &coff.symbols {

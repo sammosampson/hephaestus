@@ -34,7 +34,7 @@ pub fn add_pointer_to_data_section_and_make_relocation(coff: &mut Coff, to_add: 
 }
 
 fn add_relocation_for_data_pointer(coff: &mut Coff, pointer: u32) {
-    add_relocation_entry(coff, relocation_entry(pointer, 2, IMAGE_REL_AMD64_ADDR64));
+    add_data_section_relocation_entry(coff, relocation_entry(pointer, 2, IMAGE_REL_AMD64_ADDR64));
 }
 
 pub fn add_entry_to_text_section(coff: &mut Coff, entry: u8) {

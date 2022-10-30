@@ -28,15 +28,24 @@ pub fn relocatable_value(symbol_index: u32, initial_value_to_use: u32) -> Reloca
     RelocatableValue { symbol_index, initial_value_to_use }
 }
 
-pub fn add_relocation_entry(coff: &mut Coff, entry: CoffRelocationEntry) {
-    coff.relocations.push(entry);
-    coff.text_section_header.number_of_relocations += 1;
+pub fn add_text_section_relocation_entry(coff: &mut Coff, entry: CoffRelocationEntry) {
+    coff.text_section_relocations.push(entry);
+    coff.text_section_header.number_of_relocations += 1;    
+    coff.header.pointer_to_symbol_table += size_of::<CoffRelocationEntry>() as u32;
+    set_current_timestamp(coff);
+}
+
+pub fn add_data_section_relocation_entry(coff: &mut Coff, entry: CoffRelocationEntry) {
+    coff.data_section_relocations.push(entry);
+    coff.data_section_header.number_of_relocations += 1;
+    coff.text_section_header.pointer_to_section += size_of::<CoffRelocationEntry>() as u32;
+    coff.text_section_header.pointer_to_relocations += size_of::<CoffRelocationEntry>() as u32;
     coff.header.pointer_to_symbol_table += size_of::<CoffRelocationEntry>() as u32;
     set_current_timestamp(coff);
 }
 
 pub fn add_relocatable_entry_and_text_section_inital_entry(coff: &mut Coff, relocatable_value: RelocatableValue, relocation_type: u16) { 
-    add_relocation_entry(
+    add_text_section_relocation_entry(
         coff, 
         relocation_entry(
             coff.text_section_header.size_of_section, 

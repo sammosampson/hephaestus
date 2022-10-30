@@ -37,19 +37,19 @@ fn build_bytecode_at_variable_assignment_to_literal(
     assignment_name: &str,
     literal: &ResolvableLiteral
 ) {
-    let assignment_offset = get_assignment_offset(assignment_map, assignment_name);
+    let assignment_offset = get_assignment(assignment_map, assignment_name).offset;
     match get_resolved_literal(literal) {
         ResolvedLiteral::UnsignedInt8(_) => todo!("assignment to literal u8"),
         ResolvedLiteral::SignedInt8(_) => todo!("assignment to literal s8"),
         ResolvedLiteral::UnsignedInt16(_) => todo!("assignment to literal u16"),
         ResolvedLiteral::SignedInt16(_) => todo!("assignment to literal s16"),
-        ResolvedLiteral::UnsignedInt32(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_32_instruction(value, base_pointer_register(), assignment_offset)),
-        ResolvedLiteral::SignedInt32(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_32_instruction(value as u32, base_pointer_register(), assignment_offset)),
-        ResolvedLiteral::UnsignedInt64(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_64_instruction(value, base_pointer_register(), assignment_offset)),
-        ResolvedLiteral::SignedInt64(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_64_instruction(value as u64, base_pointer_register(), assignment_offset)),
+        ResolvedLiteral::UnsignedInt32(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_32_instruction(value, base_pointer_register(), assignment_offset as u8)),
+        ResolvedLiteral::SignedInt32(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_32_instruction(value as u32, base_pointer_register(), assignment_offset as u8)),
+        ResolvedLiteral::UnsignedInt64(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_64_instruction(value, base_pointer_register(), assignment_offset as u8)),
+        ResolvedLiteral::SignedInt64(value) => add_byte_code(&mut ir.byte_code, move_value_to_reg_plus_offset_64_instruction(value as u64, base_pointer_register(), assignment_offset as u8)),
         ResolvedLiteral::Float32(_) => todo!("assignment to literal float32"),
         ResolvedLiteral::Float64(_) => todo!("assignment to literal float64"),
-        ResolvedLiteral::String(value) => build_bytecode_at_variable_assignment_to_literal_string(ir, assignment_offset, value),
+        ResolvedLiteral::String(value) => build_bytecode_at_variable_assignment_to_literal_string(ir, assignment_offset as u8, value),
     };
 }
 
@@ -95,8 +95,8 @@ fn build_bytecode_at_variable_assignment_to_null(
     assignment_map: &AssignmentMap,
     assignment_name: &str
 ) {
-    let offset = get_assignment_offset(assignment_map, assignment_name);
-    let instruction = move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), offset);
+    let offset = get_assignment(assignment_map, assignment_name).offset;
+    let instruction = move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), offset as u8);
     add_byte_code(&mut ir.byte_code, instruction);
 }
 
@@ -109,32 +109,52 @@ fn build_bytecode_at_variable_assignment_to_member_expr(
     member: &AbstractSyntaxNode
 ) {
     if let AbstractSyntaxNodeItem::Instance { name, instance_type, .. } = instance.item_ref() {
-        let instance_offset = get_assignment_offset(assignment_map, name);
+        let instance_offset = get_assignment(assignment_map, name).offset;
         add_byte_code(
-            &mut ir.byte_code, 
-            move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), instance_offset, standard_register(0))
+            &mut ir.byte_code,
+            move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), instance_offset as u8, standard_register(0))
         );
 
         if let AbstractSyntaxNodeItem::Member { name, .. } = member.item_ref() {
-            
             let member_offset = get_instance_member_offset(instance_type, name) as u8;
             add_byte_code(
                 &mut ir.byte_code, 
                 move_reg_plus_offset_to_reg_64_instruction(standard_register(0), member_offset, standard_register(1))
             );
 
-            let assignment_offset = get_assignment_offset(assignment_map, assignment_name);
-            add_byte_code(
-                &mut ir.byte_code, 
-                move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment_offset)
-            );
+            let assignment = get_assignment(assignment_map, assignment_name);
+            if let Some((built_in_arg_type, ..)) = try_get_built_in_type(&assignment.resolved_type.id) {
+                let instruction = match built_in_arg_type {
+                    BuiltInType::UnsignedInt32 => move_reg_to_reg_plus_offset_32_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
+                    BuiltInType::SignedInt32 => move_reg_to_reg_plus_offset_32_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
+                    BuiltInType::UnsignedInt64 => move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
+                    BuiltInType::SignedInt64 => move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
+                    BuiltInType::Void => move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
+                    _ => todo!("Other built in typed member expr assignment")
+                };
+                add_byte_code(&mut ir.byte_code, instruction);
+            } else {
+                todo!("Non built in typed member expr assignment");
+            }
         }
     } else {
         panic!("member expr instance is not instance");
     }
 }
 
-pub type Assignments = HashMap<String, isize>;
+pub type Assignments = HashMap<String, Assignment>;
+
+pub struct Assignment {
+    pub offset: isize,
+    resolved_type: RuntimeTypePointer
+}
+
+fn assignment(offset: isize, resolved_type: RuntimeTypePointer) -> Assignment {
+    Assignment {
+        offset,
+        resolved_type
+    }
+}
 
 #[derive(Default)]
 pub struct AssignmentMap {
@@ -159,7 +179,7 @@ fn add_statements_to_assignment_map(assignment_map: &mut AssignmentMap, statemen
                 let size = get_type_size_from_resolvable_type(variable_type) as isize;
                 position = position - size;
                 assignment_map.total_size += size as usize;
-                add_assignment_to_map(assignment_map, name.clone(), position);
+                add_assignment_type_and_position_to_map(assignment_map, name, position, variable_type);
             }
         _ => {}
         }
@@ -170,8 +190,8 @@ fn add_args_to_assignment_map(assignment_map: &mut AssignmentMap, args: &Abstrac
     let mut position = 16;
     for statement in args {
         match statement.item_ref() {
-            AbstractSyntaxNodeItem::MemberDeclaration { name, .. } => {
-                add_assignment_to_map(assignment_map, name.clone(), position);
+            AbstractSyntaxNodeItem::MemberDeclaration { name, member_type } => {
+                add_assignment_type_and_position_to_map(assignment_map, name, position, member_type);
                 position = position + 8;
             }
         _ => {}
@@ -179,18 +199,26 @@ fn add_args_to_assignment_map(assignment_map: &mut AssignmentMap, args: &Abstrac
     }
 }
 
-fn add_assignment_to_map(assignment_map: &mut AssignmentMap, name: String, position: isize) {
-    assignment_map.assignments.insert(name, position);
+fn add_assignment_type_and_position_to_map(assignment_map: &mut AssignmentMap, name: &str, position: isize, assignment_type: &ResolvableType) {
+    if let Some(resolved_type) = try_get_resolved_runtime_type_pointer(assignment_type) {
+        add_assignment_to_map(assignment_map, string(name), assignment(position, resolved_type));
+    } else {
+        panic!("Type must be resolved at this point")
+    }
+}
+
+fn add_assignment_to_map(assignment_map: &mut AssignmentMap, name: String, assignment: Assignment) {
+    assignment_map.assignments.insert(name, assignment);
 }
 
 pub fn get_full_assignment_storage_size(assignment_map: &AssignmentMap) -> u8 {
     assignment_map.total_size as u8
 }
 
-pub fn get_assignment_offset(assignment_map: &AssignmentMap, assignment_name: &str) -> u8 {
-    if let Some(position) = assignment_map.assignments.get(assignment_name) {
-        return *position as u8;
+pub fn get_assignment<'a>(assignment_map: &'a AssignmentMap, assignment_name: &str) -> &'a Assignment {
+    if let Some(assignment) = assignment_map.assignments.get(assignment_name) {
+        return assignment;
     } else {
-        panic!("No offset found for assignment")
+        panic!("No assignment found")
     }
 }

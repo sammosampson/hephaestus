@@ -27,8 +27,9 @@ pub struct Coff {
     data_section_header: CoffSectionHeader,
     text_section_header: CoffSectionHeader,
     data_section: Vec<u8>,
+    data_section_relocations: Vec<CoffRelocationEntry>,
     text_section: Vec<u8>,
-    relocations: Vec<CoffRelocationEntry>,
+    text_section_relocations: Vec<CoffRelocationEntry>,
     symbols: Vec<CoffSymbol>,    
     strings_table_length: u32,
     strings: Vec<u8>
@@ -156,8 +157,9 @@ pub fn create_coff() -> Coff {
             IMAGE_SCN_CNT_CODE | IMAGE_SCN_ALIGN_16BYTES | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ,
         ),
         data_section: vec!(),
+        data_section_relocations: vec!(),
         text_section: vec!(),
-        relocations: vec!(),
+        text_section_relocations: vec!(),
         symbols: vec!(),
         strings_table_length: 0x4,
         strings: vec!()

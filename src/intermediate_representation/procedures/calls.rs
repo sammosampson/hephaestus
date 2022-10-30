@@ -117,7 +117,7 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
     arg_type: &ResolvableType,
     arg_index: usize
 ) {
-    let offset = get_assignment_offset(assignment_map, identifier_name);
+    let offset = get_assignment(assignment_map, identifier_name).offset;
     if let Some(arg_type) = try_get_resolved_runtime_type_pointer(arg_type) {
         if let Some((built_in_arg_type, is_pointer)) = try_get_built_in_type(&arg_type.id) {
             match built_in_arg_type {
@@ -125,10 +125,10 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
                 BuiltInType::SignedInt8 => todo!("identifier call arg s8"),
                 BuiltInType::UnsignedInt16 => todo!("identifier call arg u16"),
                 BuiltInType::SignedInt16 => todo!("identifier call arg s16"),
-                BuiltInType::UnsignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_location(ir, offset, arg_index),
-                BuiltInType::SignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_location(ir, offset, arg_index),
-                BuiltInType::UnsignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset, arg_index),
-                BuiltInType::SignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset, arg_index),
+                BuiltInType::UnsignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_location(ir, offset as u8, arg_index),
+                BuiltInType::SignedInt32 => build_bytecode_for_move_variable_32_to_call_arg_location(ir, offset as u8, arg_index),
+                BuiltInType::UnsignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset as u8, arg_index),
+                BuiltInType::SignedInt64 => build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset as u8, arg_index),
                 BuiltInType::Float32 => todo!("identifier call arg float32"),
                 BuiltInType::Float64 => todo!("identifier call arg float64"),
                 BuiltInType::String => todo!("identifier call arg string"),
@@ -137,7 +137,7 @@ fn build_bytecode_at_procedure_call_argument_local_identifier(
                     if !is_pointer {
                         panic!("Non pointer void arguments not allowed");
                     }
-                    build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset, arg_index);
+                    build_bytecode_for_move_variable_64_to_call_arg_location(ir, offset as u8, arg_index);
                 }
             };
             return;
@@ -234,7 +234,7 @@ fn move_procedure_call_return_value_into_storage(ir: &mut IntermediateRepresenta
         move_reg_to_reg_plus_offset_32_instruction(
             call_return_arg_register(0), 
             base_pointer_register(),
-            get_assignment_offset(assignment_map, assignment_name)
+            get_assignment(assignment_map, assignment_name).offset as u8
         )
     );
 }

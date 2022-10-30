@@ -100,7 +100,7 @@ main :: () {
         // to_print.count
         move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 0, standard_register(1)),
         // into length
-        move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -20i8 as u8),
+        move_reg_to_reg_plus_offset_32_instruction(standard_register(1), base_pointer_register(), -20i8 as u8),
         
         // store bytes_written
         move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -28i8 as u8),
