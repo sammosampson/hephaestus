@@ -169,7 +169,7 @@ fn build_bytecode_for_move_call_arg_32_to_shadow_space_if_fourth_or_more(ir: &mu
     if arg_index > 3 {
         add_byte_code(
             &mut ir.byte_code, 
-            move_reg_to_reg_plus_offset_32_instruction(call_arg_register(arg_index),  stack_pointer_register(), (arg_index * 8) as u8)
+            move_reg_to_reg_plus_offset_instruction(register_size_32(), call_arg_register(arg_index),  stack_pointer_register(), (arg_index * 8) as u8)
         );
     }
 }
@@ -178,7 +178,7 @@ fn build_bytecode_for_move_call_arg_64_to_shadow_space_if_fourth_or_more(ir: &mu
     if arg_index > 3 {
         add_byte_code(
             &mut ir.byte_code,
-            move_reg_to_reg_plus_offset_64_instruction(call_arg_register(arg_index), stack_pointer_register(), (arg_index * 8) as u8));
+            move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(arg_index), stack_pointer_register(), (arg_index * 8) as u8));
     }
 }
 
@@ -231,7 +231,8 @@ fn build_bytecode_at_procedure_call_argument_global_identifier(
 fn move_procedure_call_return_value_into_storage(ir: &mut IntermediateRepresentation, assignment_map: &AssignmentMap, assignment_name: &str) {
     add_byte_code(
         &mut ir.byte_code, 
-        move_reg_to_reg_plus_offset_32_instruction(
+        move_reg_to_reg_plus_offset_instruction(
+            register_size_32(),
             call_return_arg_register(0), 
             base_pointer_register(),
             get_assignment(assignment_map, assignment_name).offset as u8

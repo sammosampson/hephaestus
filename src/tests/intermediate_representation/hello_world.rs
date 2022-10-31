@@ -70,7 +70,7 @@ main :: () {
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
 
         // move call arg to shadow
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
         
         // make storage for 4 * 8 byte and 1 * 4 byte local assignments in statement body
         sub_value_from_reg_8_instruction(36, stack_pointer_register()),
@@ -82,7 +82,7 @@ main :: () {
         // call GetStdHandle
         call_to_symbol_instruction(2),
         // store returned handle value
-        move_reg_to_reg_plus_offset_32_instruction(call_return_arg_register(0), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_32(), call_return_arg_register(0), base_pointer_register(), -8i8 as u8),
         // release shadow space for GetStdHandle proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),
         
@@ -92,7 +92,7 @@ main :: () {
         // to_print.data
         move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 8, standard_register(1)),
         // into to_write
-        move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -16i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), -16i8 as u8),
         
         //length := cast(u32) to_print.count
         // get string instance pointer
@@ -100,7 +100,7 @@ main :: () {
         // to_print.count
         move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 0, standard_register(1)),
         // into length
-        move_reg_to_reg_plus_offset_32_instruction(standard_register(1), base_pointer_register(), -20i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_32(), standard_register(1), base_pointer_register(), -20i8 as u8),
         
         // store bytes_written
         move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -28i8 as u8),
@@ -114,7 +114,7 @@ main :: () {
         move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -20i8 as u8, call_arg_register(2)),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -28i8 as u8, call_arg_register(3)),
         move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -36i8 as u8, call_arg_register(4)),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(4), stack_pointer_register(), 32),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(4), stack_pointer_register(), 32),
         call_to_symbol_instruction(3),
         // release shadow space for WriteFile proc call
         add_value_to_reg_8_instruction(40, stack_pointer_register()),

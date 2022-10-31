@@ -47,8 +47,8 @@ fn byte_code_for_procedure_body_with_args_generates_correctly() {
     assert_eq!(proc_body_ir.byte_code, vec!(
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(1), base_pointer_register(), 24),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(1), base_pointer_register(), 24),
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
         pop_reg_64_instruction(base_pointer_register()),
         ret_instruction()

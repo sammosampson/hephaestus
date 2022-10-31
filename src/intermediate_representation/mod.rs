@@ -13,7 +13,8 @@ pub use strings::*;
 use crate::{
     parsing::CompilationUnitId,
     utilities::*, 
-    strings::*
+    strings::*,
+    typing::*
 };
 
 pub type ForeignLibraryReferences = Vec<String>;
@@ -73,6 +74,56 @@ pub fn base_pointer_register() -> ByteCodeRegister {
 pub fn stack_pointer_register() -> ByteCodeRegister {
     ByteCodeRegister::StackPointer
 }
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum RegisterSize {
+    Byte,
+    Word,
+    DoubleWord,
+    QuadWord
+}
+
+pub fn register_size_32() -> RegisterSize {
+    RegisterSize::DoubleWord
+}
+
+pub fn register_size_64() -> RegisterSize {
+    RegisterSize::QuadWord
+}
+
+impl From<BuiltInType> for RegisterSize {
+    fn from(from: BuiltInType) -> Self {
+        match from {
+            BuiltInType::UnsignedInt8 => RegisterSize::Byte,
+            BuiltInType::SignedInt8 => RegisterSize::Byte,
+            BuiltInType::UnsignedInt16 => RegisterSize::Word,
+            BuiltInType::SignedInt16 => RegisterSize::Word,
+            BuiltInType::UnsignedInt32 => RegisterSize::DoubleWord,
+            BuiltInType::SignedInt32 => RegisterSize::DoubleWord,
+            BuiltInType::UnsignedInt64 => RegisterSize::QuadWord,
+            BuiltInType::SignedInt64 => RegisterSize::QuadWord,
+            BuiltInType::Float32 => todo!("Float32 register size"),
+            BuiltInType::Float64 => todo!("Float64 register size"),
+            BuiltInType::String => RegisterSize::QuadWord,
+            BuiltInType::Boolean => RegisterSize::Byte,
+            BuiltInType::Void => RegisterSize::QuadWord,
+        }
+    }
+}
+
+pub fn built_in_type_to_register_size(from: BuiltInType) -> RegisterSize {
+    from.into()
+}
+
+
+pub fn resolved_type_to_register_size(from: &RuntimeTypePointer) -> RegisterSize {
+    if let Some((built_in_arg_type, ..)) = try_get_built_in_type(&from.id) {
+        return built_in_type_to_register_size(built_in_arg_type);
+    }
+    panic!();
+}
+
+
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ByteCodeInstruction {
@@ -141,12 +192,13 @@ pub fn move_value_to_reg_plus_offset_64_instruction(value: u64, to: ByteCodeRegi
     ByteCodeInstruction::MoveValueToRegPlusOffset64 { value, to, offset }
 }
 
-pub fn move_reg_to_reg_plus_offset_64_instruction(from: ByteCodeRegister, to: ByteCodeRegister, offset: u8) -> ByteCodeInstruction {
-    ByteCodeInstruction::MoveRegToRegPlusOffset64 { from, to, offset }
-}
-
-pub fn move_reg_to_reg_plus_offset_32_instruction(from: ByteCodeRegister, to: ByteCodeRegister, offset: u8) -> ByteCodeInstruction {
-    ByteCodeInstruction::MoveRegToRegPlusOffset32 { from, to, offset }
+pub fn move_reg_to_reg_plus_offset_instruction(register_size: RegisterSize, from: ByteCodeRegister, to: ByteCodeRegister, offset: u8) -> ByteCodeInstruction {
+    match register_size {
+        RegisterSize::Byte => todo!("move_reg_to_reg_plus_offset_instruction for byte"),
+        RegisterSize::Word => todo!("move_reg_to_reg_plus_offset_instruction for word"),
+        RegisterSize::DoubleWord => ByteCodeInstruction::MoveRegToRegPlusOffset64 { from, to, offset },
+        RegisterSize::QuadWord => ByteCodeInstruction::MoveRegToRegPlusOffset32 { from, to, offset },
+    }
 }
 
 pub fn move_reg_plus_offset_to_reg_32_instruction(from: ByteCodeRegister, offset: u8, to: ByteCodeRegister) -> ByteCodeInstruction {

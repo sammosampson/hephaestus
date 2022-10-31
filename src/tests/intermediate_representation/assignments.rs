@@ -98,7 +98,7 @@ fn byte_code_for_string_assignment_generates_correctly() {
         //store x
         move_value_to_reg_plus_offset_64_instruction(4, base_pointer_register(), -16i8 as u8),
         load_data_section_address_to_reg_64(0, call_arg_register(0)),
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), -8i8 as u8),
         
         //epilogue
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
@@ -132,7 +132,7 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
         
         // store single proc arg in shadow
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
         
         //reserve space for 2 locals
         sub_value_from_reg_8_instruction(16, stack_pointer_register()),
@@ -143,7 +143,7 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
         // get count value from string
         move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 0, standard_register(1)),
         // store count value in x space
-        move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), -8i8 as u8),
         
         //store y
         // get string pointer from shadow
@@ -151,7 +151,7 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
         // get data pointer value from string
         move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 8, standard_register(1)),
         // store data pointer value in y space
-        move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), -16i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), -16i8 as u8),
         
         //epilogue
         move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),

@@ -41,7 +41,7 @@ main :: () {
         // proc call
         call_to_symbol_instruction(1),
         // store proc call return value
-        move_reg_to_reg_plus_offset_32_instruction(call_return_arg_register(0), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_32(), call_return_arg_register(0), base_pointer_register(), -8i8 as u8),
         // release shadow space for proc call
         add_value_to_reg_8_instruction(32, stack_pointer_register()),
         
@@ -273,7 +273,7 @@ main :: (x: s32) {
         push_reg_64_instruction(base_pointer_register()),
         move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
         
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
         
         // reserve shadow space for proc call
         sub_value_from_reg_8_instruction(32, stack_pointer_register()),

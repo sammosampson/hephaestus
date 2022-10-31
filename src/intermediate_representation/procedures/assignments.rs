@@ -77,7 +77,7 @@ fn store_string_data_member_value(ir: &mut IntermediateRepresentation, data_item
     );
     add_byte_code(
         &mut ir.byte_code, 
-        move_reg_to_reg_plus_offset_64_instruction(call_arg_register(0), base_pointer_register(), assignment_offset + 8)
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), assignment_offset + 8)
     );
 }
 
@@ -109,37 +109,40 @@ fn build_bytecode_at_variable_assignment_to_member_expr(
     member: &AbstractSyntaxNode
 ) {
     if let AbstractSyntaxNodeItem::Instance { name, instance_type, .. } = instance.item_ref() {
-        let instance_offset = get_assignment(assignment_map, name).offset;
-        add_byte_code(
-            &mut ir.byte_code,
-            move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), instance_offset as u8, standard_register(0))
-        );
-
+        build_bytecode_to_move_instance_pointer_to_register(ir, get_assignment(assignment_map, name).offset);
         if let AbstractSyntaxNodeItem::Member { name, .. } = member.item_ref() {
-            let member_offset = get_instance_member_offset(instance_type, name) as u8;
-            add_byte_code(
-                &mut ir.byte_code, 
-                move_reg_plus_offset_to_reg_64_instruction(standard_register(0), member_offset, standard_register(1))
-            );
-
-            let assignment = get_assignment(assignment_map, assignment_name);
-            if let Some((built_in_arg_type, ..)) = try_get_built_in_type(&assignment.resolved_type.id) {
-                let instruction = match built_in_arg_type {
-                    BuiltInType::UnsignedInt32 => move_reg_to_reg_plus_offset_32_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
-                    BuiltInType::SignedInt32 => move_reg_to_reg_plus_offset_32_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
-                    BuiltInType::UnsignedInt64 => move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
-                    BuiltInType::SignedInt64 => move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
-                    BuiltInType::Void => move_reg_to_reg_plus_offset_64_instruction(standard_register(1), base_pointer_register(), assignment.offset as u8),
-                    _ => todo!("Other built in typed member expr assignment")
-                };
-                add_byte_code(&mut ir.byte_code, instruction);
-            } else {
-                todo!("Non built in typed member expr assignment");
-            }
+            build_bytecode_to_move_instance_member_to_register(ir, get_instance_member_offset(instance_type, name) as u8);
+            build_bytecode_to_move_instance_member_value_to_assinment(ir, get_assignment(assignment_map, assignment_name));
         }
     } else {
         panic!("member expr instance is not instance");
     }
+}
+
+fn build_bytecode_to_move_instance_pointer_to_register(ir: &mut IntermediateRepresentation, instance_offset: isize) {
+    add_byte_code(
+        &mut ir.byte_code,
+        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), instance_offset as u8, standard_register(0))
+    );
+}
+
+fn build_bytecode_to_move_instance_member_to_register(ir: &mut IntermediateRepresentation, member_offset: u8) {
+    add_byte_code(
+        &mut ir.byte_code, 
+        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), member_offset, standard_register(1))
+    );
+}
+
+fn build_bytecode_to_move_instance_member_value_to_assinment(ir: &mut IntermediateRepresentation, assignment: &Assignment) {
+    add_byte_code(
+        &mut ir.byte_code, 
+        move_reg_to_reg_plus_offset_instruction(
+            resolved_type_to_register_size(&assignment.resolved_type),
+            standard_register(1), 
+            base_pointer_register(),
+            assignment.offset as u8
+        )
+    );
 }
 
 pub type Assignments = HashMap<String, Assignment>;
