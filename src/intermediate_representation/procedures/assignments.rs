@@ -161,7 +161,7 @@ fn build_bytecode_to_move_instance_member_to_register(ir: &mut IntermediateRepre
     );
 }
 
-fn build_bytecode_to_move_instance_member_value_to_assignment(ir: &mut IntermediateRepresentation, assignment: &Assignment) {
+fn build_bytecode_to_move_instance_member_value_to_assignment(ir: &mut IntermediateRepresentation, assignment: &IRAssignment) {
     add_byte_code(
         &mut ir.byte_code, 
         move_reg_to_reg_plus_offset_instruction(
@@ -173,15 +173,15 @@ fn build_bytecode_to_move_instance_member_value_to_assignment(ir: &mut Intermedi
     );
 }
 
-pub type Assignments = HashMap<String, Assignment>;
+pub type Assignments = HashMap<String, IRAssignment>;
 
-pub struct Assignment {
+pub struct IRAssignment {
     pub offset: AddressOffset,
     resolved_type: RuntimeTypePointer
 }
 
-fn assignment(offset: AddressOffset, resolved_type: RuntimeTypePointer) -> Assignment {
-    Assignment {
+fn assignment(offset: AddressOffset, resolved_type: RuntimeTypePointer) -> IRAssignment {
+    IRAssignment {
         offset,
         resolved_type
     }
@@ -238,7 +238,7 @@ fn add_assignment_type_and_position_to_map(assignment_map: &mut AssignmentMap, n
     }
 }
 
-fn add_assignment_to_map(assignment_map: &mut AssignmentMap, name: String, assignment: Assignment) {
+fn add_assignment_to_map(assignment_map: &mut AssignmentMap, name: String, assignment: IRAssignment) {
     assignment_map.assignments.insert(name, assignment);
 }
 
@@ -246,7 +246,7 @@ pub fn get_full_assignment_storage_size(assignment_map: &AssignmentMap) -> u8 {
     assignment_map.total_size as u8
 }
 
-pub fn get_assignment<'a>(assignment_map: &'a AssignmentMap, assignment_name: &str) -> &'a Assignment {
+pub fn get_assignment<'a>(assignment_map: &'a AssignmentMap, assignment_name: &str) -> &'a IRAssignment {
     if let Some(assignment) = assignment_map.assignments.get(assignment_name) {
         return assignment;
     } else {
