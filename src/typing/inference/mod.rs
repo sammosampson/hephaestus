@@ -1,16 +1,18 @@
 mod header;
 mod body;
 mod constants;
+mod expressions;
 
 pub use header::*;
 pub use body::*;
 pub use constants::*;
+pub use expressions::*;
 
 use std::collections::*;
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
-use crate::typing::*;
+use crate::types::*;
 
 pub struct TypingActor;
 

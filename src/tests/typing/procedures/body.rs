@@ -1,5 +1,5 @@
 use crate::threading::*;
-use crate::typing::*;
+use crate::types::*;
 use crate::utilities::*;
 use crate::tests::parsing::*;
 use crate::tests::typing::*;

@@ -1,8 +1,9 @@
 use crate::parsing::*;
 use crate::compilation::*;
+use crate::threading::*;
 use crate::typing::*;
+use crate::types::*;
 use crate::utilities::*;
-
 
 pub fn perform_typing_for_constant(
     unit_id: CompilationUnitId,

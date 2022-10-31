@@ -1,4 +1,6 @@
-use crate::typing::*;
+use crate::parsing::*;
+use crate::threading::*;
+use crate::types::*;
 use crate::utilities::*;
 
 pub fn perform_typing_for_procedure_header(

@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::typing::*;
+use crate::types::*;
 
 pub fn parse_expression(lexer: &mut Lexer, lhs: AbstractSyntaxNode, position: SourceFilePosition) -> AbstractSyntaxNode {
     let op = parse_operator(lexer);

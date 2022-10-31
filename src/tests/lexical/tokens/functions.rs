@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::typing::*;
+use crate::types::*;
 use crate::utilities::*;
 
 #[test]

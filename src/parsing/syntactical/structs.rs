@@ -1,6 +1,6 @@
 use crate::{
     parsing::*,
-    typing::*
+    types::*
 };
 
 pub fn struct_item(
@@ -94,6 +94,13 @@ pub fn member_item(
     }
 }
 
+pub fn try_get_member_name(item: &AbstractSyntaxNodeItem) -> Option<&str> {
+    if let AbstractSyntaxNodeItem::Member { name, .. } = item {
+        return Some(name);
+    }
+    None
+}
+
 pub fn instance_item(
     name: String,
     instance_type: ResolvableType,
@@ -104,4 +111,11 @@ pub fn instance_item(
         instance_type,
         scope
     }
+}
+
+pub fn try_get_instance_name_and_type(item: &AbstractSyntaxNodeItem) -> Option<(&str, &ResolvableType)> {
+    if let AbstractSyntaxNodeItem::Instance { name, instance_type, .. } = item {
+        return Some((name, instance_type));
+    }
+    None
 }

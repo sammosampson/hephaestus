@@ -14,6 +14,7 @@ mod collections;
 mod acting;
 mod utilities;
 mod strings;
+mod types;
 
 fn main() {
     std::env::set_var("RUST_LOG", "debug");

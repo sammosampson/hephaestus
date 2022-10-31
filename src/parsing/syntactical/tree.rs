@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::typing::*;
+use crate::types::*;
 
 pub type AbstractSyntaxChildNodeItem = Box<AbstractSyntaxNodeItem>;
 pub type AbstractSyntaxChildNodes = Vec<AbstractSyntaxNode>;

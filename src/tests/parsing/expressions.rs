@@ -1,6 +1,6 @@
 use crate::{
     parsing::*,
-    typing::*,
+    types::*,
     tests::parsing::*,
     threading::*, 
     utilities::*

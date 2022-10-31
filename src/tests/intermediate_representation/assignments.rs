@@ -20,19 +20,19 @@ fn byte_code_for_known_type_signed_number_assignment_generates_correctly() {
     assert_eq!(main_body_ir.data.items.len(), 0);
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         //reserve space for 2 local assignments
-        sub_value_from_reg_8_instruction(12, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(12), stack_pointer_register()),
         //store x
-        move_value_to_reg_plus_offset_32_instruction(1, base_pointer_register(), -4i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_32(1), base_pointer_register(), negative_address_offset(4)),
         //store y
-        move_value_to_reg_plus_offset_64_instruction(2, base_pointer_register(), -12i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_64(2), base_pointer_register(), negative_address_offset(12)),
 
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -54,17 +54,17 @@ fn byte_code_for_cast_type_assignment_generates_correctly() {
     assert_eq!(main_body_ir.data.items.len(), 0);
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         //reserve space for 1 local assignments
-        sub_value_from_reg_8_instruction(4, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(4), stack_pointer_register()),
         //store x
-        move_value_to_reg_plus_offset_32_instruction(1, base_pointer_register(), -4i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_32(1), base_pointer_register(), negative_address_offset(4)),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -90,19 +90,19 @@ fn byte_code_for_string_assignment_generates_correctly() {
 
     assert_eq!(some_proc_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         //reserve space for 1 local of string struct { count: int (8 bytes) + data *u8 (8 bytes) }
-        sub_value_from_reg_8_instruction(16, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(16), stack_pointer_register()),
         //store x
-        move_value_to_reg_plus_offset_64_instruction(4, base_pointer_register(), -16i8 as u8),
-        load_data_section_address_to_reg_64(0, call_arg_register(0)),
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), -8i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_64(4), base_pointer_register(), negative_address_offset(16)),
+        load_data_section_address_to_reg(register_size_64(), data_section_offset(0), call_arg_register(0)),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), negative_address_offset(8)),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -128,34 +128,34 @@ fn byte_code_for_string_field_assignment_generates_correctly() {
 
     assert_eq!(some_proc_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         // store single proc arg in shadow
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), address_offset(16)),
         
         //reserve space for 2 locals
-        sub_value_from_reg_8_instruction(16, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(16), stack_pointer_register()),
         
         //store x
         // get string pointer from shadow
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), address_offset(16), standard_register(0)),
         // get count value from string
-        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 0, standard_register(1)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), standard_register(0), address_offset(0), standard_register(1)),
         // store count value in x space
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), negative_address_offset(8)),
         
         //store y
         // get string pointer from shadow
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), address_offset(16), standard_register(0)),
         // get data pointer value from string
-        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 8, standard_register(1)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), standard_register(0), address_offset(8), standard_register(1)),
         // store data pointer value in y space
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), -16i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), negative_address_offset(16)),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));

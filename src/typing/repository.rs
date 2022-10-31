@@ -1,7 +1,7 @@
 use std::collections::*;
 use crate::acting::*;
 use crate::compilation::*;
-use super::*;
+use crate::types::*;
 
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -9,6 +9,29 @@ pub struct FindTypeCriteria {
     name: String,
     args: RuntimeTypePointers
 }
+
+pub fn find_type_by_name(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    name: &mut String
+) -> RuntimeTypePointer {
+    find_type_by_name_and_args(ctx, type_repository, name, vec!())
+}
+
+
+pub fn find_type_by_name_and_args(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    name: &mut String,
+    arg_types: RuntimeTypePointers    
+) -> RuntimeTypePointer {
+    find_type_from_criteria(
+        create_find_type_criteria_with_name_and_args(name.to_string(), arg_types),
+        ctx,
+        type_repository
+    )
+}
+
 
 pub fn create_find_type_criteria_with_name(name: String) -> FindTypeCriteria {
     create_find_type_criteria_with_name_and_args(name, vec!())

@@ -42,21 +42,21 @@ main :: () {
     ));
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
 
         // reserve shadow space for print proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers for GetStdHandle proc call
-        load_data_section_address_to_reg_64(15, call_arg_register(0)),
+        load_data_section_address_to_reg(register_size_64(), data_section_offset(15), call_arg_register(0)),
         // call print
-        call_to_symbol_instruction(3),
+        call_to_symbol_instruction(symbol_index(3)),
         // release shadow space for print proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()        
     ));
@@ -66,62 +66,62 @@ main :: () {
     assert_eq!(print_body_ir.data.items.len(), 0);
     assert_eq!(print_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
 
         // move call arg to shadow
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), address_offset(16)),
         
         // make storage for 4 * 8 byte and 1 * 4 byte local assignments in statement body
-        sub_value_from_reg_8_instruction(36, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(36), stack_pointer_register()),
         
         // reserve shadow space for GetStdHandle proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers for GetStdHandle proc call
-        move_symbol_to_reg_32_instruction(1, call_arg_register(0)),
+        move_symbol_to_reg_instruction(register_size_32(), symbol_index(1), call_arg_register(0)),
         // call GetStdHandle
-        call_to_symbol_instruction(2),
+        call_to_symbol_instruction(symbol_index(2)),
         // store returned handle value
-        move_reg_to_reg_plus_offset_instruction(register_size_32(), call_return_arg_register(0), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_32(), call_return_arg_register(0), base_pointer_register(), negative_address_offset(8)),
         // release shadow space for GetStdHandle proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         // to_write := cast(*void) to_print.data;
         // get string instance pointer
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), address_offset(16), standard_register(0)),
         // to_print.data
-        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 8, standard_register(1)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), standard_register(0), address_offset(8), standard_register(1)),
         // into to_write
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), -16i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), standard_register(1), base_pointer_register(), negative_address_offset(16)),
         
         //length := cast(u32) to_print.count
         // get string instance pointer
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), 16, standard_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), address_offset(16), standard_register(0)),
         // to_print.count
-        move_reg_plus_offset_to_reg_64_instruction(standard_register(0), 0, standard_register(1)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), standard_register(0), address_offset(0), standard_register(1)),
         // into length
-        move_reg_to_reg_plus_offset_instruction(register_size_32(), standard_register(1), base_pointer_register(), -20i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_32(), standard_register(1), base_pointer_register(), negative_address_offset(20)),
         
         // store bytes_written
-        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -28i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_64(0), base_pointer_register(), negative_address_offset(28)),
         // store overlapped
-        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -36i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_64(0), base_pointer_register(), negative_address_offset(36)),
         
         // reserve shadow space for WriteFile proc call
-        sub_value_from_reg_8_instruction(40, stack_pointer_register()),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -8i8 as u8, call_arg_register(0)),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -16i8 as u8, call_arg_register(1)),
-        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -20i8 as u8, call_arg_register(2)),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -28i8 as u8, call_arg_register(3)),
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -36i8 as u8, call_arg_register(4)),
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(4), stack_pointer_register(), 32),
-        call_to_symbol_instruction(3),
+        sub_value_from_reg_instruction(instruction_value_8(40), stack_pointer_register()),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), negative_address_offset(8), call_arg_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), negative_address_offset(16), call_arg_register(1)),
+        move_reg_plus_offset_to_reg_instruction(register_size_32(), base_pointer_register(), negative_address_offset(20), call_arg_register(2)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), negative_address_offset(28), call_arg_register(3)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), negative_address_offset(36), call_arg_register(4)),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(4), stack_pointer_register(), address_offset(32)),
+        call_to_symbol_instruction(symbol_index(3)),
         // release shadow space for WriteFile proc call
-        add_value_to_reg_8_instruction(40, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(40), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
         

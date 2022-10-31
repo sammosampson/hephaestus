@@ -1,6 +1,6 @@
 
 use crate::threading::*;
-use crate::typing::*;
+use crate::types::*;
 use crate::parsing::*;
 use crate::utilities::*;
 use crate::tests::parsing::*;

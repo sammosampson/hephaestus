@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::typing::*;
+use crate::types::*;
 
 #[test]
 fn compound_get_for_struct_declaration() {

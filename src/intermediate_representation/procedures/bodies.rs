@@ -32,7 +32,7 @@ fn build_bytecode_at_procedure_argument_shadow_storage(ir: &mut IntermediateRepr
             register_size_64(),
             call_arg_register(arg_index), 
             base_pointer_register(), 
-            (16 + (arg_index * 8)) as u8
+            address_offset((16 + (arg_index * 8)) as u8)
         )
     );
 }
@@ -46,7 +46,7 @@ fn build_bytecode_for_procedure_assignments_storage_reservation(ir: &mut Interme
 
     add_byte_code(
         &mut ir.byte_code,
-        sub_value_from_reg_8_instruction(assignment_storage_size, stack_pointer_register())
+        sub_value_from_reg_instruction(instruction_value_8(assignment_storage_size), stack_pointer_register())
     );
 }
 
@@ -74,8 +74,8 @@ fn build_bytecode_for_procedure_prologue(ir: &mut IntermediateRepresentation) {
     add_byte_codes(
         &mut ir.byte_code,
         vec!(
-            push_reg_64_instruction(base_pointer_register()),
-            move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+            push_reg_instruction(register_size_64(), base_pointer_register()),
+            move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         )
     );
 }
@@ -84,8 +84,8 @@ fn build_bytecode_for_procedure_epilogue(ir: &mut IntermediateRepresentation) {
     add_byte_codes(
         &mut ir.byte_code, 
         vec!(
-            move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-            pop_reg_64_instruction(base_pointer_register()),
+            move_reg_to_reg_instruction(register_size_64(),base_pointer_register(), stack_pointer_register()),
+            pop_reg_instruction(register_size_64(), base_pointer_register()),
             ret_instruction()
         )
     );

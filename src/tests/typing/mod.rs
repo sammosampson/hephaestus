@@ -6,6 +6,7 @@ mod assignments;
 use crate::parsing::*;
 use crate::threading::*;
 use crate::typing::*;
+use crate::types::*;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::tests::acting::*;

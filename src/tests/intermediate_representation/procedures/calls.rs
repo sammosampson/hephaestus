@@ -27,27 +27,27 @@ main :: () {
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
 
         //reserve space for 1 local assignments
-        sub_value_from_reg_8_instruction(8, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(8), stack_pointer_register()),
         
         // reserve shadow space for proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers
-        move_value_to_reg_64_instruction(1, call_arg_register(0)),
-        move_value_to_reg_64_instruction(2, call_arg_register(1)),
+        move_value_to_reg_instruction(instruction_value_64(1), call_arg_register(0)),
+        move_value_to_reg_instruction(instruction_value_64(2), call_arg_register(1)),
         // proc call
-        call_to_symbol_instruction(1),
+        call_to_symbol_instruction(symbol_index(1)),
         // store proc call return value
-        move_reg_to_reg_plus_offset_instruction(register_size_32(), call_return_arg_register(0), base_pointer_register(), -8i8 as u8),
+        move_reg_to_reg_plus_offset_instruction(register_size_32(), call_return_arg_register(0), base_pointer_register(), negative_address_offset(8)),
         // release shadow space for proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -77,27 +77,27 @@ main :: () {
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         //reserve space for 1 local assignment
-        sub_value_from_reg_8_instruction(4, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(4), stack_pointer_register()),
         
         //store x
-        move_value_to_reg_plus_offset_32_instruction(14, base_pointer_register(), -4i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_32(14), base_pointer_register(), negative_address_offset(4)),
         
         // reserve shadow space for proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers
-        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), -4i8 as u8, call_arg_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_32(), base_pointer_register(), negative_address_offset(4), call_arg_register(0)),
         // proc call
-        call_to_symbol_instruction(1),
+        call_to_symbol_instruction(symbol_index(1)),
         // release shadow space for proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -127,27 +127,27 @@ main :: () {
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         //reserve space for 1 local assignment
-        sub_value_from_reg_8_instruction(8, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(8), stack_pointer_register()),
         
         //store x
-        move_value_to_reg_plus_offset_64_instruction(0, base_pointer_register(), -8i8 as u8),
+        move_value_to_reg_plus_offset_instruction(instruction_value_64(0), base_pointer_register(), negative_address_offset(8)),
         
         // reserve shadow space for proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers
-        move_reg_plus_offset_to_reg_64_instruction(base_pointer_register(), -8i8 as u8, call_arg_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_64(), base_pointer_register(), negative_address_offset(8), call_arg_register(0)),
         // proc call
-        call_to_symbol_instruction(1),
+        call_to_symbol_instruction(symbol_index(1)),
         // release shadow space for proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -182,23 +182,23 @@ main :: () {
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         // reserve shadow space for proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg register to point at
-        load_data_section_address_to_reg_64(4, call_arg_register(0)),
+        load_data_section_address_to_reg(register_size_64(), data_section_offset(4), call_arg_register(0)),
         
         // proc call
-        call_to_symbol_instruction(3),
+        call_to_symbol_instruction(symbol_index(3)),
         
         // release shadow space for proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -228,21 +228,21 @@ main :: () {
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
         // reserve shadow space for proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers
-        move_symbol_to_reg_32_instruction(1, call_arg_register(0)),
+        move_symbol_to_reg_instruction(register_size_32(), symbol_index(1), call_arg_register(0)),
         // proc call
-        call_to_symbol_instruction(2),
+        call_to_symbol_instruction(symbol_index(2)),
         // release shadow space for proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));
@@ -270,23 +270,23 @@ main :: (x: s32) {
     
     assert_eq!(main_body_ir.byte_code, vec!(
         //prologue
-        push_reg_64_instruction(base_pointer_register()),
-        move_reg_to_reg_64_instruction(stack_pointer_register(), base_pointer_register()),
+        push_reg_instruction(register_size_64(), base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), stack_pointer_register(), base_pointer_register()),
         
-        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), 16),
+        move_reg_to_reg_plus_offset_instruction(register_size_64(), call_arg_register(0), base_pointer_register(), address_offset(16)),
         
         // reserve shadow space for proc call
-        sub_value_from_reg_8_instruction(32, stack_pointer_register()),
+        sub_value_from_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         // set call arg registers
-        move_reg_plus_offset_to_reg_32_instruction(base_pointer_register(), 16, call_arg_register(0)),
+        move_reg_plus_offset_to_reg_instruction(register_size_32(), base_pointer_register(), address_offset(16), call_arg_register(0)),
         // proc call
-        call_to_symbol_instruction(1),
+        call_to_symbol_instruction(symbol_index(1)),
         // release shadow space for proc call
-        add_value_to_reg_8_instruction(32, stack_pointer_register()),
+        add_value_to_reg_instruction(instruction_value_8(32), stack_pointer_register()),
         
         //epilogue
-        move_reg_to_reg_64_instruction(base_pointer_register(), stack_pointer_register()),
-        pop_reg_64_instruction(base_pointer_register()),
+        move_reg_to_reg_instruction(register_size_64(), base_pointer_register(), stack_pointer_register()),
+        pop_reg_instruction(register_size_64(), base_pointer_register()),
         
         ret_instruction()
     ));

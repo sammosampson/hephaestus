@@ -1,6 +1,6 @@
 use crate::parsing::*;
 use crate::utilities::*;
-use crate::typing::*;
+use crate::types::*;
 
 #[test]
 fn compound_get_for_typed_variable() {
