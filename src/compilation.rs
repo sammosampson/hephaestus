@@ -13,6 +13,30 @@ use crate::{
 
 use log::*;
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum CompilationErrorItem {
+    ParseError(ParseError)
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct CompilationError {
+    item: CompilationErrorItem,
+    position: SourceFilePosition,
+}
+
+pub fn create_compilation_error(item: CompilationErrorItem, position: SourceFilePosition) -> CompilationError {
+    CompilationError {
+        item,
+        position,
+    }
+}
+
+pub type CompilationErrors = Vec<CompilationError>;
+
+pub fn create_compilation_errors() -> CompilationErrors {
+    vec!()
+}
+
 #[derive(Clone, Debug)]
 pub enum CompilationMessage {
     Compile(String),

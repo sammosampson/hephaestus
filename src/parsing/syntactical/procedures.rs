@@ -1,3 +1,4 @@
+use crate::create_compilation_errors;
 use crate::parsing::*;
 use crate::types::*;
 
@@ -94,7 +95,11 @@ pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer,
     let mut body_ref = unknown_procedure_body_reference();
 
     if is_open_brace(&peek_next_token(lexer).item) {
-        let body = create_unit(filename, parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone()));
+        let body = create_unit(
+            filename, 
+            parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone()),
+            create_compilation_errors()
+        );
         body_ref = local_procedure_body_reference(body.id);
         units.push(body);
     }

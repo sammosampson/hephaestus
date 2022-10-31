@@ -1,4 +1,4 @@
-use crate::parsing::*;
+use crate::{parsing::*, CompilationErrorItem, create_compilation_error};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ParseError {
@@ -21,6 +21,10 @@ pub enum ParseError {
 
 pub fn create_error_node(error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNode {
     create_node(AbstractSyntaxNodeItem::Error(error), position)
+}
+
+pub fn create_error_node_result(error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNodeResult {
+    Err(create_compilation_error(CompilationErrorItem::ParseError(error), position))
 }
 
 pub fn tokenisation_error(error: SourceTokenError) -> ParseError {
