@@ -1,6 +1,6 @@
 use crate::parsing::*;
 use crate::threading::create_shareable;
-use crate::typing::*;
+use crate::types::*;
 
 type TypeOption = Option<ResolvableType>;
 

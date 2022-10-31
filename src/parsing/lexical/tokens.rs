@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::typing::*;
+use crate::types::*;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct SourceToken {

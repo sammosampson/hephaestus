@@ -7,7 +7,8 @@ use crate::{
     acting::*,
     file_system::*,
     intermediate_representation::*,
-    backends::*
+    backends::*,
+    types::*
 };
 
 use log::*;

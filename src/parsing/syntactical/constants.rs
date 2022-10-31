@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::typing::*;
+use crate::types::*;
 
 pub fn parse_inferred_constant(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
     parse_constant(name, lexer, position, unresolved_resolvable_type())

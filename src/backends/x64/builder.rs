@@ -47,17 +47,17 @@ fn build_x64_object(coff: &mut Coff, ir: IntermediateRepresentation) -> String {
             ByteCodeInstruction::MoveRegToReg64 { from, to } => 
                 add_mov_from_qword_reg_to_reg_op(coff, get_register(from), get_register(to)),
             ByteCodeInstruction::MoveValueToRegPlusOffset32 { value, to, offset } => 
-                add_mov_dword_value_into_reg_plus_offset_pointer_op(coff, value, get_register(to), offset),
+                add_mov_dword_value_into_reg_plus_offset_pointer_op(coff, value, get_register(to), *offset),
             ByteCodeInstruction::MoveValueToRegPlusOffset64 { value, to, offset } => 
-                add_mov_qword_value_into_reg_plus_offset_pointer_op(coff, value, get_register(to), offset),
+                add_mov_qword_value_into_reg_plus_offset_pointer_op(coff, value, get_register(to), *offset),
             ByteCodeInstruction::MoveRegToRegPlusOffset32 { from, to, offset } => 
-                add_mov_reg_to_reg_plus_offset_dword_pointer_op(coff, get_register(from), get_register(to), offset),
+                add_mov_reg_to_reg_plus_offset_dword_pointer_op(coff, get_register(from), get_register(to), *offset),
             ByteCodeInstruction::MoveRegToRegPlusOffset64 { from, to, offset } => 
-                add_mov_reg_to_reg_plus_offset_qword_pointer_op(coff, get_register(from), get_register(to), offset),
+                add_mov_reg_to_reg_plus_offset_qword_pointer_op(coff, get_register(from), get_register(to), *offset),
             ByteCodeInstruction::MoveRegPlusOffsetToReg32 { from, offset, to } => 
-                add_mov_dword_reg_plus_offset_pointer_to_reg_op(coff, get_register(from), offset, get_register(to)),
+                add_mov_dword_reg_plus_offset_pointer_to_reg_op(coff, get_register(from), *offset, get_register(to)),
             ByteCodeInstruction::MoveRegPlusOffsetToReg64 { from, offset, to } => 
-                add_mov_qword_reg_plus_offset_pointer_to_reg_op(coff, get_register(from), offset, get_register(to)),
+                add_mov_qword_reg_plus_offset_pointer_to_reg_op(coff, get_register(from), *offset, get_register(to)),
             ByteCodeInstruction::SubValueFromReg8 { value, from } => 
                 add_sub_byte_value_from_reg_op(coff, value, get_register(from)),
             ByteCodeInstruction::AddValueToReg8 { value, to } => 
@@ -69,14 +69,14 @@ fn build_x64_object(coff: &mut Coff, ir: IntermediateRepresentation) -> String {
                 add_lea_reg_plus_relocatable_offset_pointer_to_reg_op(
                     coff, 
                     REG_IP, 
-                    relocatable_value(0x02, data_section_offset), 
+                    relocatable_value(0x02, *data_section_offset), 
                     get_register(to)
                 ),
             ByteCodeInstruction::LoadAddressInRegPlusOffsetToReg64 { from, offset, to } =>
                 add_lea_reg_plus_offset_pointer_to_reg_op(
                     coff, 
                     get_register(from), 
-                    offset, 
+                    *offset, 
                     get_register(to)
                 ),
         }
@@ -110,8 +110,8 @@ fn build_x64_object(coff: &mut Coff, ir: IntermediateRepresentation) -> String {
 
 }
 
-fn convert_byte_code_to_coff_symbol_index(number_of_symbols: usize, symbol_index: u32) -> u32 {
-    (6 + number_of_symbols) as u32 - symbol_index
+fn convert_byte_code_to_coff_symbol_index(number_of_symbols: usize, symbol_index: SymbolIndex) -> u32 {
+    (6 + number_of_symbols) as u32 - *symbol_index
 }
 
 fn get_register(register: ByteCodeRegister) -> u8 {
