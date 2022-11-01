@@ -2,11 +2,13 @@ mod header;
 mod body;
 mod constants;
 mod expressions;
+mod errors;
 
 pub use header::*;
 pub use body::*;
 pub use constants::*;
 pub use expressions::*;
+pub use errors::*;
 
 use std::collections::*;
 use crate::parsing::*;
@@ -64,16 +66,16 @@ pub fn perform_typing(
 
     match unit.tree.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } => {
-            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr);        
+            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr, &mut unit.errors);        
         },
         AbstractSyntaxNodeItem::Constant { name, value, constant_type } => {
-            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type);        
+            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type, &mut unit.errors);        
         },
         AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args, .. } => {
-            perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args);                      
+            perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args, &mut unit.errors);                      
         },
         AbstractSyntaxNodeItem::ProcedureBody { args, return_types, statements, .. } => {
-            perform_typing_for_procedure_body(ctx, type_repository, args, return_types, statements);
+            perform_typing_for_procedure_body(ctx, type_repository, args, return_types, statements, &mut unit.errors);
         },
         _ => {}
     };

@@ -10,23 +10,26 @@ pub fn perform_typing_for_known_target_type_expression(
     type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     expr: &mut AbstractSyntaxNode,
-    known_target_type: &RuntimeTypePointer
+    known_target_type: &RuntimeTypePointer,
+    errors: &mut CompilationErrors
 ) { 
+    let expr_position = expr.position.clone();
+    
     match expr.item_mut() {
         AbstractSyntaxNodeItem::Literal(literal) => {
-            perform_typing_for_known_target_type_expression_literal(literal, known_target_type);
+            perform_typing_for_known_target_type_expression_literal(literal, known_target_type, expr_position, errors);
         },
         AbstractSyntaxNodeItem::Identifier { name, scope }  => {
-            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope);
+            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope, expr_position, errors);
         },
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type, ..} => {
-            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, expression_type);
+            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, expression_type, errors);
         },
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type } => {
-            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, procedure_call_type);
+            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, procedure_call_type, expr_position, errors);
         },
         AbstractSyntaxNodeItem::MemberExpr { instance, member, member_expression_type } => {
-            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type);
+            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type, errors);
         },
         _ => {}
     }
@@ -34,7 +37,9 @@ pub fn perform_typing_for_known_target_type_expression(
 
 fn perform_typing_for_known_target_type_expression_literal(
     literal: &mut ResolvableLiteral,
-    known_target_type: &RuntimeTypePointer
+    known_target_type: &RuntimeTypePointer, 
+    literal_position: SourceFilePosition,
+    errors: &mut CompilationErrors
 )  {
     if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
         match unresolved_literal {
@@ -46,18 +51,21 @@ fn perform_typing_for_known_target_type_expression_literal(
                             2 => resolve_to_int_16_literal_if_possible(value, is_signed),
                             4 => resolve_to_int_32_literal_if_possible(value, is_signed),
                             8 => resolve_to_int_64_literal_if_possible(value, is_signed),
-                            _ => panic!("type size in bytes invalid")
+                            n => {
+                                add_type_inference_error(errors, type_size_in_bytes_invalid_error(n), literal_position);
+                                None
+                            }
                         };
                         if let Some(resolved) = resolved {
                             *literal = resolved_resolvable_literal(resolved);
                         } else {
-                            panic!("literal value is too large for target type")
+                            add_type_inference_error(errors, literal_value_is_too_large_for_target_type_error(), literal_position);
                         }
                     } else {
-                        panic!("target type size is not resolved")
+                        add_type_inference_error(errors, target_type_size_is_not_resolved_error(), literal_position);
                     }
                 } else {
-                    panic!("literal value is not for target type")
+                    add_type_inference_error(errors, literal_value_is_not_for_target_type_error(), literal_position);
                 }
             },
             UnresolvedLiteral::Float(number) => { 
@@ -66,18 +74,21 @@ fn perform_typing_for_known_target_type_expression_literal(
                         let resolved = match size_in_bytes {
                             4 => resolve_to_float_32_literal_if_possible(number),
                             8 => resolve_to_float_64_literal_if_possible(number),
-                            _ => panic!("type size in bytes invalid")
+                            n => {
+                                add_type_inference_error(errors, type_size_in_bytes_invalid_error(n), literal_position);
+                                None
+                            }
                         };
                         if let Some(resolved) = resolved {
                             *literal = resolved_resolvable_literal(resolved);
                         } else {
-                            panic!("literal value is too large for target type")
+                            add_type_inference_error(errors, literal_value_is_too_large_for_target_type_error(), literal_position);
                         }
                     } else {
-                        panic!("target type size is not resolved")
+                        add_type_inference_error(errors, target_type_size_is_not_resolved_error(), literal_position);
                     }
                 } else {
-                    panic!("literal value is not for target type")
+                    add_type_inference_error(errors, literal_value_is_not_for_target_type_error(), literal_position);
                 }
             },
             UnresolvedLiteral::String(value) => {
@@ -85,12 +96,12 @@ fn perform_typing_for_known_target_type_expression_literal(
                     RuntimeTypeItem::String { .. }  => {
                         *literal = resolved_resolvable_literal(resolved_string_literal(value.clone()));
                     }, 
-                    _ => panic!("literal value is not for target type")
+                    _ => add_type_inference_error(errors, literal_value_is_not_for_target_type_error(), literal_position)
                 }
             },
         }
     } else {
-        panic!("literal should not be resolved at this point");
+        add_type_inference_error(errors, literal_should_not_be_resolved_error(), literal_position);
     }
 }
 
@@ -164,27 +175,34 @@ pub fn perform_typing_for_inferred_type_expression(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
-    expr: &mut AbstractSyntaxNode
+    expr: &mut AbstractSyntaxNode,
+    errors: &mut CompilationErrors
 )  -> OptionalRuntimeTypePointer { 
+    let expr_position = expr.position.clone();
+
     match expr.item_mut() {
         AbstractSyntaxNodeItem::ForeignSystemLibrary{ library } =>
-            perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, library),
+            perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, library, errors),
         AbstractSyntaxNodeItem::Literal(literal) =>
-            perform_typing_for_inferred_type_expression_literal(literal),
+            perform_typing_for_inferred_type_expression_literal(literal, expr_position, errors),
         AbstractSyntaxNodeItem::Identifier { name, scope} =>
-            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope),
+            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope, expr_position, errors),
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
-            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id),
+            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id, errors),
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id } =>
-            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id),
+            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id, expr_position, errors),
         AbstractSyntaxNodeItem::Cast { cast_type, expr} =>
-            perform_typing_for_expression_cast(ctx, type_repository, local_type_map, cast_type, expr),
+            perform_typing_for_expression_cast(ctx, type_repository, local_type_map, cast_type, expr, errors),
         AbstractSyntaxNodeItem::MemberExpr { instance, member, member_expression_type } =>
-            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type),
+            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type, errors),
         _ => None
     }
 }
-fn perform_typing_for_inferred_type_expression_literal(literal: &mut ResolvableLiteral) -> OptionalRuntimeTypePointer {
+fn perform_typing_for_inferred_type_expression_literal(
+    literal: &mut ResolvableLiteral,
+    literal_position: SourceFilePosition,   
+    errors: &mut CompilationErrors
+) -> OptionalRuntimeTypePointer {
     if let ResolvableLiteral::Unresolved(unresolved_literal) = literal {
         match unresolved_literal {
             UnresolvedLiteral::Int(value) => {
@@ -201,7 +219,8 @@ fn perform_typing_for_inferred_type_expression_literal(literal: &mut ResolvableL
             },
         }
     }
-    panic!("literal should not be resaolved at this point")
+    add_type_inference_error(errors, literal_should_not_be_resolved_error(), literal_position);
+    None
 }
 
 fn perform_typing_for_expression_identifier(
@@ -209,21 +228,33 @@ fn perform_typing_for_expression_identifier(
     type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     name: &mut String,
-    scope: &mut Scope
+    scope: &mut Scope,
+    identifier_position: SourceFilePosition,   
+    errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
     if let Some(local_identifier_type) = get_type_for_identifier(local_type_map, &name) {
         *scope = local_scope();
         return Some(local_identifier_type.clone());
     }
     *scope = global_scope();
-    get_global_type_for_identifier(ctx, type_repository, name)
+    get_global_type_for_identifier(ctx, type_repository, name, identifier_position, errors)
 }
 
-fn get_global_type_for_identifier(ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle, name: &mut String) -> OptionalRuntimeTypePointer {
-    let global_type = find_type_by_name(ctx, type_repository, name);
-    if let Some(global_type) = try_get_constant_definition_runtime_type_item(&global_type.item) {
-        return Some(global_type);
+fn get_global_type_for_identifier(
+    ctx: &CompilationMessageContext,
+    type_repository: &CompilationActorHandle,
+    name: &mut String,
+    identifier_position: SourceFilePosition,   
+    errors: &mut CompilationErrors
+) -> OptionalRuntimeTypePointer {
+    if let Some(global_type) = find_type_by_name(ctx, type_repository, name) {
+        if let Some(global_type) = try_get_constant_definition_runtime_type_item(&global_type.item) {
+            return Some(global_type);
+        }
+    } else {
+        add_type_inference_error(errors, type_cannot_be_found_error(), identifier_position)
     }
+    
     None
 }
 
@@ -233,13 +264,14 @@ fn perform_typing_for_expression_expression(
     local_type_map: &IdentifierTypeLookup,
     lhs: &mut AbstractSyntaxNode,
     rhs: &mut AbstractSyntaxNode,
-    type_id: &mut ResolvableType
+    type_id: &mut ResolvableType,
+    errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
-    let lhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, lhs);
-    let rhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, rhs);
+    let lhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, lhs, errors);
+    let rhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, rhs, errors);
     
     if lhs_resolved_type != rhs_resolved_type {
-        todo!("deal with different types on either side of expression")
+        todo(errors, function!(), "deal with different types on either side of expression");
     }
 
     if let Some(resolved_type) = lhs_resolved_type {
@@ -256,7 +288,9 @@ fn perform_typing_for_expression_procedure_call(
     local_type_map: &IdentifierTypeLookup,
     name: &mut String,
     args: &mut AbstractSyntaxChildNodes,
-    type_id: &mut ResolvableType
+    type_id: &mut ResolvableType,
+    position: SourceFilePosition,
+    errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
     let resolved_types = perform_typing_for_procedure_call_return_first_return_type(
         ctx,
@@ -264,14 +298,17 @@ fn perform_typing_for_expression_procedure_call(
         local_type_map,
         args,
         name,
-        type_id
+        type_id,
+        position,
+        errors
     );
     
     if resolved_types.len() > 0 {
         return Some(resolved_types.first().unwrap().clone());
     }
 
-    todo!()
+    todo(errors, function!(), "Deal with no resolved types returned");
+    None
 }
 
 fn perform_typing_for_expression_cast(
@@ -279,10 +316,18 @@ fn perform_typing_for_expression_cast(
     type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     cast_type: &mut ResolvableType,
-    expr: &mut AbstractSyntaxNode
+    expr: &mut AbstractSyntaxNode,
+    errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
     if let Some(resolved_cast_type) = try_get_resolved_runtime_type_pointer(&cast_type) {
-        perform_typing_for_known_target_type_expression(ctx, type_repository, local_type_map, expr, &resolved_cast_type);
+        perform_typing_for_known_target_type_expression(
+            ctx,
+            type_repository,
+            local_type_map,
+            expr,
+            &resolved_cast_type,
+            errors
+        );
         return Some(resolved_cast_type.clone());
     }
     None
@@ -294,14 +339,16 @@ fn perform_typing_for_member_expression(
     local_type_map: &IdentifierTypeLookup,
     instance: &mut AbstractSyntaxNode,
     member: &mut AbstractSyntaxNode,
-    member_expression_type: &mut ResolvableType
+    member_expression_type: &mut ResolvableType,
+    errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
     
     if let Some(instance_type) = perform_typing_for_member_expression_instance(
         ctx,
         type_repository,
         local_type_map,
-        instance
+        instance,
+        errors
     ) {
         if let Some(resolved_member_expression_type) = perform_typing_for_member_expression_member(&instance_type, member) {
             *member_expression_type = resolved_resolvable_type(resolved_member_expression_type.clone());
@@ -315,12 +362,13 @@ fn perform_typing_for_member_expression_instance(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
-    instance: &mut AbstractSyntaxNode
+    instance: &mut AbstractSyntaxNode,
+    errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
-    
+    let instance_position = instance.position.clone();
     match instance.item_mut() {
         AbstractSyntaxNodeItem::Instance { name, instance_type, scope} => {
-            if let Some(resolved_member_instance_type) = perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope) {
+            if let Some(resolved_member_instance_type) = perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope, instance_position, errors) {
                 *instance_type = resolved_resolvable_type(resolved_member_instance_type.clone());
                 return Some(resolved_member_instance_type);
             }

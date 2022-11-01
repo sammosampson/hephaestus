@@ -8,14 +8,34 @@ use crate::{
     file_system::*,
     intermediate_representation::*,
     backends::*,
-    types::*
+    types::*,
+    utilities::*
 };
 
 use log::*;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum CompilationErrorItem {
-    ParseError(ParseError)
+    ParseError(ParseError),
+    TypeInferenceError(TypeInferenceError),
+    IntermediateRepresentationError(IntermediateRepresentationError),
+    ToDo{function: String, text: String, },
+}
+
+pub fn type_inference_error(error: TypeInferenceError) -> CompilationErrorItem {
+    CompilationErrorItem::TypeInferenceError(error)
+}
+
+pub fn intermediate_representation_error(error: IntermediateRepresentationError) -> CompilationErrorItem {
+    CompilationErrorItem::IntermediateRepresentationError(error)
+}
+
+pub fn todo_error(function: &str, text: &str) -> CompilationErrorItem {
+    CompilationErrorItem::ToDo { function: string(function), text: string(text) }
+}
+
+pub fn todo(errors: &mut CompilationErrors, function: &str, text: &str) {
+    add_compilation_error(errors, create_compilation_error(todo_error(function, text), no_position()));
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -52,12 +72,13 @@ pub enum CompilationMessage {
     UnitSized { unit: CompilationUnit },
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
+    TypeRequestReleaseDueToError(CompilationErrorItem),
     AddResolvedType(RuntimeTypePointer),
     BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
     ByteCodeBuilt { code: IntermediateRepresentation },
     BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle },
-    BackendBuilt { id: CompilationUnitId },
-    CompilationComplete
+    BackendBuilt { id: CompilationUnitId, result: BackendErrorResult },
+    CompilationComplete,
 }
 
 pub trait WireTapCompilationMessage : Send + 'static {
@@ -114,6 +135,10 @@ pub fn create_type_found_event(resolved_type: RuntimeTypePointer) -> Compilation
     CompilationMessage::TypeFound(resolved_type)
 }
 
+pub fn type_request_released_due_to_error_event(error: CompilationErrorItem) -> CompilationMessage {
+    CompilationMessage::TypeRequestReleaseDueToError(error)
+}
+
 pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> CompilationMessage {
     CompilationMessage::AddResolvedType(resolved_type)
 }
@@ -130,8 +155,8 @@ pub fn create_build_backend_command(code: IntermediateRepresentation, compiler: 
     CompilationMessage::BuildBackend { code, compiler }
 }
 
-pub fn create_backend_built_event(id: CompilationUnitId) -> CompilationMessage {
-    CompilationMessage::BackendBuilt { id }
+pub fn create_backend_built_event(id: CompilationUnitId, result: BackendErrorResult) -> CompilationMessage {
+    CompilationMessage::BackendBuilt { id, result }
 }
 
 fn create_compilation_complete_event() -> CompilationMessage {
@@ -220,7 +245,7 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
                 handle_unit_sized(self, unit, ctx),
             CompilationMessage::ByteCodeBuilt { code } => 
                 handle_byte_code_built(self, code, ctx, self.backend.clone()),
-            CompilationMessage::BackendBuilt { id } => 
+            CompilationMessage::BackendBuilt { id, .. } => 
                 handle_backend_built(self, id, ctx),
             CompilationMessage::CompilationComplete => shutdown_after_receive(),
             _ => continue_listening_after_receive()

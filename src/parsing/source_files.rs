@@ -5,6 +5,10 @@ pub struct SourceFilePosition {
     pub col: usize,
 }
 
+pub fn no_position() -> SourceFilePosition {
+    SourceFilePosition::default()
+}
+
 pub fn create_source_file_position(absolute: usize, line: usize, col: usize) -> SourceFilePosition {
     SourceFilePosition { absolute, line, col }
 }

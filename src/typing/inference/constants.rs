@@ -12,12 +12,13 @@ pub fn perform_typing_for_constant(
     resolved_types: &mut RuntimeTypePointers,
     name: &str,
     value: &mut AbstractSyntaxNode,
-    constant_type: &mut ResolvableType
+    constant_type: &mut ResolvableType,
+    errors: &mut CompilationErrors
 ) {
     if let Some(resolved_constant_type) = try_get_resolved_runtime_type_pointer(constant_type) {
-        perform_typing_for_known_type_constant(ctx, type_repository, value, &resolved_constant_type);
+        perform_typing_for_known_type_constant(ctx, type_repository, value, &resolved_constant_type, errors);
     } else {
-        perform_typing_for_inferred_constant(ctx, type_repository, value, constant_type);
+        perform_typing_for_inferred_constant(ctx, type_repository, value, constant_type, errors);
     }
 
     if let Some(resolved_constant_type) = try_get_resolved_runtime_type_pointer(constant_type) {
@@ -40,13 +41,15 @@ fn perform_typing_for_inferred_constant(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     value: &mut AbstractSyntaxNode,
-    constant_type: &mut ResolvableType
+    constant_type: &mut ResolvableType,
+    errors: &mut CompilationErrors
 ) {
     if let Some(expression_type) = perform_typing_for_inferred_type_expression(
         ctx,
         type_repository, 
         &create_identifier_type_lookup(), 
-        value
+        value,
+        errors
     ) {
         *constant_type = resolved_resolvable_type(expression_type);
     }
@@ -56,13 +59,15 @@ fn perform_typing_for_known_type_constant(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     value: &mut AbstractSyntaxNode,
-    constant_type: &RuntimeTypePointer
+    constant_type: &RuntimeTypePointer,
+    errors: &mut CompilationErrors
 ) {
     perform_typing_for_known_target_type_expression(
         ctx,
         type_repository, 
         &create_identifier_type_lookup(), 
         value,
-        constant_type
+        constant_type,
+        errors
     );
 }

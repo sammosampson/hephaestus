@@ -21,12 +21,11 @@ pub fn not_required_type_size() -> TypeSize {
     TypeSize::NotRequired
 }
 
-pub fn get_type_size_from_resolvable_type(variable_type: &ResolvableType) -> usize {
+pub fn try_get_type_size_from_resolvable_type(variable_type: &ResolvableType) -> Option<usize> {
     if let Some(runtime_type) = try_get_resolved_runtime_type_pointer(variable_type) {
         if let Some(type_size) = try_get_resolved_type_size(&runtime_type.size) {
-            return type_size;
+            return Some(type_size);
         }
-        panic!("type size could not be resolved")
     }
-    panic!("type could not be resolved")
+    None
 }

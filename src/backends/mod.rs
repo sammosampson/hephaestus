@@ -1,8 +1,10 @@
 mod llvm;
 mod x64;
+mod errors;
 
 pub use llvm::*;
 pub use x64::*;
+pub use errors::*;
 
 use crate::{
     acting::*,
@@ -11,7 +13,7 @@ use crate::{
 };
 
 pub trait BackendBuild : Send + Clone + 'static {
-    fn build_backend(&mut self, ir: IntermediateRepresentation);
+    fn build_backend(&mut self, ir: IntermediateRepresentation) -> BackendErrorResult;
 }
 
 
@@ -33,7 +35,7 @@ impl<TBackend: BackendBuild> Actor<CompilationMessage> for BackendActor<TBackend
 
 fn build_backend_from_ir<TBackend: BackendBuild>(backend: &mut TBackend, ir: IntermediateRepresentation, compiler: &CompilationActorHandle) -> AfterReceiveAction {
     let id = ir.id;
-    backend.build_backend(ir);
-    send_message_to_actor(compiler, create_backend_built_event(id));
+    let result = backend.build_backend(ir);
+    send_message_to_actor(compiler, create_backend_built_event(id, result));
     shutdown_after_receive()
 }

@@ -1,4 +1,6 @@
 use std::collections::*;
+use log::debug;
+
 use crate::acting::*;
 use crate::compilation::*;
 use crate::types::*;
@@ -14,7 +16,7 @@ pub fn find_type_by_name(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     name: &mut String
-) -> RuntimeTypePointer {
+) -> OptionalRuntimeTypePointer {
     find_type_by_name_and_args(ctx, type_repository, name, vec!())
 }
 
@@ -24,7 +26,7 @@ pub fn find_type_by_name_and_args(
     type_repository: &CompilationActorHandle,
     name: &mut String,
     arg_types: RuntimeTypePointers    
-) -> RuntimeTypePointer {
+) -> OptionalRuntimeTypePointer {
     find_type_from_criteria(
         create_find_type_criteria_with_name_and_args(name.to_string(), arg_types),
         ctx,
@@ -41,17 +43,17 @@ pub fn create_find_type_criteria_with_name_and_args(name: String, args: RuntimeT
     FindTypeCriteria { name, args }
 }
 
-pub fn find_type_from_criteria(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> RuntimeTypePointer {
+pub fn find_type_from_criteria(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> OptionalRuntimeTypePointer {
     send_find_type_request(type_repository, criteria, ctx);  
     await_type_found_response(ctx)
 }
 
 fn send_find_type_request(type_repository: &CompilationActorHandle, criteria: FindTypeCriteria, ctx: &CompilationMessageContext) {
-    println!("finding type: {:?}", criteria.name);
+    debug!("finding type: {:?}", criteria.name);
     send_message_to_actor(type_repository, create_find_type_request(criteria, create_self_handle(ctx)))
 }
 
-fn await_type_found_response(ctx: &CompilationMessageContext) -> RuntimeTypePointer {    
+fn await_type_found_response(ctx: &CompilationMessageContext) -> OptionalRuntimeTypePointer {    
     let mut result = None;
     
     await_message(ctx, |message| {
@@ -63,11 +65,7 @@ fn await_type_found_response(ctx: &CompilationMessageContext) -> RuntimeTypePoin
         false
     });
 
-    if let Some(result) = result {
-        return result
-    }
-    
-    todo!("wait and send back type when it exists")
+    result
 }
 
 type RuntimeTypeMap = HashMap<FindTypeCriteria, RuntimeTypePointer>;
@@ -126,8 +124,10 @@ fn handle_find_type(repository: &mut TypeRepositoryActor, criteria: FindTypeCrit
 }
 
 fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type: RuntimeTypePointer) -> AfterReceiveAction {
-    let criteria = parse_find_type_criteria(&resolved_type);
-    add_resolved_type(repository, criteria, resolved_type);
+    match parse_find_type_criteria(&resolved_type) {
+        Ok(criteria) => add_resolved_type(repository, criteria, resolved_type), 
+        Err(error) => release_all_type_requests_due_to_error(repository, error)
+    };
     service_find_type_requests(repository);
     continue_listening_after_receive()
 }
@@ -166,13 +166,26 @@ fn service_find_type_request(repository: &TypeRepositoryActor, request: &FindTyp
     false
 }
 
-fn parse_find_type_criteria(resolved_type: &RuntimeTypePointer) -> FindTypeCriteria {
+fn release_all_type_requests_due_to_error(repository: &mut TypeRepositoryActor, error: CompilationErrorItem) {
+    for request in &repository.find_type_requests {
+        release_type_request_due_to_error(request, error.clone())
+    }
+}
+
+fn release_type_request_due_to_error(request: &FindTypeRequest, error: CompilationErrorItem) {
+    println!("releasing type: {:?}", &request.criteria.name);
+    send_message_to_actor(&request.respond_to, type_request_released_due_to_error_event(error));
+}
+
+pub type FindTypeCriteriaResult = Result<FindTypeCriteria, CompilationErrorItem>;
+
+pub fn parse_find_type_criteria(resolved_type: &RuntimeTypePointer) -> FindTypeCriteriaResult {
     match &resolved_type.item {
         RuntimeTypeItem::ProcedureDefinition { arg_types, .. } => 
-            create_find_type_criteria_with_name_and_args(resolved_type.name.clone(), arg_types.clone()),
+            Ok(create_find_type_criteria_with_name_and_args(resolved_type.name.clone(), arg_types.clone())),
         RuntimeTypeItem::ConstantDefinition { .. } => 
-            create_find_type_criteria_with_name(resolved_type.name.clone()),
-        _ => todo!("add other types")
+            Ok(create_find_type_criteria_with_name(resolved_type.name.clone())),
+        _ => Err(todo_error(function!(), "parse criteria for other types"))
     }
 }
 

@@ -1,3 +1,5 @@
+#[macro_use]
+mod utilities;
 mod testing;
 mod parsing;
 mod typing;
@@ -10,10 +12,10 @@ mod threading;
 mod compilation;
 mod collections;
 mod acting;
-mod utilities;
 mod strings;
 mod types;
 
+pub use utilities::*;
 pub use testing::*;
 pub use parsing::*;
 pub use typing::*;
@@ -26,6 +28,5 @@ pub use threading::*;
 pub use compilation::*;
 pub use collections::*;
 pub use acting::*;
-pub use utilities::*;
 pub use strings::*;
 pub use types::*;
