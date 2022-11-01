@@ -37,6 +37,10 @@ pub fn create_compilation_errors() -> CompilationErrors {
     vec!()
 }
 
+pub fn add_compilation_error(errors: &mut CompilationErrors, error: CompilationError) {
+    errors.push(error);
+}
+
 #[derive(Clone, Debug)]
 pub enum CompilationMessage {
     Compile(String),

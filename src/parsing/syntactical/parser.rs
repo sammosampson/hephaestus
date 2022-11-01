@@ -48,18 +48,13 @@ pub fn parse(filename: String, input: &str) -> CompilationUnits {
     loop {
         let mut errors = create_compilation_errors();
 
-        let node_result = parse_next_node(filename.clone(), &mut lexer, &mut units);
+        let node = parse_next_node(filename.clone(), &mut lexer, &mut units, &mut errors);
 
-        match node_result {
-            Ok(node) => {
-                if is_eof_node(&node) {
-                    break;
-                }      
-                
-                units.push(create_unit(filename.clone(), node, errors));        
-            },
-            Err(error) => errors.push(error),
-        }        
+        if is_eof_node(&node) {
+            break;
+        }      
+        
+        units.push(create_unit(filename.clone(), node, errors));          
     }
 
     units
@@ -69,16 +64,16 @@ fn is_eof_node(node: &AbstractSyntaxNode) -> bool {
     node.item_ref() == &AbstractSyntaxNodeItem::Eof
 }
 
-pub fn parse_next_node(filename: String, lexer: &mut Lexer, units: &mut CompilationUnits) -> AbstractSyntaxNodeResult {
+pub fn parse_next_node(filename: String, lexer: &mut Lexer, units: &mut CompilationUnits, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Identifier(name) => Ok(parse_top_level_identifier(filename, name, lexer, token.position, units)),
-        SourceTokenItem::Directive(name) => Ok(parse_directive(name, lexer, token.position)),
-        SourceTokenItem::Literal(literal) => Ok(parse_literal(literal, lexer, token.position)),
-        SourceTokenItem::Error(error) => create_error_node_result(tokenisation_error(error), token.position),
-        SourceTokenItem::Eof => Ok(create_node(create_eof_item(), token.position)),
-        _ => create_error_node_result(unimplemented_error(), token.position),
+        SourceTokenItem::Identifier(name) => parse_top_level_identifier(filename, name, lexer, token.position, units, errors),
+        SourceTokenItem::Directive(name) => parse_directive(name, lexer, token.position, errors),
+        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position, errors),
+        SourceTokenItem::Error(error) => create_error_and_error_node(errors, tokenisation_error(error), token.position),
+        SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
+        _ => create_error_and_error_node(errors, unimplemented_error(), token.position),
     }
 }
 

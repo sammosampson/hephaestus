@@ -1,4 +1,4 @@
-use crate::create_compilation_errors;
+use crate::compilation::*;
 use crate::parsing::*;
 use crate::types::*;
 
@@ -21,8 +21,8 @@ pub fn foreign_procedure_body_reference(foreign_system_library: AbstractSyntaxNo
     ProcedureBodyReference::Foerign(foreign_system_library)
 }
 
-pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
-    let arguments = parse_procedure_call_args(lexer);
+pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
+    let arguments = parse_procedure_call_args(lexer, errors);
     
     assert!(is_close_paren(&peek_next_token(lexer).item));
     eat_next_token(lexer);
@@ -30,7 +30,7 @@ pub fn parse_procedure_call(name: String, lexer: &mut Lexer, position: SourceFil
     create_node(procedure_call_item(name, arguments, unresolved_resolvable_type()), position)
 }
 
-fn parse_procedure_call_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+fn parse_procedure_call_args(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxChildNodes {
     let mut args = vec!();
 
     if is_close_paren(&peek_next_token(lexer).item) {
@@ -38,7 +38,7 @@ fn parse_procedure_call_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     }
 
     loop {
-        args.push(parse_procedure_call_arg(lexer));
+        args.push(parse_procedure_call_arg(lexer, errors));
 
         let next_token = peek_next_token(lexer);
         
@@ -49,14 +49,14 @@ fn parse_procedure_call_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
         if is_arg_separator(&next_token.item) {
             eat_next_token(lexer);
         } else {
-            args.push(create_error_node(expected_arg_separator_error(), next_token.position));  
+            args.push(create_error_and_error_node(errors, expected_arg_separator_error(), next_token.position));  
             return args;
         }
     }
 }
 
-fn parse_procedure_call_arg(lexer: &mut Lexer) -> AbstractSyntaxNode {
-    let expr = parse_procedure_call_arg_expr(lexer);
+fn parse_procedure_call_arg(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
+    let expr = parse_procedure_call_arg_expr(lexer, errors);
     let pos = expr.position;
 
     create_node(
@@ -64,40 +64,40 @@ fn parse_procedure_call_arg(lexer: &mut Lexer) -> AbstractSyntaxNode {
         pos)        
 }
 
-pub fn parse_procedure_call_arg_expr(lexer: &mut Lexer) -> AbstractSyntaxNode {
+pub fn parse_procedure_call_arg_expr(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Keyword(keyword) => parse_procedure_call_keyword(keyword, token.position),
-        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position),
-        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
-        SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
+        SourceTokenItem::Keyword(keyword) => parse_procedure_call_keyword(keyword, token.position, errors),
+        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position, errors),
+        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position, errors),
+        SourceTokenItem::Error(error) => create_error_and_error_node(errors, tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
-        _ => create_error_node(unimplemented_error(), token.position),
+        _ => create_error_and_error_node(errors, unimplemented_error(), token.position),
     }
 }
 
-fn parse_procedure_call_keyword(keyword: Keyword, position: SourceFilePosition) -> AbstractSyntaxNode {
+fn parse_procedure_call_keyword(keyword: Keyword, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     match keyword {
         Keyword::Null => create_node(null_item(), position),
-        _ => create_error_node(unimplemented_error(), position),
+        _ => create_error_and_error_node(errors, unimplemented_error(), position),
     }
 }
 
-pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
-    let args = parse_procedure_args(lexer);
+pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
+    let args = parse_procedure_args(lexer, errors);
     
     assert!(is_close_paren(&peek_next_token(lexer).item));
     eat_next_token(lexer);
 
-    let return_types = parse_procedure_return_types(lexer);
+    let return_types = parse_procedure_return_types(lexer, errors);
 
     let mut body_ref = unknown_procedure_body_reference();
 
     if is_open_brace(&peek_next_token(lexer).item) {
         let body = create_unit(
             filename, 
-            parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone()),
+            parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone(), errors),
             create_compilation_errors()
         );
         body_ref = local_procedure_body_reference(body.id);
@@ -105,7 +105,7 @@ pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer,
     }
 
     if is_foreign_directive(&peek_next_token(lexer).item) {
-        let foreign_library_identifier = parse_foreign_library_identifier(lexer);
+        let foreign_library_identifier = parse_foreign_library_identifier(lexer, errors);
         body_ref = foreign_procedure_body_reference(foreign_library_identifier);
         
         if is_line_terminiator(&peek_next_token(lexer).item) {
@@ -116,7 +116,7 @@ pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer,
     create_node(procedure_header_item(name, args, return_types, body_ref), position)
 }
 
-fn parse_procedure_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+fn parse_procedure_args(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxChildNodes {
     let mut args = vec!();
 
     if is_close_paren(&peek_next_token(lexer).item) {
@@ -124,7 +124,7 @@ fn parse_procedure_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     }
 
     loop {
-        args.push(parse_declaration(lexer));
+        args.push(parse_declaration(lexer, errors));
 
         let next_token = peek_next_token(lexer);
         
@@ -135,13 +135,13 @@ fn parse_procedure_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
         if is_arg_separator(&next_token.item) {
             eat_next_token(lexer);
         } else {
-            args.push(create_error_node(expected_arg_separator_error(), next_token.position));  
+            args.push(create_error_and_error_node(errors, expected_arg_separator_error(), next_token.position));  
             return args;
         }
     }
 }
 
-fn parse_procedure_return_types(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+fn parse_procedure_return_types(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxChildNodes {
     if !is_goes_to_assignment(&peek_next_token(lexer).item) {
         return vec!();
     }
@@ -154,7 +154,7 @@ fn parse_procedure_return_types(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     }
 
     loop {
-        returns.push(parse_procedure_return_type(lexer));
+        returns.push(parse_procedure_return_type(lexer, errors));
 
         let next_token = peek_next_token(lexer);
         
@@ -169,31 +169,32 @@ fn parse_procedure_return_types(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
         if is_arg_separator(&next_token.item) {
             eat_next_token(lexer);
         } else {
-            returns.push(create_error_node(expected_arg_separator_error(), next_token.position));  
+            returns.push(create_error_and_error_node(errors, expected_arg_separator_error(), next_token.position));  
             return returns;
         }
     }
 }
 
-fn parse_procedure_return_type(lexer: &mut Lexer) -> AbstractSyntaxNode {
+fn parse_procedure_return_type(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     if let Some(return_type) = try_parse_type(lexer) {
         let next_token = get_next_token(lexer);
         return create_node(type_item(return_type), next_token.position);
     }
 
-    create_error_node(expected_type_error(), get_next_token(lexer).position)
+    create_error_and_error_node(errors, expected_type_error(), get_next_token(lexer).position)
 }
 
 fn parse_procedure_body(
     lexer: &mut Lexer,
     name: String,
     args: AbstractSyntaxChildNodes,
-    return_types: AbstractSyntaxChildNodes
+    return_types: AbstractSyntaxChildNodes,
+    errors: &mut CompilationErrors
 ) -> AbstractSyntaxNode {
     assert!(is_open_brace(&peek_next_token(lexer).item));
 
     let brace = get_next_token(lexer);
-    let statements = parse_procedure_body_statements(lexer);
+    let statements = parse_procedure_body_statements(lexer, errors);
     
     assert!(is_close_brace(&peek_next_token(lexer).item));
     eat_next_token(lexer);
@@ -201,7 +202,7 @@ fn parse_procedure_body(
     create_node(procedure_body_item(name, args, return_types, statements), brace.position)
 }
 
-fn parse_foreign_library_identifier(lexer: &mut Lexer) -> AbstractSyntaxNode {
+fn parse_foreign_library_identifier(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     assert!(is_foreign_directive(&peek_next_token(lexer).item));
     eat_next_token(lexer);
         
@@ -211,10 +212,10 @@ fn parse_foreign_library_identifier(lexer: &mut Lexer) -> AbstractSyntaxNode {
         eat_next_token(lexer);
         return create_node(unknown_scope_identifier_item(foreign_library), token.position)
     }
-    create_error_node(expected_foreign_library_identifier_error(), token.position)
+    create_error_and_error_node(errors, expected_foreign_library_identifier_error(), token.position)
 }
 
-fn parse_procedure_body_statements(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+fn parse_procedure_body_statements(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxChildNodes {
     if is_close_brace(&peek_next_token(lexer).item) {
         return vec!();
     }
@@ -222,7 +223,7 @@ fn parse_procedure_body_statements(lexer: &mut Lexer) -> AbstractSyntaxChildNode
     let mut statements = vec!();
 
     loop {
-        statements.push(parse_procedure_body_statement(lexer));
+        statements.push(parse_procedure_body_statement(lexer, errors));
 
         if is_line_terminiator(&peek_next_token(lexer).item) {
             eat_next_token(lexer)
@@ -234,33 +235,33 @@ fn parse_procedure_body_statements(lexer: &mut Lexer) -> AbstractSyntaxChildNode
     }
 }
 
-pub fn parse_procedure_body_statement(lexer: &mut Lexer) -> AbstractSyntaxNode {
+pub fn parse_procedure_body_statement(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Keyword(keyword) => parse_procedure_body_keyword(keyword, lexer, token.position),
-        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position),
-        SourceTokenItem::Error(error) => create_error_node(tokenisation_error(error), token.position),
+        SourceTokenItem::Keyword(keyword) => parse_procedure_body_keyword(keyword, lexer, token.position, errors),
+        SourceTokenItem::Identifier(name) => parse_identifier(name, lexer, token.position, errors),
+        SourceTokenItem::Error(error) => create_error_and_error_node(errors, tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
-        _ => create_error_node(unimplemented_error(), token.position),
+        _ => create_error_and_error_node(errors, unimplemented_error(), token.position),
     }
 }
 
-fn parse_procedure_body_keyword(keyword: Keyword, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+fn parse_procedure_body_keyword(keyword: Keyword, lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     match keyword {
-        Keyword::Return => parse_return_statement(lexer, position),
-        _ => create_error_node(unimplemented_error(), position),
+        Keyword::Return => parse_return_statement(lexer, position, errors),
+        _ => create_error_and_error_node(errors, unimplemented_error(), position),
     }
 }
 
-fn parse_return_statement(lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+fn parse_return_statement(lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     create_node(
-        return_item(parse_return_statement_args(lexer)),
+        return_item(parse_return_statement_args(lexer, errors)),
         position
     )
 }
 
-fn parse_return_statement_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+fn parse_return_statement_args(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxChildNodes {
     let mut args = vec!();
 
     if is_line_terminiator(&peek_next_token(lexer).item) {
@@ -268,7 +269,7 @@ fn parse_return_statement_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
     }
 
     loop {
-        args.push(parse_procedure_call_arg(lexer));
+        args.push(parse_procedure_call_arg(lexer, errors));
 
         let next_token = peek_next_token(lexer);
         
@@ -279,7 +280,7 @@ fn parse_return_statement_args(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
         if is_arg_separator(&next_token.item) {
             eat_next_token(lexer);
         } else {
-            args.push(create_error_node(expected_arg_separator_error(), next_token.position));  
+            args.push(create_error_and_error_node(errors, expected_arg_separator_error(), next_token.position));  
             return args;
         }
     }

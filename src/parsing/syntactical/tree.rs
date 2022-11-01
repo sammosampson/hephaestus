@@ -1,5 +1,4 @@
 use crate::parsing::*;
-use crate::compilation::*;
 use crate::types::*;
 
 pub type AbstractSyntaxChildNodeItem = Box<AbstractSyntaxNodeItem>;
@@ -100,5 +99,3 @@ pub enum AbstractSyntaxNodeItem {
     Error(ParseError),
     Eof
 }
-
-pub type AbstractSyntaxNodeResult = Result<AbstractSyntaxNode, CompilationError>;
