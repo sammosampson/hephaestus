@@ -9,7 +9,8 @@ use crate::{
     intermediate_representation::*,
     backends::*,
     types::*,
-    errors::*
+    errors::*,
+    utilities::*
 };
 
 use log::*;
@@ -32,7 +33,7 @@ pub enum CompilationMessage {
     BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle },
     BackendBuilt { id: CompilationUnitId, result: BackendErrorResult },
     CompilationComplete,
-    ReportErrors { errors: CompilationErrors },
+    ReportErrors { filename: String, errors: CompilationErrors },
     ShutDown,
 }
 
@@ -119,8 +120,8 @@ fn create_compilation_complete_event() -> CompilationMessage {
 }
 
 
-fn create_report_errors_command(errors: CompilationErrors) -> CompilationMessage {
-    CompilationMessage::ReportErrors { errors }
+fn create_report_errors_command(filename: String, errors: CompilationErrors) -> CompilationMessage {
+    CompilationMessage::ReportErrors { filename, errors }
 }
 
 
@@ -250,7 +251,7 @@ fn handle_any_errors<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap:
 
     send_message_to_actor(
         &compiler.error_reporter, 
-        create_report_errors_command(unit.errors.clone())
+        create_report_errors_command(string(&unit.filename), unit.errors.clone())
     );
     
     compiler.errors_exist = true;
