@@ -4,6 +4,7 @@ use crate::{
     parsing::*,
     types::*,
     threading::*,
+    errors::*,
     utilities::*
 };
 
@@ -70,6 +71,7 @@ pub struct RuntimeType {
 
 pub type RuntimeTypePointer = Shareable<RuntimeType>;
 pub type OptionalRuntimeTypePointer = Option<RuntimeTypePointer>;
+pub type RuntimeTypePointerResult = Result<RuntimeTypePointer, CompilationErrorItem>;
 pub type RuntimeTypePointers = Vec<RuntimeTypePointer>;
 
 pub fn create_type(id: RuntimeTypeId, name: String, item: RuntimeTypeItem, size: TypeSize) -> RuntimeType {

@@ -1,4 +1,4 @@
-use crate::{parsing::*, strings::*, compilation::*};
+use crate::{parsing::*, strings::*, errors::*};
 
 pub fn parse_directive(directive: Directive, lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     match directive {

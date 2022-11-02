@@ -4,7 +4,7 @@ use crate::{
     parsing::*,
     types::*,
     intermediate_representation::*,
-    compilation::*
+    errors::*
 };
 
 pub fn build_bytecode_at_variable_declaration(

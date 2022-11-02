@@ -4,6 +4,7 @@ use crate::threading::*;
 use crate::typing::*;
 use crate::types::*;
 use crate::utilities::*;
+use crate::errors::*;
 
 pub fn perform_typing_for_known_target_type_expression(
     ctx: &CompilationMessageContext,
@@ -247,12 +248,16 @@ fn get_global_type_for_identifier(
     identifier_position: SourceFilePosition,   
     errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
-    if let Some(global_type) = find_type_by_name(ctx, type_repository, name) {
-        if let Some(global_type) = try_get_constant_definition_runtime_type_item(&global_type.item) {
-            return Some(global_type);
-        }
-    } else {
-        add_type_inference_error(errors, type_cannot_be_found_error(), identifier_position)
+
+    match find_type_by_name(ctx, type_repository, name) {
+        Ok(global_type) => {
+            if let Some(global_type) = try_get_constant_definition_runtime_type_item(&global_type.item) {
+                return Some(global_type);
+            }        
+        },
+        Err(error) => {
+            add_compilation_error(errors, create_compilation_error(error, identifier_position));
+        },
     }
     
     None

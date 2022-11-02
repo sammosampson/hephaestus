@@ -1,7 +1,7 @@
 use rust_hephaestus::*;
 
 fn main() {
-    std::env::set_var("RUST_LOG", "debug");
+    //std::env::set_var("RUST_LOG", "debug");
     pretty_env_logger::init();
     
     match get_file_to_compile_from_invocation_arguments() {

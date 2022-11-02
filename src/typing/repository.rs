@@ -4,7 +4,7 @@ use log::debug;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::types::*;
-
+use crate::errors::*;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct FindTypeCriteria { 
@@ -16,7 +16,7 @@ pub fn find_type_by_name(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     name: &mut String
-) -> OptionalRuntimeTypePointer {
+) -> RuntimeTypePointerResult {
     find_type_by_name_and_args(ctx, type_repository, name, vec!())
 }
 
@@ -26,7 +26,7 @@ pub fn find_type_by_name_and_args(
     type_repository: &CompilationActorHandle,
     name: &mut String,
     arg_types: RuntimeTypePointers    
-) -> OptionalRuntimeTypePointer {
+) -> RuntimeTypePointerResult {
     find_type_from_criteria(
         create_find_type_criteria_with_name_and_args(name.to_string(), arg_types),
         ctx,
@@ -43,7 +43,7 @@ pub fn create_find_type_criteria_with_name_and_args(name: String, args: RuntimeT
     FindTypeCriteria { name, args }
 }
 
-pub fn find_type_from_criteria(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> OptionalRuntimeTypePointer {
+pub fn find_type_from_criteria(criteria: FindTypeCriteria, ctx: &CompilationMessageContext, type_repository: &CompilationActorHandle) -> RuntimeTypePointerResult {
     send_find_type_request(type_repository, criteria, ctx);  
     await_type_found_response(ctx)
 }
@@ -53,16 +53,21 @@ fn send_find_type_request(type_repository: &CompilationActorHandle, criteria: Fi
     send_message_to_actor(type_repository, create_find_type_request(criteria, create_self_handle(ctx)))
 }
 
-fn await_type_found_response(ctx: &CompilationMessageContext) -> OptionalRuntimeTypePointer {    
-    let mut result = None;
+fn await_type_found_response(ctx: &CompilationMessageContext) -> RuntimeTypePointerResult {    
+    let mut result = Err(no_error());
     
     await_message(ctx, |message| {
-        let resolved_type = try_get_type_found_compilation_message(message);
-        if resolved_type.is_some() {
-            result = resolved_type;
-            return true;
+        match message {
+            CompilationMessage::TypeFound(resolved_type) => {
+                result = Ok(resolved_type);
+                true
+            },
+            CompilationMessage::TypeRequestReleaseDueToError(error) => {
+                result = Err(error);
+                true
+            },
+            _ => false
         }
-        false
     });
 
     result
@@ -112,6 +117,8 @@ impl Actor<CompilationMessage> for TypeRepositoryActor {
                 handle_find_type(self, criteria, respond_to),
             CompilationMessage::AddResolvedType(resolved_type) => 
                 handle_add_resolved_type(self, resolved_type),
+            CompilationMessage::ShutDown => 
+                handle_shutdown(self),
             _ => continue_listening_after_receive()
         }
     }
@@ -131,6 +138,12 @@ fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type:
     service_find_type_requests(repository);
     continue_listening_after_receive()
 }
+
+fn handle_shutdown(repository: &mut TypeRepositoryActor) -> AfterReceiveAction {
+    release_all_type_requests_due_to_error(repository, shutdown_requested_error());
+    shutdown_after_receive()
+}
+
 
 fn add_find_type_request(repository: &mut TypeRepositoryActor,  request: FindTypeRequest) {
     repository.find_type_requests.push(request);

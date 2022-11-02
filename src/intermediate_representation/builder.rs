@@ -2,7 +2,8 @@ use crate::{
     acting::*,
     compilation::*,
     parsing::*,
-    intermediate_representation::*
+    intermediate_representation::*,
+    errors::*
 };
 
 pub struct IntemediateRepresentationActor;
@@ -14,17 +15,17 @@ pub fn create_intemediate_representation_actor() -> IntemediateRepresentationAct
 impl Actor<CompilationMessage> for IntemediateRepresentationActor {
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::BuildByteCode { mut unit, compiler } =>
-                build_bytecode(&mut unit, &compiler),
+            CompilationMessage::BuildByteCode { unit, compiler } =>
+                build_bytecode(unit, &compiler),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn build_bytecode(unit: &mut CompilationUnit, compiler: &CompilationActorHandle) -> AfterReceiveAction {    
+fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle) -> AfterReceiveAction {    
     let mut ir = create_intermediate_representation(unit.id, unit.filename.clone());    
-    build_bytecode_at_root(unit, &mut ir);
-    send_message_to_actor(compiler, create_byte_code_built_event(ir));
+    build_bytecode_at_root(&mut unit, &mut ir);
+    send_message_to_actor(compiler, create_byte_code_built_event(unit, ir));
     shutdown_after_receive()
 }
 

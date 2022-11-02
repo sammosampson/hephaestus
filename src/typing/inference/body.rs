@@ -3,6 +3,7 @@ use crate::parsing::*;
 use crate::compilation::*;
 use crate::typing::*;
 use crate::types::*;
+use crate::errors::*;
 
 pub type LocalTypes = RuntimeTypePointers;
 
@@ -144,15 +145,17 @@ pub fn perform_typing_for_procedure_call_return_first_return_type(
 ) -> RuntimeTypePointers {  
     let resolved_arg_types = perform_typing_for_unknown_target_type_args(ctx, type_repository, local_type_map, args, errors);
     
-    if let Some(resolved_type) = find_type_by_name_and_args(ctx, type_repository, name, resolved_arg_types) {
-        *type_id = resolved_resolvable_type(resolved_type.clone());
-        
-        if let Some((_arg_types, return_types)) = try_get_procedure_definition_runtime_type_item(&resolved_type.item) {
-            return return_types;
-        }
-    } else {
-        add_type_inference_error(errors, type_cannot_be_found_error(), position)
-    }
+    match find_type_by_name_and_args(ctx, type_repository, name, resolved_arg_types) {
+        Ok(resolved_type) => {
+            *type_id = resolved_resolvable_type(resolved_type.clone());
+            if let Some((_arg_types, return_types)) = try_get_procedure_definition_runtime_type_item(&resolved_type.item) {
+                return return_types;
+            }
+        }        
+        Err(error) => {
+            add_compilation_error(errors, create_compilation_error(error, position));
+        },
+    }       
 
     vec!()
 }

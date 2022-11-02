@@ -1,7 +1,7 @@
 use crate::{
     parsing::*,
     intermediate_representation::*,
-    compilation::*,
+    errors::*,
     types::*
 };
 

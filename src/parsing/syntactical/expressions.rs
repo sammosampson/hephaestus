@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::compilation::*;
+use crate::errors::*;
 use crate::types::*;
 
 pub fn parse_expression(lexer: &mut Lexer, lhs: AbstractSyntaxNode, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {

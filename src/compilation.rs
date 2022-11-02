@@ -9,57 +9,10 @@ use crate::{
     intermediate_representation::*,
     backends::*,
     types::*,
-    utilities::*
+    errors::*
 };
 
 use log::*;
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum CompilationErrorItem {
-    ParseError(ParseError),
-    TypeInferenceError(TypeInferenceError),
-    IntermediateRepresentationError(IntermediateRepresentationError),
-    ToDo{function: String, text: String, },
-}
-
-pub fn type_inference_error(error: TypeInferenceError) -> CompilationErrorItem {
-    CompilationErrorItem::TypeInferenceError(error)
-}
-
-pub fn intermediate_representation_error(error: IntermediateRepresentationError) -> CompilationErrorItem {
-    CompilationErrorItem::IntermediateRepresentationError(error)
-}
-
-pub fn todo_error(function: &str, text: &str) -> CompilationErrorItem {
-    CompilationErrorItem::ToDo { function: string(function), text: string(text) }
-}
-
-pub fn todo(errors: &mut CompilationErrors, function: &str, text: &str) {
-    add_compilation_error(errors, create_compilation_error(todo_error(function, text), no_position()));
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub struct CompilationError {
-    item: CompilationErrorItem,
-    position: SourceFilePosition,
-}
-
-pub fn create_compilation_error(item: CompilationErrorItem, position: SourceFilePosition) -> CompilationError {
-    CompilationError {
-        item,
-        position,
-    }
-}
-
-pub type CompilationErrors = Vec<CompilationError>;
-
-pub fn create_compilation_errors() -> CompilationErrors {
-    vec!()
-}
-
-pub fn add_compilation_error(errors: &mut CompilationErrors, error: CompilationError) {
-    errors.push(error);
-}
 
 #[derive(Clone, Debug)]
 pub enum CompilationMessage {
@@ -75,10 +28,12 @@ pub enum CompilationMessage {
     TypeRequestReleaseDueToError(CompilationErrorItem),
     AddResolvedType(RuntimeTypePointer),
     BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
-    ByteCodeBuilt { code: IntermediateRepresentation },
+    ByteCodeBuilt { unit: CompilationUnit, code: IntermediateRepresentation },
     BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle },
     BackendBuilt { id: CompilationUnitId, result: BackendErrorResult },
     CompilationComplete,
+    ReportErrors { errors: CompilationErrors },
+    ShutDown,
 }
 
 pub trait WireTapCompilationMessage : Send + 'static {
@@ -147,8 +102,8 @@ pub fn create_build_byte_code_command(unit: CompilationUnit, compiler: Compilati
     CompilationMessage::BuildByteCode { unit, compiler }
 }
 
-pub fn create_byte_code_built_event(code: IntermediateRepresentation) -> CompilationMessage {
-    CompilationMessage::ByteCodeBuilt { code }
+pub fn create_byte_code_built_event(unit: CompilationUnit, code: IntermediateRepresentation) -> CompilationMessage {
+    CompilationMessage::ByteCodeBuilt { unit, code }
 }
 
 pub fn create_build_backend_command(code: IntermediateRepresentation, compiler: CompilationActorHandle) -> CompilationMessage {
@@ -163,11 +118,14 @@ fn create_compilation_complete_event() -> CompilationMessage {
     CompilationMessage::CompilationComplete
 }
 
-pub fn try_get_type_found_compilation_message(message: CompilationMessage) -> Option<RuntimeTypePointer> {
-    if let CompilationMessage::TypeFound(resolved_type) = message {
-       return Some(resolved_type);
-    }
-    None
+
+fn create_report_errors_command(errors: CompilationErrors) -> CompilationMessage {
+    CompilationMessage::ReportErrors { errors }
+}
+
+
+fn create_shutdown_command() -> CompilationMessage {
+    CompilationMessage::ShutDown
 }
 
 pub fn compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
@@ -177,8 +135,9 @@ pub fn compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireT
     message_wire_tap: TMessageWireTap
 ) {
     let (type_repository_handle, ..) = start_singleton_actor(create_type_repository_actor());
+    let (error_reporter_handle, ..) = start_singleton_actor(create_error_reporter_actor());
     let (compiler_handle, compiler_shutdown_notifier) = start_singleton_actor(
-        create_compiler_actor(type_repository_handle, reader, backend, message_wire_tap)
+        create_compiler_actor(type_repository_handle, error_reporter_handle, reader, backend, message_wire_tap)
     );
     
     send_message_to_actor(
@@ -210,13 +169,16 @@ fn compilation_requested_list_is_empty(lookup: &CompilationUnitsRequestedList) -
 struct CompilerActor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> {
     compilation_units_requested_list: CompilationUnitsRequestedList,
     type_repository: CompilationActorHandle,
+    error_reporter: CompilationActorHandle,
     reader: TReader,
     backend: TBackend,
-    message_wire_tap: TMessageWireTap
+    message_wire_tap: TMessageWireTap,
+    errors_exist: bool
 }
 
 fn create_compiler_actor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     type_repository: CompilationActorHandle,
+    error_reporter: CompilationActorHandle,
     reader: TReader,
     backend: TBackend, 
     message_wire_tap: TMessageWireTap
@@ -224,9 +186,11 @@ fn create_compiler_actor<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     CompilerActor {
         compilation_units_requested_list: create_compilation_units_requested_list(),
         type_repository,
+        error_reporter, 
         reader,
         backend,
-        message_wire_tap
+        message_wire_tap,
+        errors_exist: false
     }
 }
 
@@ -234,6 +198,16 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         self.message_wire_tap.tap(&message);
 
+        if self.errors_exist {
+            return self.error_state_handling(message, ctx)
+        }
+
+        self.normal_state_handling(message, ctx)
+    }
+}
+
+impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> CompilerActor<TReader, TBackend, TMessageWireTap> {
+    fn normal_state_handling(&mut self, message: CompilationMessage, ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
         match message {
             CompilationMessage::Compile(file_name) =>
                 handle_compile(file_name, ctx, self.reader.clone()),
@@ -243,7 +217,7 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
                 handle_unit_typed(self, unit, resolved_types, ctx),
             CompilationMessage::UnitSized { unit } => 
                 handle_unit_sized(self, unit, ctx),
-            CompilationMessage::ByteCodeBuilt { code } => 
+            CompilationMessage::ByteCodeBuilt { code, .. } => 
                 handle_byte_code_built(self, code, ctx, self.backend.clone()),
             CompilationMessage::BackendBuilt { id, .. } => 
                 handle_backend_built(self, id, ctx),
@@ -251,6 +225,37 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
             _ => continue_listening_after_receive()
         }
     }
+
+    fn error_state_handling(&mut self, message: CompilationMessage, ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
+        match message {
+            CompilationMessage::Compile(file_name) =>
+                handle_compile(file_name, ctx, self.reader.clone()),
+            _ => continue_listening_after_receive()
+        }
+    }
+}
+
+fn handle_any_errors<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>, 
+    unit: &CompilationUnit) -> bool {
+    
+    if unit.errors.len() == 0 {
+        return false;
+    }
+
+    send_message_to_actor(
+        &compiler.type_repository, 
+        create_shutdown_command()
+    );
+
+    send_message_to_actor(
+        &compiler.error_reporter, 
+        create_report_errors_command(unit.errors.clone())
+    );
+    
+    compiler.errors_exist = true;
+
+    return true
 }
 
 fn handle_compile<TReader: FileRead>(
@@ -289,13 +294,17 @@ fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap
 }
 
 fn handle_unit_typed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &CompilerActor<TReader, TBackend, TMessageWireTap>, 
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>, 
     unit: CompilationUnit,
     resolved_types: RuntimeTypePointers,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     
     debug!("handling unit typed for {:?}", unit.id);
+
+    if handle_any_errors(compiler, &unit) {
+        return continue_listening_after_receive();
+    }
     
     for resolved_type in resolved_types {
         send_message_to_actor(&compiler.type_repository, create_add_resolved_type_command(resolved_type));

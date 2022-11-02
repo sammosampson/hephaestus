@@ -23,7 +23,7 @@ pub fn compile_file_and_get_intemediate_representation(file_path: &str, reader: 
     loop {
         let next_message = message_receiver.recv().unwrap();
         match next_message {
-            CompilationMessage::ByteCodeBuilt { code } => result.push(code),
+            CompilationMessage::ByteCodeBuilt { code, .. } => result.push(code),
             CompilationMessage::CompilationComplete => break,           
             _ => {}
         }

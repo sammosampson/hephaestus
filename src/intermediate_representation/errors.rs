@@ -1,4 +1,4 @@
-use crate::compilation::*;
+use crate::errors::*;
 use crate::parsing::*;
 
 #[derive(PartialEq, Debug, Clone)]

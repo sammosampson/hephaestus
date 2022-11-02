@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::compilation::*;
+use crate::errors::*;
 
 pub fn parse_literal(literal: UnresolvedLiteral, lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     let node = create_node(literal_item(unresolved_resolvable_literal(literal)), position);

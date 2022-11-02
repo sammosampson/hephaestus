@@ -14,6 +14,7 @@ mod collections;
 mod acting;
 mod strings;
 mod types;
+mod errors;
 
 pub use utilities::*;
 pub use testing::*;
@@ -30,3 +31,4 @@ pub use collections::*;
 pub use acting::*;
 pub use strings::*;
 pub use types::*;
+pub use errors::*;

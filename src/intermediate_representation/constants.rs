@@ -1,6 +1,6 @@
 use crate::{
     parsing::*,
-    compilation::*,
+    errors::*,
     intermediate_representation::*,
     strings::*
 };

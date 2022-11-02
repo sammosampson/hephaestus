@@ -1,5 +1,5 @@
 use crate::parsing::*;
-use crate::compilation::*;
+use crate::errors::*;
 use crate::types::*;
 
 pub fn parse_inferred_value_assignment(name: String, lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {

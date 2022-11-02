@@ -1,6 +1,6 @@
 use crate::parsing::*;
 use crate::types::*;
-use crate::compilation::*;
+use crate::errors::*;
 
 pub fn parse_top_level_declaration(
     filename: String,

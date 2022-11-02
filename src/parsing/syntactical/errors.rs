@@ -1,6 +1,6 @@
 use crate::{
     parsing::*,
-    compilation::*
+    errors::*
 };
 
 #[derive(PartialEq, Debug, Clone)]

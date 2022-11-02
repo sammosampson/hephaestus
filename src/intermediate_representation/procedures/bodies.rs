@@ -1,7 +1,7 @@
 use crate::{
     parsing::*,
     intermediate_representation::*,
-    compilation::*
+    errors::*
 };
 
 pub fn build_bytecode_at_procedure_body(

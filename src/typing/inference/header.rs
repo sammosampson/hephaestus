@@ -3,7 +3,7 @@ use crate::threading::*;
 use crate::types::*;
 use crate::typing::*;
 use crate::utilities::*;
-use crate::compilation::*;
+use crate::errors::*;
 
 pub fn perform_typing_for_procedure_header(
     unit_id: CompilationUnitId,

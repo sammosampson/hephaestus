@@ -3,6 +3,7 @@ use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::utilities::*;
+use crate::errors::*;
 
 pub struct ParserActor<T: FileRead> { file_reader: T }
 

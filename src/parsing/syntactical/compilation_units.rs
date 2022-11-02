@@ -1,5 +1,5 @@
 use uuid::*;
-use crate::{parsing::*, compilation::*};
+use crate::{parsing::*, errors::*};
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
 pub struct CompilationUnitId {
