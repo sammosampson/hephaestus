@@ -172,7 +172,6 @@ fn service_find_type_request(repository: &TypeRepositoryActor, request: &FindTyp
     let resolved_type = repository.type_map.get(&request.criteria);
 
     if let Some(resolved_type) = resolved_type {
-        println!("releasing type: {:?}", &request.criteria.name);
         send_message_to_actor(&request.respond_to, create_type_found_event(resolved_type.clone()));
         return true;
     }
@@ -186,7 +185,6 @@ fn release_all_type_requests_due_to_error(repository: &mut TypeRepositoryActor, 
 }
 
 fn release_type_request_due_to_error(request: &FindTypeRequest, error: CompilationErrorItem) {
-    println!("releasing type: {:?}", &request.criteria.name);
     send_message_to_actor(&request.respond_to, type_request_released_due_to_error_event(error));
 }
 

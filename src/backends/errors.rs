@@ -1,6 +1,6 @@
 use crate::utilities::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BackendError {
     UnsupportedInstruction,
     UnimplementedInstruction,

@@ -1,3 +1,4 @@
+use crate::BackendError;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::parsing::*;
@@ -36,6 +37,8 @@ fn report_error(filename: &str, error: &CompilationError) {
         CompilationErrorItem::IntermediateRepresentationError(ir_error) => report_intermediate_representation_error(filename, ir_error, error.position),
         CompilationErrorItem::ToDo { function, text } => report_todo_error(filename, function, text, error.position),
         CompilationErrorItem::ShutDownRequested => {},
+        CompilationErrorItem::FileNotFound(filename) => report_file_not_found_error(filename),
+        CompilationErrorItem::BackendError(backend_error) => report_backend_error(backend_error),
     }
 }
 
@@ -122,6 +125,21 @@ fn report_todo_error(filename: &str, function: &str, text: &str, position: Sourc
     output_error(filename, &format!("TODO: {} - {}", function, text), position);
 }
 
+
+
+fn report_file_not_found_error(filename: &str) {
+    println!("{} not found", filename);
+}
+
+fn report_backend_error(backend_error: &BackendError) {
+    match backend_error {
+        BackendError::UnsupportedInstruction => println!("Unsupported x64 instruction"),
+        BackendError::UnimplementedInstruction => println!("Unimplemented x64 instruction"),
+        BackendError::UnimplementedFeature(feature) => println!("Unimplemented x64 feature: {}", feature),
+        BackendError::RegisterNotAvailable(register) => println!("x64 register: {} not available", register),
+    }
+}
+
 fn output_error(filename: &str, text: &str, position: SourceFilePosition) {
     println!("{}", text);
     println!("file: {}, line: {}, column: {}", filename, position.line, position.col);
@@ -130,15 +148,21 @@ fn output_error(filename: &str, text: &str, position: SourceFilePosition) {
 #[derive(PartialEq, Debug, Clone)]
 pub enum CompilationErrorItem {
     None,
+    FileNotFound(String),
     ParseError(ParseError),
     TypeInferenceError(TypeInferenceError),
     IntermediateRepresentationError(IntermediateRepresentationError),
+    BackendError(BackendError),
     ToDo{function: String, text: String, },
     ShutDownRequested,
 }
 
 pub fn no_error() -> CompilationErrorItem {
     CompilationErrorItem::None
+}
+
+pub fn file_not_found_error(filename: String) -> CompilationErrorItem {
+    CompilationErrorItem::FileNotFound(filename)
 }
 
 pub fn type_inference_error(error: TypeInferenceError) -> CompilationErrorItem {
@@ -155,6 +179,10 @@ pub fn todo_error(function: &str, text: &str) -> CompilationErrorItem {
 
 pub fn shutdown_requested_error() -> CompilationErrorItem {
     CompilationErrorItem::ShutDownRequested
+}
+
+pub fn backend_error(error: BackendError) -> CompilationErrorItem {
+    CompilationErrorItem::BackendError(error)
 }
 
 pub fn todo(errors: &mut CompilationErrors, function: &str, text: &str) {

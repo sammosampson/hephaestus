@@ -33,7 +33,6 @@ fn handle_perform_sizing(
 pub fn perform_sizing(
     _ctx: &CompilationMessageContext,
     _type_repository: &CompilationActorHandle,
-    unit: &mut CompilationUnit
+    _unit: &mut CompilationUnit
 ) {
-    println!("perform_sizing for {:?}", unit.id);
 }
