@@ -124,7 +124,6 @@ fn create_report_errors_command(filename: String, errors: CompilationErrors) -> 
     CompilationMessage::ReportErrors { filename, errors }
 }
 
-
 fn create_shutdown_command() -> CompilationMessage {
     CompilationMessage::ShutDown
 }
