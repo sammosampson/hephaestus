@@ -1,2 +1,2 @@
 # hephaestus
-compiler for a new language
+compiler for th jai language written in rust
