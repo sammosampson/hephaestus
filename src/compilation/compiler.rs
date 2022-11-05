@@ -136,12 +136,15 @@ pub fn compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireT
         create_compiler_actor(type_repository_handle, error_reporter_handle, reader, backend, message_wire_tap)
     );
     
+    start_compilation(compiler_handle, file_name);
+    await_shutdown(&compiler_shutdown_notifier);
+}
+
+fn start_compilation(compiler_handle: ActorHandle<CompilationMessage>, file_name: String) {
     send_message_to_actor(
         &compiler_handle, 
         create_compile_command(file_name)
     );
-
-    await_shutdown(&compiler_shutdown_notifier);
 }
 
 pub struct CompilerActor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> {
@@ -203,28 +206,9 @@ impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilat
             _ => continue_listening_after_receive()
         }
     }
-
-    fn error_state_handling(&mut self, message: CompilationMessage, ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
-        match message {
-            CompilationMessage::Compile(file_name) =>
-                handle_compile(file_name, ctx, self.reader.clone()),
-            CompilationMessage::FileParsed(parse_result) =>
-                handle_file_parsed_in_error_state(self, parse_result, ctx),
-            CompilationMessage::UnitTyped { unit, .. } => 
-                handle_after_compile_in_error_state(self, unit.id, &unit.filename, unit.errors, ctx),
-            CompilationMessage::UnitSized { unit } => 
-                handle_after_compile_in_error_state(self, unit.id, &unit.filename, unit.errors, ctx),
-            CompilationMessage::ByteCodeBuilt { unit, .. } => 
-                handle_after_compile_in_error_state(self, unit.id, &unit.filename, unit.errors, ctx),
-            CompilationMessage::BackendBuilt { id, result } => 
-                handle_backend_built_in_error_state(self, id, result, ctx),
-            CompilationMessage::CompilationComplete => shutdown_after_receive(),
-            _ => continue_listening_after_receive()
-        }
-    }
 }
 
-fn handle_compile<TReader: FileRead>(
+pub fn handle_compile<TReader: FileRead>(
     file_name: String,
     ctx: &CompilationMessageContext,
     reader: TReader
@@ -239,11 +223,14 @@ fn handle_compile<TReader: FileRead>(
 
     let compiler_handle = create_self_handle(ctx);
     
+    parse_file(parser_handle, file_name, compiler_handle);
+    continue_listening_after_receive()
+}
+
+fn parse_file(parser_handle: ActorHandle<CompilationMessage>, file_name: String, compiler_handle: ActorHandle<CompilationMessage>) {
     send_message_to_actor(
         &parser_handle, 
         create_parse_file_command(file_name, compiler_handle)
     );
-
-    continue_listening_after_receive()
 }
 

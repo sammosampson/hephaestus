@@ -24,17 +24,25 @@ pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessag
         return continue_listening_after_receive();
     }
     
+    let byte_code_runner = start_backend_actor(ctx, backend);
+
+    let compiler_handle = create_self_handle(&ctx);
+
+    build_backend(byte_code_runner, code, compiler_handle);
+    continue_listening_after_receive()
+}
+
+fn start_backend_actor<TBackend: BackendBuild>(ctx: &ActorContext<CompilationMessage>, backend: TBackend) -> ActorHandle<CompilationMessage> {
     let (byte_code_runner, ..) = start_actor(
         ctx, 
         create_backend_actor(backend)
     );
+    byte_code_runner
+}
 
-    let compiler_handle = create_self_handle(&ctx);
-
+fn build_backend(byte_code_runner: ActorHandle<CompilationMessage>, code: IntermediateRepresentation, compiler_handle: ActorHandle<CompilationMessage>) {
     send_message_to_actor(
         &byte_code_runner, 
         create_build_backend_command(code, compiler_handle)
     );
-
-    continue_listening_after_receive()
 }

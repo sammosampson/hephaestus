@@ -21,17 +21,25 @@ pub fn handle_unit_sized<TReader: FileRead, TBackend: BackendBuild, TMessageWire
         return continue_listening_after_receive();
     }
     
+    let intemediate_representation_handle = start_sizing_actor(ctx);
+
+    let compiler_handle = create_self_handle(&ctx);
+
+    perform_sizing(intemediate_representation_handle, unit, compiler_handle);
+    continue_listening_after_receive()
+}
+
+fn start_sizing_actor(ctx: &ActorContext<CompilationMessage>) -> ActorHandle<CompilationMessage> {
     let (intemediate_representation_handle, ..) = start_actor(
         ctx, 
         create_intemediate_representation_actor()
     );
+    intemediate_representation_handle
+}
 
-    let compiler_handle = create_self_handle(&ctx);
-
+fn perform_sizing(intemediate_representation_handle: ActorHandle<CompilationMessage>, unit: CompilationUnit, compiler_handle: ActorHandle<CompilationMessage>) {
     send_message_to_actor(
         &intemediate_representation_handle, 
         create_build_byte_code_command(unit, compiler_handle)
     );
-
-    continue_listening_after_receive()
 }

@@ -37,22 +37,35 @@ fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, T
     
 
     for unit in units {
-        let (typing_handle, ..) = start_actor(
-            &ctx, 
-            create_typing_actor()
-        );
-        
-        send_message_to_actor(
-            &typing_handle, 
-            create_perform_typing_command(
-                unit, 
-                compiler.type_repository.clone(), 
-                create_self_handle(ctx)
-            )
-        );
+        let typing_handle = start_typing_actor(ctx);
+        perform_typing(compiler, typing_handle, unit, ctx);
     }
 
     continue_listening_after_receive()
+}
+
+fn start_typing_actor(ctx: &ActorContext<CompilationMessage>) -> ActorHandle<CompilationMessage> {
+    let (typing_handle, ..) = start_actor(
+        &ctx, 
+        create_typing_actor()
+    );
+    typing_handle
+}
+
+fn perform_typing<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
+    typing_handle: ActorHandle<CompilationMessage>,
+    unit: CompilationUnit,
+    ctx: &ActorContext<CompilationMessage>
+) {
+    send_message_to_actor(
+        &typing_handle, 
+        create_perform_typing_command(
+            unit, 
+            compiler.type_repository.clone(), 
+            create_self_handle(ctx)
+        )
+    );
 }
 
 fn process_parse_file_not_found<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
