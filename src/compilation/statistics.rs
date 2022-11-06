@@ -1,10 +1,25 @@
 use std::collections::HashMap;
+use log::*;
 
 use crate::{
-    parsing::*
+    compilation::*,
+    parsing::*,
+    backends::*,
+    file_system::*
 };
 
 pub type CompilationUnitsRequestedList = HashMap<CompilationUnitId, CompilationUnitId>;
+
+pub fn register_units_with_statistics<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
+    units: &Vec<CompilationUnit>
+) {
+    for unit in units {
+        register_compilation_requested(&mut compiler.compilation_units_requested_list, unit.id);
+    }
+    
+    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
+}
 
 pub fn create_compilation_units_requested_list() -> HashMap<CompilationUnitId, CompilationUnitId> {
     HashMap::default()

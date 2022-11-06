@@ -29,12 +29,7 @@ fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, T
 
     debug!("process parsed compilation units for {:?} units", units.len());
     
-    for unit in &units {
-        register_compilation_requested(&mut compiler.compilation_units_requested_list, unit.id);
-    }
-
-    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
-    
+    register_units_with_statistics(compiler, &units);    
 
     for unit in units {
         let typing_handle = start_typing_actor(ctx);
