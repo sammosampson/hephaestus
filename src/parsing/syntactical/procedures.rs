@@ -87,7 +87,10 @@ fn parse_procedure_call_keyword(keyword: Keyword, position: SourceFilePosition, 
 pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
     let args = parse_procedure_args(lexer, errors);
     
-    assert!(is_close_paren(&peek_next_token(lexer).item));
+    if errors.len() == 0 {
+        assert!(is_close_paren(&peek_next_token(lexer).item));
+    }
+    
     eat_next_token(lexer);
 
     let return_types = parse_procedure_return_types(lexer, errors);
@@ -95,10 +98,12 @@ pub fn parse_procedure_header(filename: String, name: String, lexer: &mut Lexer,
     let mut body_ref = unknown_procedure_body_reference();
 
     if is_open_brace(&peek_next_token(lexer).item) {
+        let mut body_errors = create_compilation_errors();
+
         let body = create_unit(
             filename, 
-            parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone(), errors),
-            create_compilation_errors()
+            parse_procedure_body(lexer, name.clone(), args.clone(), return_types.clone(), &mut body_errors),
+            body_errors
         );
         body_ref = local_procedure_body_reference(body.id);
         units.push(body);
@@ -196,7 +201,10 @@ fn parse_procedure_body(
     let brace = get_next_token(lexer);
     let statements = parse_procedure_body_statements(lexer, errors);
     
-    assert!(is_close_brace(&peek_next_token(lexer).item));
+    if errors.len() == 0 {
+        assert!(is_close_brace(&peek_next_token(lexer).item));
+    }
+
     eat_next_token(lexer);
 
     create_node(procedure_body_item(name, args, return_types, statements), brace.position)
@@ -224,6 +232,10 @@ fn parse_procedure_body_statements(lexer: &mut Lexer, errors: &mut CompilationEr
 
     loop {
         statements.push(parse_procedure_body_statement(lexer, errors));
+
+        if errors.len() > 0 {
+            return statements
+        }
 
         if is_line_terminiator(&peek_next_token(lexer).item) {
             eat_next_token(lexer)

@@ -25,8 +25,12 @@ impl Actor<CompilationMessage> for IntemediateRepresentationActor {
 fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle) -> AfterReceiveAction {    
     let mut ir = create_intermediate_representation(unit.id, unit.filename.clone());    
     build_bytecode_at_root(&mut unit, &mut ir);
-    send_message_to_actor(compiler, create_byte_code_built_event(unit, ir));
+    notify_compiler_byte_code_built_for_unit(compiler, unit, ir);
     shutdown_after_receive()
+}
+
+fn notify_compiler_byte_code_built_for_unit(compiler: &CompilationActorHandle, unit: CompilationUnit, ir: IntermediateRepresentation) {
+    send_message_to_actor(compiler, create_byte_code_built_event(unit, ir));
 }
 
 fn build_bytecode_at_root(unit: &mut CompilationUnit, ir: &mut IntermediateRepresentation) {

@@ -13,7 +13,7 @@ pub fn create_statistics() -> Statistics {
     HashMap::default()
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum CompilationPhase{
     Parsing,
     Typing,
@@ -44,11 +44,10 @@ pub fn backend_build_compilation_phase() -> CompilationPhase {
 
 pub fn register_units_with_statistics(
     statistics: &mut Statistics,
-    units: &Vec<CompilationUnit>,
-    ctx: &CompilationMessageContext
+    units: &Vec<CompilationUnit>
 ) {
     for unit in units {
-        end_compilation_phase_in_statistics(statistics, parsing_compilation_phase(), unit.id, ctx);
+        log_end_compilation_phase(parsing_compilation_phase(), unit.id);
         register_unit_with_statistics(statistics, unit.id);
     }
     
@@ -62,7 +61,13 @@ pub fn start_compilation_phase_in_statistics(_statistics: &mut Statistics, phase
 
 pub fn end_compilation_phase_in_statistics(statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId, ctx: &CompilationMessageContext) {
     log_end_compilation_phase(phase, id);
-    remove_unit_from_statistics_and_check_for_completion(statistics, id, ctx);
+    if is_final_phase(phase) {
+        remove_unit_from_statistics_and_check_for_completion(statistics, id, ctx);
+    }
+}
+
+fn is_final_phase(phase: CompilationPhase) -> bool {
+    phase == CompilationPhase::BackendBuild
 }
 
 fn remove_unit_from_statistics_and_check_for_completion(statistics: &mut Statistics, id: CompilationUnitId, ctx: &CompilationMessageContext) {

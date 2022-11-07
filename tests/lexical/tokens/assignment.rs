@@ -18,6 +18,20 @@ fn compound_get_for_typed_variable() {
 }
 
 #[test]
+fn compound_get_for_invalid_typed_variable() {
+    let mut lexer = lex("x:! u32;");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Error(create_unknown_token_error('!')));
+}
+
+#[test]
 fn compound_get_for_typed_variable_with_initial_asignment() {
     let mut lexer = lex("x: u32 = 1;");
 
@@ -38,6 +52,20 @@ fn compound_get_for_typed_variable_with_initial_asignment() {
     
     let token = get_next_token(&mut lexer);
     assert_eq!(token.item, SourceTokenItem::Terminator(Terminator::Line));
+}
+
+#[test]
+fn compound_get_for_invalid_typed_variable_with_initial_asignment() {
+    let mut lexer = lex("x :! s32 = 1;");
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Identifier("x".to_string()));
+    
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Assignment(Assignment::Initialise));
+
+    let token = get_next_token(&mut lexer);
+    assert_eq!(token.item, SourceTokenItem::Error(create_unknown_token_error('!')));
 }
 
 #[test]

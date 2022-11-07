@@ -23,7 +23,11 @@ pub enum ParseError {
 }
 
 pub fn create_error_node(error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(AbstractSyntaxNodeItem::Error(error), position)
+    create_node(error_item(error), position)
+}
+
+pub fn error_item(error: ParseError) -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Error(error)
 }
 
 pub fn create_error_and_error_node(errors: &mut CompilationErrors, error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNode {

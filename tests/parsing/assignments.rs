@@ -34,6 +34,32 @@ fn parse_typed_assigment_parses_correctly() {
 }                       
 
 #[test]
+fn parse_invalid_assigment_parses_correctly() {        
+    let units = run_parse_file_return_only_units("main :: () {
+        x :! s32 = 1;
+    }");
+
+    assert_eq!(units.len(), 3);
+    assert_eq!(
+        units[0].tree, 
+        node(
+            position(11, 1, 12),
+            procedure_body_item(
+                string("main"),
+                vec!(),
+                vec!(),
+                vec!(
+                    node(
+                        position(24, 2, 12),
+                        error_item(expected_type_error())
+                    )
+                )
+            )
+        )
+    )
+}                       
+
+#[test]
 fn parse_casted_assigment_parses_correctly() {        
     let units = run_parse_file_return_only_units("main :: () {
     x := cast(u32) 1;

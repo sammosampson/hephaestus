@@ -50,12 +50,17 @@ pub fn parse(filename: String, input: &str) -> CompilationUnits {
         let mut errors = create_compilation_errors();
 
         let node = parse_next_node(filename.clone(), &mut lexer, &mut units, &mut errors);
+        let has_errors = errors.len() > 0;
 
         if is_eof_node(&node) {
             break;
         }      
         
         units.push(create_unit(filename.clone(), node, errors));          
+
+        if has_errors {
+            break;
+        }
     }
 
     units

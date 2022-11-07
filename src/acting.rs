@@ -37,8 +37,8 @@ pub trait Actor<TMessage> : Parallelisable
     fn receive(&mut self, message: TMessage, ctx: &ActorContext<TMessage>) -> AfterReceiveAction;
 }
 
-pub fn send_message_to_actor<TMessage>(actor: &ActorHandle<TMessage>, message: TMessage) {
-    actor.sender.send(message).unwrap();
+pub fn send_message_to_actor<TMessage: core::fmt::Debug>(actor: &ActorHandle<TMessage>, message: TMessage) {
+    actor.sender.send(message).unwrap()
 }
 
 pub fn start_singleton_actor<TActor, TMessage>(actor: TActor) -> (ActorHandle<TMessage>, ActorShutdownNotifier)

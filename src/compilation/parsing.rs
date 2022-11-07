@@ -24,7 +24,7 @@ fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, T
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
 
-    register_units_with_statistics(&mut compiler.statistics, &units, ctx);    
+    register_units_with_statistics(&mut compiler.statistics, &units);    
 
     for unit in units {
         start_compilation_phase_in_statistics(&mut compiler.statistics, typing_compilation_phase(), unit.id);

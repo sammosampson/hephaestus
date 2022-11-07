@@ -31,7 +31,6 @@ pub fn parse_value_assignment_value(lexer: &mut Lexer, errors: &mut CompilationE
         SourceTokenItem::Error(error) => create_error_and_error_node(errors, tokenisation_error(error), token.position),
         SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
         SourceTokenItem::Keyword(keyword) => parse_value_assignment_keyword(keyword, lexer, token.position, errors),
-        
         _ => create_error_and_error_node(errors, unimplemented_error(), token.position),
     }
 }

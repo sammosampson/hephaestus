@@ -26,7 +26,7 @@ impl Actor<CompilationMessage> for TypingActor {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::PerformTyping { unit, type_repository, compiler} => 
-                handle_perform_typing(unit, ctx, &type_repository, compiler),
+                handle_perform_typing(unit, ctx, &type_repository, &compiler),
             _ => continue_listening_after_receive()
         }
     }
@@ -50,11 +50,15 @@ fn handle_perform_typing(
     mut unit: CompilationUnit, 
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle, 
-    compiler: CompilationActorHandle
+    compiler: &CompilationActorHandle
 ) -> AfterReceiveAction {
     let resolved_types = perform_typing(ctx, type_repository, &mut unit);
-    send_message_to_actor(&compiler, create_unit_typed_event(resolved_types, unit));    
+    notify_compiler_unit_has_been_typed(compiler, resolved_types, unit);    
     shutdown_after_receive()
+}
+
+fn notify_compiler_unit_has_been_typed(compiler: &CompilationActorHandle, resolved_types: RuntimeTypePointers, unit: CompilationUnit) {
+    send_message_to_actor(compiler, create_unit_typed_event(resolved_types, unit));
 }
 
 pub fn perform_typing(

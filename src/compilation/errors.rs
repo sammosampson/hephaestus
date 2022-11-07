@@ -15,7 +15,7 @@ impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilat
             CompilationMessage::Compile(file_name) =>
                 handle_compile(file_name, ctx, self.reader.clone()),
             CompilationMessage::FileParsed(parse_result) =>
-                handle_file_parsed_in_error_state(self, parse_result, ctx),
+                handle_file_parsed_in_error_state(self, parse_result),
             CompilationMessage::UnitTyped { unit, .. } => 
                 handle_after_compile_in_error_state(self, unit.id, &unit.filename, typing_compilation_phase(), unit.errors, ctx),
             CompilationMessage::UnitSized { unit } => 
@@ -32,22 +32,20 @@ impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilat
 
 pub fn handle_file_parsed_in_error_state<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> (
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
-    parse_result: FileParseResult,
-    ctx: &ActorContext<CompilationMessage>
+    parse_result: FileParseResult
 ) -> AfterReceiveAction {
     
     match parse_result {
-        FileParseResult::CompilationUnits { units, .. } => process_parsed_compilation_units_in_error_state(compiler, units, ctx),
+        FileParseResult::CompilationUnits { units, .. } => process_parsed_compilation_units_in_error_state(compiler, units),
         FileParseResult::NotFound(filename) => process_parse_file_not_found_in_error_state(compiler, filename)
     }
 }
 
 fn process_parsed_compilation_units_in_error_state<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
-    units: CompilationUnits,
-    ctx: &CompilationMessageContext
+    units: CompilationUnits
 ) -> AfterReceiveAction {
-    register_units_with_statistics(&mut compiler.statistics, &units, ctx);
+    register_units_with_statistics(&mut compiler.statistics, &units);
     continue_listening_after_receive()
 }
 
