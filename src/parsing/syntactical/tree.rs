@@ -1,8 +1,11 @@
 use crate::parsing::*;
 use crate::types::*;
+use crate::errors::*;
 
 pub type AbstractSyntaxChildNodeItem = Box<AbstractSyntaxNodeItem>;
 pub type AbstractSyntaxChildNodes = Vec<AbstractSyntaxNode>;
+pub type AbstractSyntaxNodeResult = Result<AbstractSyntaxNode, CompilationError>;
+pub type AbstractSyntaxChildNodesResult = Result<AbstractSyntaxChildNodes, CompilationError>;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct AbstractSyntaxNode {
@@ -96,6 +99,6 @@ pub enum AbstractSyntaxNodeItem {
     Literal(ResolvableLiteral),
     Identifier{ name: String, scope: Scope },
     Operator(Operator),
-    Error(ParseError),
+    Error,
     Eof
 }

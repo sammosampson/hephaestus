@@ -1,5 +1,5 @@
 use uuid::*;
-use crate::{parsing::*, errors::*};
+use crate::{parsing::*};
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
 pub struct CompilationUnitId {
@@ -22,16 +22,14 @@ pub fn create_compilation_unit_id() -> CompilationUnitId {
 pub struct CompilationUnit {
     pub id: CompilationUnitId,
     pub filename: String,
-    pub tree: AbstractSyntaxNode,
-    pub errors: CompilationErrors,
+    pub tree: AbstractSyntaxNode
 }
 
-pub fn create_unit(filename: String, tree: AbstractSyntaxNode, errors: CompilationErrors) -> CompilationUnit {
+pub fn create_unit(filename: String, tree: AbstractSyntaxNode) -> CompilationUnit {
     CompilationUnit {
         id: create_compilation_unit_id(),
         filename,
         tree,
-        errors
     }
 }
 

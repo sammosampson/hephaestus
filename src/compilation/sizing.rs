@@ -5,6 +5,7 @@ use crate::{
     acting::*,
     file_system::*,
     backends::*,
+    errors::*,
 };
 
 pub fn start_sizing_actor(ctx: &CompilationMessageContext) -> CompilationActorHandle {
@@ -30,12 +31,13 @@ pub fn perform_sizing(
 pub fn handle_unit_sized<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>, 
     unit: CompilationUnit,
+    errors: CompilationErrors,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     
     end_compilation_phase_in_statistics(&mut compiler.statistics, sizing_compilation_phase(), unit.id, ctx);
     
-    if handle_any_errors(compiler, &unit.filename, &unit.errors) {
+    if handle_any_errors(compiler, &errors) {
         return continue_listening_after_receive();
     }
     

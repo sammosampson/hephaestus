@@ -6,6 +6,7 @@ use crate::{
     intermediate_representation::*,
     backends::*,
     compilation::*,
+    errors::*
 };
 
 pub fn start_bytecode_creation_actor(ctx: &CompilationMessageContext) -> CompilationActorHandle {
@@ -26,6 +27,7 @@ pub fn perform_bytecode_creation(intemediate_representation_handle: CompilationA
 pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     unit: CompilationUnit,
+    errors: CompilationErrors,
     code: IntermediateRepresentation,
     ctx: &CompilationMessageContext,
     backend: TBackend
@@ -33,7 +35,7 @@ pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessag
 
     end_compilation_phase_in_statistics(&mut compiler.statistics, bytecode_creation_compilation_phase(), unit.id, ctx);
     
-    if handle_any_errors(compiler, &unit.filename, &unit.errors) {
+    if handle_any_errors(compiler, &errors) {
         return continue_listening_after_receive();
     }
     

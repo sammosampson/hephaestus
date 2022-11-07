@@ -19,6 +19,10 @@ pub fn string(value: &str) -> String {
     value.to_string()
 }
 
+pub fn empty_string() -> String {
+    string("")
+}
+
 pub fn is_int_string(to_check: &str) -> bool{
     parse_signed_64_from_string(to_check).is_ok() || parse_unsigned_64_from_string(to_check).is_ok()
 }

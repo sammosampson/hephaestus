@@ -30,7 +30,7 @@ pub fn handle_backend_built<TReader: FileRead, TBackend: BackendBuild, TMessageW
 ) -> AfterReceiveAction {    
     end_compilation_phase_in_statistics(&mut compiler.statistics, backend_build_compilation_phase(), id, ctx);
     
-    if handle_any_errors(compiler, "", &create_errors_for_backend_error_result(result)) {
+    if handle_any_errors(compiler, &create_errors_for_backend_error_result(result)) {
         return continue_listening_after_receive();
     }
     

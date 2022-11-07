@@ -23,27 +23,33 @@ impl Actor<CompilationMessage> for IntemediateRepresentationActor {
 }
 
 fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle) -> AfterReceiveAction {    
-    let mut ir = create_intermediate_representation(unit.id, unit.filename.clone());    
-    build_bytecode_at_root(&mut unit, &mut ir);
-    notify_compiler_byte_code_built_for_unit(compiler, unit, ir);
+    let mut ir = create_intermediate_representation(unit.id, unit.filename.clone());
+    let mut errors = create_compilation_errors(unit.filename.clone());
+    build_bytecode_at_root(&mut unit, &mut errors, &mut ir);
+    notify_compiler_byte_code_built_for_unit(compiler, unit, errors, ir);
     shutdown_after_receive()
 }
 
-fn notify_compiler_byte_code_built_for_unit(compiler: &CompilationActorHandle, unit: CompilationUnit, ir: IntermediateRepresentation) {
-    send_message_to_actor(compiler, create_byte_code_built_event(unit, ir));
+fn notify_compiler_byte_code_built_for_unit(
+    compiler: &CompilationActorHandle,
+    unit: CompilationUnit,
+    errors: CompilationErrors,
+    ir: IntermediateRepresentation
+) {
+    send_message_to_actor(compiler, create_byte_code_built_event(unit, errors, ir));
 }
 
-fn build_bytecode_at_root(unit: &mut CompilationUnit, ir: &mut IntermediateRepresentation) {
+fn build_bytecode_at_root(unit: &mut CompilationUnit, errors: &mut CompilationErrors, ir: &mut IntermediateRepresentation) {
     match unit.tree.item_ref() {
         AbstractSyntaxNodeItem::ProcedureHeader { name, .. } =>
             build_bytecode_at_procedure_header(ir, name),
         AbstractSyntaxNodeItem::ProcedureBody { name, args, statements, .. } =>
-            build_bytecode_at_procedure_body(ir, name, args, statements, &mut unit.errors),
+            build_bytecode_at_procedure_body(ir, name, args, statements, errors),
         AbstractSyntaxNodeItem::Constant { name, value, ..} =>
-            build_bytecode_at_top_root_const(ir, name, value, &mut unit.errors),
+            build_bytecode_at_top_root_const(ir, name, value, errors),
         AbstractSyntaxNodeItem::Struct { name, ..} =>
-            todo(&mut unit.errors, function!(), &format!("struct bytecode coming soon {}", name)),
+            todo(errors, function!(), &format!("struct bytecode coming soon {}", name)),
         item =>
-            todo(&mut unit.errors, function!(), &format!("Other root bytecode: {:?}", item))
+            todo(errors, function!(), &format!("Other root bytecode: {:?}", item))
     }    
 }

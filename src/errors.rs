@@ -15,16 +15,16 @@ pub fn create_error_reporter_actor() -> ErrorReporterActor {
 impl Actor<CompilationMessage> for ErrorReporterActor {
     fn receive(&mut self, message: CompilationMessage, _ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
         match message {
-            CompilationMessage::ReportErrors { filename, errors } => report_errors(&filename, &errors),
+            CompilationMessage::ReportErrors { errors } => report_errors(&errors),
             CompilationMessage::ShutDown => shutdown_after_receive(),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn report_errors(filename: &str, errors: &CompilationErrors) -> AfterReceiveAction {
-    for error in errors {
-        report_error(filename, error);
+fn report_errors(errors: &CompilationErrors) -> AfterReceiveAction {
+    for error in &errors.items {
+        report_error(&errors.filename, error);
     }
     continue_listening_after_receive()
 }
@@ -202,12 +202,23 @@ pub fn create_compilation_error(item: CompilationErrorItem, position: SourceFile
     }
 }
 
-pub type CompilationErrors = Vec<CompilationError>;
+#[derive(Clone, Debug)]
+pub struct CompilationErrors {
+    filename: String,
+    items: Vec<CompilationError>
+}
 
-pub fn create_compilation_errors() -> CompilationErrors {
-    vec!()
+pub fn create_compilation_errors(filename: String) -> CompilationErrors {
+    CompilationErrors {
+        filename,
+        items: vec!()
+    }
 }
 
 pub fn add_compilation_error(errors: &mut CompilationErrors, error: CompilationError) {
-    errors.push(error);
+    errors.items.push(error);
+}
+
+pub fn are_any_compilation_errors(errors: &CompilationErrors) -> bool {
+    errors.items.len() == 0
 }

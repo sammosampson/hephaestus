@@ -22,20 +22,16 @@ pub enum ParseError {
     Unimplemented
 }
 
-pub fn create_error_node(error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(error_item(error), position)
+pub fn create_error_node(position: SourceFilePosition) -> AbstractSyntaxNode {
+    create_node(error_item(), position)
 }
 
-pub fn error_item(error: ParseError) -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Error(error)
+pub fn error_item() -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Error
 }
 
-pub fn create_error_and_error_node(errors: &mut CompilationErrors, error: ParseError, position: SourceFilePosition) -> AbstractSyntaxNode {
-    add_compilation_error(
-        errors,
-        create_compilation_error(CompilationErrorItem::ParseError(error.clone()), position.clone())
-    );
-    create_error_node(error, position)
+pub fn create_error(error: ParseError, position: SourceFilePosition) -> CompilationError {
+    create_compilation_error(CompilationErrorItem::ParseError(error.clone()), position.clone())
 }
 
 pub fn tokenisation_error(error: SourceTokenError) -> ParseError {

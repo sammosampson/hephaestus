@@ -15,6 +15,7 @@ use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::types::*;
+use crate::errors::*;
 
 pub struct TypingActor;
 
@@ -52,34 +53,41 @@ fn handle_perform_typing(
     type_repository: &CompilationActorHandle, 
     compiler: &CompilationActorHandle
 ) -> AfterReceiveAction {
-    let resolved_types = perform_typing(ctx, type_repository, &mut unit);
-    notify_compiler_unit_has_been_typed(compiler, resolved_types, unit);    
+    let mut errors = create_compilation_errors(unit.filename.clone());
+    let resolved_types = perform_typing(ctx, type_repository, &mut unit, &mut errors);
+    notify_compiler_unit_has_been_typed(compiler, resolved_types, unit, errors);    
     shutdown_after_receive()
 }
 
-fn notify_compiler_unit_has_been_typed(compiler: &CompilationActorHandle, resolved_types: RuntimeTypePointers, unit: CompilationUnit) {
-    send_message_to_actor(compiler, create_unit_typed_event(resolved_types, unit));
+fn notify_compiler_unit_has_been_typed(
+    compiler: &CompilationActorHandle,
+    resolved_types: RuntimeTypePointers,
+    unit: CompilationUnit,
+    errors: CompilationErrors
+) {
+    send_message_to_actor(compiler, create_unit_typed_event(resolved_types, unit, errors));
 }
 
 pub fn perform_typing(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
-    unit: &mut CompilationUnit
+    unit: &mut CompilationUnit,
+    errors: &mut CompilationErrors
 ) -> RuntimeTypePointers {
     let mut resolved_types = vec!();
 
     match unit.tree.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } => {
-            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr, &mut unit.errors);        
+            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr, errors);        
         },
         AbstractSyntaxNodeItem::Constant { name, value, constant_type } => {
-            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type, &mut unit.errors);        
+            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type, errors);        
         },
         AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args, .. } => {
-            perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args, &mut unit.errors);                      
+            perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args, errors);                      
         },
         AbstractSyntaxNodeItem::ProcedureBody { args, return_types, statements, .. } => {
-            perform_typing_for_procedure_body(ctx, type_repository, args, return_types, statements, &mut unit.errors);
+            perform_typing_for_procedure_body(ctx, type_repository, args, return_types, statements, errors);
         },
         _ => {}
     };

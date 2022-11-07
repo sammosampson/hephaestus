@@ -39,12 +39,12 @@ fn process_parse_file_not_found<TReader: FileRead, TBackend: BackendBuild, TMess
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     filename: String
 ) -> AfterReceiveAction {
-    handle_any_errors(compiler, "", &create_errors_for_file_not_found(filename));
+    handle_any_errors(compiler, &create_errors_for_file_not_found(filename));
     continue_listening_after_receive()
 }
 
 fn create_errors_for_file_not_found(filename: String) -> CompilationErrors {
-    let mut errors = create_compilation_errors();
+    let mut errors = create_compilation_errors(filename.clone());
     add_compilation_error(&mut errors, create_compilation_error(file_not_found_error(filename), no_position()));
     errors
 }

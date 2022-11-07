@@ -1,15 +1,14 @@
 use crate::parsing::*;
-use crate::errors::*;
 use crate::types::*;
 
-pub fn parse_inferred_constant(name: String, lexer: &mut Lexer, position: SourceFilePosition, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
-    parse_constant(name, lexer, position, unresolved_resolvable_type(), errors)
+pub fn parse_inferred_constant(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNodeResult {
+    parse_constant(name, lexer, position, unresolved_resolvable_type())
 }
 
-pub fn parse_constant(name: String, lexer: &mut Lexer, position: SourceFilePosition, resolvable_type: ResolvableType, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
+pub fn parse_constant(name: String, lexer: &mut Lexer, position: SourceFilePosition, resolvable_type: ResolvableType) -> AbstractSyntaxNodeResult {
     let node = create_node(
         constant_item(name, 
-            parse_constant_value(lexer, errors), 
+            parse_constant_value(lexer)?, 
             resolvable_type
         ),
         position
@@ -19,18 +18,18 @@ pub fn parse_constant(name: String, lexer: &mut Lexer, position: SourceFilePosit
         eat_next_token(lexer);
     }
     
-    node
+    Ok(node)
 }
 
-fn parse_constant_value(lexer: &mut Lexer, errors: &mut CompilationErrors) -> AbstractSyntaxNode {
+fn parse_constant_value(lexer: &mut Lexer) -> AbstractSyntaxNodeResult {
     let token = get_next_token(lexer);
 
     match token.item {
-        SourceTokenItem::Directive(directive) => parse_const_directive(directive, lexer, token.position, errors),
-        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position, errors),
-        SourceTokenItem::Error(error) => create_error_and_error_node(errors, tokenisation_error(error), token.position),
-        SourceTokenItem::Eof => create_node(create_eof_item(), token.position),
-        _ => create_error_and_error_node(errors, unimplemented_error(), token.position),
+        SourceTokenItem::Directive(directive) => parse_const_directive(directive, lexer, token.position),
+        SourceTokenItem::Literal(literal) => parse_literal(literal, lexer, token.position),
+        SourceTokenItem::Error(error) => Err(create_error(tokenisation_error(error), token.position)),
+        SourceTokenItem::Eof => Ok(create_node(create_eof_item(), token.position)),
+        _ => Err(create_error(unimplemented_error(), token.position)),
     }
 }
 

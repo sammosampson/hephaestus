@@ -18,19 +18,19 @@ pub enum CompilationMessage {
     ParseFile(String, CompilationActorHandle),
     FileParsed(FileParseResult),
     PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
-    UnitTyped { resolved_types: RuntimeTypePointers, unit: CompilationUnit },
+    UnitTyped { resolved_types: RuntimeTypePointers, unit: CompilationUnit, errors: CompilationErrors },
     PerformSizing { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
-    UnitSized { unit: CompilationUnit },
+    UnitSized { unit: CompilationUnit, errors: CompilationErrors },
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     TypeRequestReleaseDueToError(CompilationErrorItem),
     AddResolvedType(RuntimeTypePointer),
     BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
-    ByteCodeBuilt { unit: CompilationUnit, code: IntermediateRepresentation },
+    ByteCodeBuilt { unit: CompilationUnit, errors: CompilationErrors, code: IntermediateRepresentation },
     BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle },
     BackendBuilt { id: CompilationUnitId, result: BackendErrorResult },
     CompilationComplete,
-    ReportErrors { filename: String, errors: CompilationErrors },
+    ReportErrors { errors: CompilationErrors },
     ShutDown,
 }
 
@@ -76,12 +76,12 @@ pub fn create_file_parsed_event(parse_result: FileParseResult) -> CompilationMes
     CompilationMessage::FileParsed(parse_result)
 }
 
-pub fn create_unit_typed_event(resolved_types: RuntimeTypePointers, unit: CompilationUnit) -> CompilationMessage {
-    CompilationMessage::UnitTyped { resolved_types, unit }
+pub fn create_unit_typed_event(resolved_types: RuntimeTypePointers, unit: CompilationUnit, errors: CompilationErrors) -> CompilationMessage {
+    CompilationMessage::UnitTyped { resolved_types, unit, errors }
 }
 
-pub fn create_unit_sized_event(unit: CompilationUnit) -> CompilationMessage {
-    CompilationMessage::UnitSized { unit }
+pub fn create_unit_sized_event(unit: CompilationUnit, errors: CompilationErrors) -> CompilationMessage {
+    CompilationMessage::UnitSized { unit, errors }
 }
 
 pub fn create_type_found_event(resolved_type: RuntimeTypePointer) -> CompilationMessage {
@@ -100,8 +100,8 @@ pub fn create_build_byte_code_command(unit: CompilationUnit, compiler: Compilati
     CompilationMessage::BuildByteCode { unit, compiler }
 }
 
-pub fn create_byte_code_built_event(unit: CompilationUnit, code: IntermediateRepresentation) -> CompilationMessage {
-    CompilationMessage::ByteCodeBuilt { unit, code }
+pub fn create_byte_code_built_event(unit: CompilationUnit, errors: CompilationErrors, code: IntermediateRepresentation) -> CompilationMessage {
+    CompilationMessage::ByteCodeBuilt { unit, errors, code }
 }
 
 pub fn create_build_backend_command(code: IntermediateRepresentation, compiler: CompilationActorHandle) -> CompilationMessage {
@@ -116,8 +116,8 @@ pub fn create_compilation_complete_event() -> CompilationMessage {
     CompilationMessage::CompilationComplete
 }
 
-pub fn create_report_errors_command(filename: String, errors: CompilationErrors) -> CompilationMessage {
-    CompilationMessage::ReportErrors { filename, errors }
+pub fn create_report_errors_command(errors: CompilationErrors) -> CompilationMessage {
+    CompilationMessage::ReportErrors { errors }
 }
 
 pub fn create_shutdown_command() -> CompilationMessage {
@@ -194,12 +194,12 @@ impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilat
                 handle_compile(file_name, ctx, self.reader.clone()),
             CompilationMessage::FileParsed(parse_result) =>
                 handle_file_parsed(self, parse_result, ctx),
-            CompilationMessage::UnitTyped { resolved_types, unit } => 
-                handle_unit_typed(self, unit, resolved_types, ctx),
-            CompilationMessage::UnitSized { unit } => 
-                handle_unit_sized(self, unit, ctx),
-            CompilationMessage::ByteCodeBuilt { code, unit } => 
-                handle_byte_code_built(self, unit, code, ctx, self.backend.clone()),
+            CompilationMessage::UnitTyped { resolved_types, unit, errors } => 
+                handle_unit_typed(self, unit, errors, resolved_types, ctx),
+            CompilationMessage::UnitSized { unit, errors } => 
+                handle_unit_sized(self, unit, errors, ctx),
+            CompilationMessage::ByteCodeBuilt { code, unit, errors } => 
+                handle_byte_code_built(self, unit, errors, code, ctx, self.backend.clone()),
             CompilationMessage::BackendBuilt { id, result } => 
                 handle_backend_built(self, id, result, ctx),
             CompilationMessage::CompilationComplete => shutdown_after_receive(),

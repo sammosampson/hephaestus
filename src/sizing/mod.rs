@@ -1,4 +1,5 @@
 
+use crate::create_compilation_errors;
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
@@ -26,8 +27,13 @@ fn handle_perform_sizing(
     compiler: CompilationActorHandle
 ) -> AfterReceiveAction {
     perform_sizing(ctx, type_repository, &mut unit);
-    send_message_to_actor(&compiler, create_unit_sized_event(unit));    
+    notify_compiler_unit_is_sized(&compiler, unit);    
     shutdown_after_receive()
+}
+
+fn notify_compiler_unit_is_sized(compiler: &CompilationActorHandle, unit: CompilationUnit) {
+    let filename = unit.filename.clone();
+    send_message_to_actor(compiler, create_unit_sized_event(unit, create_compilation_errors(filename)));
 }
 
 pub fn perform_sizing(

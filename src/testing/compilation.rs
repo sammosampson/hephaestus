@@ -83,7 +83,7 @@ fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) 
     loop {
         let next_message = message_receiver.recv().unwrap();
         match next_message {
-            CompilationMessage::UnitTyped { resolved_types, unit } => result.push((unit, resolved_types)),
+            CompilationMessage::UnitTyped { resolved_types, unit, .. } => result.push((unit, resolved_types)),
             CompilationMessage::CompilationComplete => break,           
             _ => {}
         }
@@ -135,7 +135,7 @@ pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: Compi
     let next_message = message_receiver.into_iter().next().unwrap();
 
     let result = match next_message {
-        CompilationMessage::UnitTyped { resolved_types, unit } => Some((resolved_types, unit)),
+        CompilationMessage::UnitTyped { resolved_types, unit, .. } => Some((resolved_types, unit)),
         _ => None
     };
 

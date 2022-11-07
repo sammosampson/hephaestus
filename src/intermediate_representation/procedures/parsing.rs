@@ -11,7 +11,7 @@ pub fn position(absolute: usize, line: usize, col: usize) -> SourceFilePosition 
     create_source_file_position(absolute, line, col)
 }
 
-pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<CompilationUnit>) {
+pub fn run_parse_file(file_path: &str, content: &str) -> (String, CompilationUnits) {
     let mut reader = create_mock_file_reader();
     add_mock_file(&mut reader, file_path, content);
 
@@ -30,7 +30,7 @@ pub fn run_parse_file(file_path: &str, content: &str) -> (String, Vec<Compilatio
     (actual_file_path, units)
 }
 
-pub fn run_parse_file_return_only_units(content: &str) -> Vec<CompilationUnit> {
+pub fn run_parse_file_return_only_units(content: &str) -> CompilationUnits {
     let (_actual_file_path, units) = run_parse_file(
         "test.hep", 
         content

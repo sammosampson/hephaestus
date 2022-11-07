@@ -6,6 +6,7 @@ use crate::{
     file_system::*,
     backends::*,
     types::*,
+    errors::*,
 };
 
 pub fn start_typing_actor(ctx: &CompilationMessageContext) -> CompilationActorHandle {
@@ -34,12 +35,13 @@ pub fn perform_typing(
 pub fn handle_unit_typed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>, 
     unit: CompilationUnit,
+    errors: CompilationErrors,
     resolved_types: RuntimeTypePointers,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     end_compilation_phase_in_statistics(&mut compiler.statistics, typing_compilation_phase(), unit.id, ctx);
 
-    if handle_any_errors(compiler, &unit.filename, &unit.errors) {
+    if handle_any_errors(compiler, &errors) {
         return continue_listening_after_receive();
     }
     
