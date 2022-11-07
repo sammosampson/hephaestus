@@ -10,7 +10,7 @@ pub fn create_sizing_actor() -> SizingActor {
 }
 
 impl Actor<CompilationMessage> for SizingActor {
-    fn receive(&mut self, message: CompilationMessage, ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
+    fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::PerformSizing { unit, type_repository, compiler} => 
                 handle_perform_sizing(unit, ctx, &type_repository, compiler),

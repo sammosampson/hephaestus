@@ -148,7 +148,7 @@ fn start_compilation(compiler_handle: ActorHandle<CompilationMessage>, file_name
 }
 
 pub struct CompilerActor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> {
-    pub compilation_units_requested_list: CompilationUnitsRequestedList,
+    pub statistics: Statistics,
     pub type_repository: CompilationActorHandle,
     pub error_reporter: CompilationActorHandle,
     pub reader: TReader,
@@ -165,7 +165,7 @@ fn create_compiler_actor<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     message_wire_tap: TMessageWireTap
 ) -> CompilerActor<TReader, TBackend, TMessageWireTap> {
     CompilerActor {
-        compilation_units_requested_list: create_compilation_units_requested_list(),
+        statistics: create_statistics(),
         type_repository,
         error_reporter, 
         reader,
@@ -188,7 +188,7 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
 }
 
 impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> CompilerActor<TReader, TBackend, TMessageWireTap> {
-    fn normal_state_handling(&mut self, message: CompilationMessage, ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
+    fn normal_state_handling(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::Compile(file_name) =>
                 handle_compile(file_name, ctx, self.reader.clone()),

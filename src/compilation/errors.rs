@@ -9,8 +9,6 @@ use crate::{
     utilities::*,
 };
 
-use log::*;
-
 impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> CompilerActor<TReader, TBackend, TMessageWireTap> {
     pub fn error_state_handling(&mut self, message: CompilationMessage, ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
         match message {
@@ -19,11 +17,11 @@ impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilat
             CompilationMessage::FileParsed(parse_result) =>
                 handle_file_parsed_in_error_state(self, parse_result, ctx),
             CompilationMessage::UnitTyped { unit, .. } => 
-                handle_after_compile_in_error_state(self, unit.id, &unit.filename, unit.errors, ctx),
+                handle_after_compile_in_error_state(self, unit.id, &unit.filename, typing_compilation_phase(), unit.errors, ctx),
             CompilationMessage::UnitSized { unit } => 
-                handle_after_compile_in_error_state(self, unit.id, &unit.filename, unit.errors, ctx),
+                handle_after_compile_in_error_state(self, unit.id, &unit.filename, sizing_compilation_phase(), unit.errors, ctx),
             CompilationMessage::ByteCodeBuilt { unit, .. } => 
-                handle_after_compile_in_error_state(self, unit.id, &unit.filename, unit.errors, ctx),
+                handle_after_compile_in_error_state(self, unit.id, &unit.filename, bytecode_creation_compilation_phase(), unit.errors, ctx),
             CompilationMessage::BackendBuilt { id, result } => 
                 handle_backend_built_in_error_state(self, id, result, ctx),
             CompilationMessage::CompilationComplete => shutdown_after_receive(),
@@ -49,9 +47,7 @@ fn process_parsed_compilation_units_in_error_state<TReader: FileRead, TBackend: 
     units: CompilationUnits,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
-    for unit in units {
-        handle_after_compile_in_error_state(compiler, unit.id, &unit.filename, unit.errors, ctx);
-    }
+    register_units_with_statistics(&mut compiler.statistics, &units, ctx);
     continue_listening_after_receive()
 }
 
@@ -71,7 +67,7 @@ pub fn handle_backend_built_in_error_state<TReader: FileRead, TBackend: BackendB
 ) -> AfterReceiveAction {
 
     let errors = create_errors_for_backend_error_result(result);
-    handle_after_compile_in_error_state(compiler, id, "", errors, ctx)
+    handle_after_compile_in_error_state(compiler, id, "", backend_build_compilation_phase(), errors, ctx)
 }
 
 pub fn create_errors_for_backend_error_result(result: BackendErrorResult) -> CompilationErrors {
@@ -86,25 +82,13 @@ pub fn handle_after_compile_in_error_state<TReader: FileRead, TBackend: BackendB
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     id: CompilationUnitId,
     filename: &str,
+    phase: CompilationPhase,
     errors: CompilationErrors,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     
-    debug!("handling after compile in error state for {:?}", id);
-    
     handle_any_errors_in_error_state(compiler, filename, &errors);
-
-    remove_unit_from_compilation_requested_list(
-        &mut compiler.compilation_units_requested_list,
-        &id
-    );
-
-    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
-    
-    if compilation_requested_list_is_empty(&compiler.compilation_units_requested_list) {
-        send_message_to_actor(&create_self_handle(ctx), create_compilation_complete_event());
-    }
-
+    end_compilation_phase_in_statistics(&mut compiler.statistics, phase, id, ctx);
     continue_listening_after_receive()
 }
 
@@ -143,7 +127,10 @@ fn create_errors_for_file_not_found(filename: String) -> CompilationErrors {
 }
 
 fn report_on_errors<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>, filename: &str, errors: &Vec<CompilationError>) {
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
+    filename: &str,
+    errors: &Vec<CompilationError>
+) {
     send_message_to_actor(
         &compiler.error_reporter, 
         create_report_errors_command(string(filename), errors.clone())

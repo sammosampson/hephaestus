@@ -4,35 +4,99 @@ use log::*;
 use crate::{
     compilation::*,
     parsing::*,
-    backends::*,
-    file_system::*
+    acting::*
 };
 
-pub type CompilationUnitsRequestedList = HashMap<CompilationUnitId, CompilationUnitId>;
+pub type Statistics = HashMap<CompilationUnitId, CompilationUnitId>;
 
-pub fn register_units_with_statistics<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
-    units: &Vec<CompilationUnit>
-) {
-    for unit in units {
-        register_compilation_requested(&mut compiler.compilation_units_requested_list, unit.id);
-    }
-    
-    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
-}
-
-pub fn create_compilation_units_requested_list() -> HashMap<CompilationUnitId, CompilationUnitId> {
+pub fn create_statistics() -> Statistics {
     HashMap::default()
 }
 
-pub fn register_compilation_requested(lookup: &mut CompilationUnitsRequestedList, id: CompilationUnitId) {
+#[derive(Debug)]
+pub enum CompilationPhase{
+    Parsing,
+    Typing,
+    Sizing,
+    ByteCodeCreation,
+    BackendBuild
+}
+
+pub fn parsing_compilation_phase() -> CompilationPhase {
+    CompilationPhase::Parsing
+}
+
+pub fn typing_compilation_phase() -> CompilationPhase {
+    CompilationPhase::Typing
+}
+
+pub fn sizing_compilation_phase() -> CompilationPhase {
+    CompilationPhase::Sizing
+}
+
+pub fn bytecode_creation_compilation_phase() -> CompilationPhase {
+    CompilationPhase::ByteCodeCreation
+}
+
+pub fn backend_build_compilation_phase() -> CompilationPhase {
+    CompilationPhase::BackendBuild
+}
+
+pub fn register_units_with_statistics(
+    statistics: &mut Statistics,
+    units: &Vec<CompilationUnit>,
+    ctx: &CompilationMessageContext
+) {
+    for unit in units {
+        end_compilation_phase_in_statistics(statistics, parsing_compilation_phase(), unit.id, ctx);
+        register_unit_with_statistics(statistics, unit.id);
+    }
+    
+    log_statistics(statistics);
+}
+
+pub fn start_compilation_phase_in_statistics(_statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId) {
+    log_start_compilation_phase(phase, id);
+}
+
+
+pub fn end_compilation_phase_in_statistics(statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId, ctx: &CompilationMessageContext) {
+    log_end_compilation_phase(phase, id);
+    remove_unit_from_statistics_and_check_for_completion(statistics, id, ctx);
+}
+
+fn remove_unit_from_statistics_and_check_for_completion(statistics: &mut Statistics, id: CompilationUnitId, ctx: &CompilationMessageContext) {
+    remove_unit_from_statistics(statistics, &id);
+    log_statistics(statistics);
+    if compilation_has_completed(statistics) {
+        notify_compiler_of_compilation_completion(ctx);
+    }
+}
+
+fn register_unit_with_statistics(lookup: &mut Statistics, id: CompilationUnitId) {
     lookup.insert(id, id);
 }
 
-pub fn remove_unit_from_compilation_requested_list(lookup: &mut CompilationUnitsRequestedList, id: &CompilationUnitId) {
+fn remove_unit_from_statistics(lookup: &mut Statistics, id: &CompilationUnitId) {
     lookup.remove(id);
 }
 
-pub fn compilation_requested_list_is_empty(lookup: &CompilationUnitsRequestedList) -> bool {
+fn compilation_has_completed(lookup: &Statistics) -> bool {
     lookup.is_empty()
+}
+
+fn notify_compiler_of_compilation_completion(ctx: &CompilationMessageContext) {
+    send_message_to_actor(&create_self_handle(ctx), create_compilation_complete_event());
+}
+
+fn log_start_compilation_phase(phase: CompilationPhase, id: CompilationUnitId) {
+    debug!("starting {:?} compilation phase for {:?}", phase, id);
+}
+
+fn log_end_compilation_phase(phase: CompilationPhase, id: CompilationUnitId) {
+    debug!("ending {:?} compilation phase for {:?}", phase, id);
+}
+
+fn log_statistics(statistics: &mut Statistics) {
+    debug!("unit requsted list is now {:?}", &statistics.keys());
 }

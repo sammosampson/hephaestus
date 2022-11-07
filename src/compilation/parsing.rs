@@ -1,14 +1,11 @@
 use crate::{
     compilation::*,
     parsing::*,
-    typing::*,
     acting::*,
     file_system::*,
     backends::*,
     errors::*,
 };
-
-use log::*;
 
 pub fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
@@ -27,40 +24,15 @@ fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, T
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
 
-    debug!("process parsed compilation units for {:?} units", units.len());
-    
-    register_units_with_statistics(compiler, &units);    
+    register_units_with_statistics(&mut compiler.statistics, &units, ctx);    
 
     for unit in units {
+        start_compilation_phase_in_statistics(&mut compiler.statistics, typing_compilation_phase(), unit.id);
         let typing_handle = start_typing_actor(ctx);
-        perform_typing(compiler, typing_handle, unit, ctx);
+        perform_typing(compiler.type_repository.clone(), typing_handle, unit, ctx);
     }
 
     continue_listening_after_receive()
-}
-
-fn start_typing_actor(ctx: &ActorContext<CompilationMessage>) -> ActorHandle<CompilationMessage> {
-    let (typing_handle, ..) = start_actor(
-        &ctx, 
-        create_typing_actor()
-    );
-    typing_handle
-}
-
-fn perform_typing<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
-    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
-    typing_handle: ActorHandle<CompilationMessage>,
-    unit: CompilationUnit,
-    ctx: &ActorContext<CompilationMessage>
-) {
-    send_message_to_actor(
-        &typing_handle, 
-        create_perform_typing_command(
-            unit, 
-            compiler.type_repository.clone(), 
-            create_self_handle(ctx)
-        )
-    );
 }
 
 fn process_parse_file_not_found<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(

@@ -1,36 +1,38 @@
 use crate::{
     compilation::*,
+    intermediate_representation::*,
     parsing::*,
     acting::*,
     file_system::*,
     backends::*,
 };
 
-use log::*;
+pub fn start_backend_actor<TBackend: BackendBuild>(ctx: &CompilationMessageContext, backend: TBackend) -> CompilationActorHandle {
+    let (byte_code_runner, ..) = start_actor(
+        ctx, 
+        create_backend_actor(backend)
+    );
+    byte_code_runner
+}
+
+pub fn build_backend(byte_code_runner: CompilationActorHandle, code: IntermediateRepresentation, compiler_handle: CompilationActorHandle) {
+    send_message_to_actor(
+        &byte_code_runner, 
+        create_build_backend_command(code, compiler_handle)
+    );
+}
 
 pub fn handle_backend_built<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     id: CompilationUnitId,
     result: BackendErrorResult,
     ctx: &CompilationMessageContext
-) -> AfterReceiveAction {
+) -> AfterReceiveAction {    
+    end_compilation_phase_in_statistics(&mut compiler.statistics, backend_build_compilation_phase(), id, ctx);
     
-    debug!("handling byte code ran for {:?}", id);
-
     if handle_any_errors(compiler, "", &create_errors_for_backend_error_result(result)) {
         return continue_listening_after_receive();
     }
     
-    remove_unit_from_compilation_requested_list(
-        &mut compiler.compilation_units_requested_list,
-        &id
-    );
-
-    debug!("unit requsted list is now {:?}", &compiler.compilation_units_requested_list.keys());
-    
-    if compilation_requested_list_is_empty(&compiler.compilation_units_requested_list) {
-        send_message_to_actor(&create_self_handle(ctx), create_compilation_complete_event());
-    }
-
     continue_listening_after_receive()
 }
