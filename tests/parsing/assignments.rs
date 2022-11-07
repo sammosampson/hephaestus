@@ -39,14 +39,7 @@ fn parse_invalid_assigment_parses_correctly() {
         x :! s32 = 1;
     }");
 
-    assert_eq!(units.len(), 1);
-    assert_eq!(
-        units[0].tree, 
-        node(
-            position(0, 0, 0),
-            error_item()
-        )
-    )
+    assert_eq!(units.len(), 0);
 }
 
 #[test]

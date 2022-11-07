@@ -1,0 +1,6 @@
+print :: (to_print: string) {
+}
+
+main :: () {
+    print("hello world!\r\n\0");
+}

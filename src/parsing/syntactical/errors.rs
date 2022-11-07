@@ -22,14 +22,6 @@ pub enum ParseError {
     Unimplemented
 }
 
-pub fn create_error_node(position: SourceFilePosition) -> AbstractSyntaxNode {
-    create_node(error_item(), position)
-}
-
-pub fn error_item() -> AbstractSyntaxNodeItem {
-    AbstractSyntaxNodeItem::Error
-}
-
 pub fn create_error(error: ParseError, position: SourceFilePosition) -> CompilationError {
     create_compilation_error(CompilationErrorItem::ParseError(error.clone()), position.clone())
 }

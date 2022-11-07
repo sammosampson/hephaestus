@@ -28,27 +28,30 @@ fn handle_parse_file<T: FileRead>(file_reader: &T, file_name: String, compiler_h
 
 #[derive(Clone, Debug)]
 pub enum FileParseResult {
-    CompilationUnits { file_name: String, units: CompilationUnits },
+    CompilationUnits { file_name: String, units: CompilationUnits, errors: CompilationErrors },
     NotFound(String),
 }
 
 pub fn parse_file<T: FileRead>(file_reader: &T, filename: &str) -> FileParseResult {
     match file_reader.read_file_to_string(filename) {
-        Ok(file_content) => FileParseResult::CompilationUnits { 
-            file_name: filename.to_string(), 
-            units: parse(string(filename), &file_content) 
+        Ok(file_content) =>{
+            let (units, errors) = parse(string(filename), &file_content);
+            return FileParseResult::CompilationUnits { 
+                file_name: filename.to_string(), 
+                units,
+                errors
+            }
         },
         Err(_) => FileParseResult::NotFound(string(filename))
     }
 }
 
-pub fn parse(filename: String, input: &str) -> CompilationUnits {
+pub fn parse(filename: String, input: &str) -> (CompilationUnits, CompilationErrors) {
     let mut lexer = lex(input);
     let mut units = vec!();
-
-    loop {
-        let mut errors = create_compilation_errors(filename.clone());
+    let mut errors = create_compilation_errors(filename.clone());
         
+    loop {
         match parse_next_node(filename.clone(), &mut lexer, &mut units) {
             Ok(node) => {
                 if is_eof_node(&node) {
@@ -59,13 +62,12 @@ pub fn parse(filename: String, input: &str) -> CompilationUnits {
             }
             Err(error) => {
                 add_compilation_error(&mut errors, error);
-                units.push(create_unit(filename.clone(), create_error_node(no_position())));
                 break;
             }
         }        
     }
 
-    units
+    (units, errors)
 }
 
 fn is_eof_node(node: &AbstractSyntaxNode) -> bool {

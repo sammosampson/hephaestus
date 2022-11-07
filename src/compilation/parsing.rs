@@ -13,7 +13,7 @@ pub fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWir
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     match parse_result {
-        FileParseResult::CompilationUnits { units, .. } => process_parsed_compilation_units(compiler, units, ctx),
+        FileParseResult::CompilationUnits { units, errors, .. } => process_parsed_compilation_units(compiler, units, errors, ctx),
         FileParseResult::NotFound(filename) => process_parse_file_not_found(compiler, filename)
     }
 }
@@ -21,9 +21,14 @@ pub fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWir
 fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     units: CompilationUnits,
+    errors: CompilationErrors,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
-
+    if handle_any_errors(compiler, &errors) {
+        check_for_statistics_completion(&mut compiler.statistics, ctx);
+        return continue_listening_after_receive();
+    }
+    
     register_units_with_statistics(&mut compiler.statistics, &units);    
 
     for unit in units {

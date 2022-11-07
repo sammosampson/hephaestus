@@ -4,7 +4,7 @@ Kernel32 :: #foreign_system_library "kernel32";
 WriteFile :: (handle: *void, to_write: *void, bytes_to_write: u32, bytes_written: *void, overlapped: *void) -> bool #foreign Kernel32;
 GetStdHandle :: (handle_type: s32) -> *void #foreign Kernel32;
 
-print :: (to_print!: string) {
+print :: (to_print: string) {
     handle := GetStdHandle(STD_OUTPUT_HANDLE);
     to_write := cast(*void) to_print.datax;
     length := cast(u32) to_print.count

@@ -23,7 +23,7 @@ pub fn run_parse_file(file_path: &str, content: &str) -> (String, CompilationUni
     let next_message = message_receiver.into_iter().next().unwrap();
 
     let (actual_file_path, units) = match next_message {
-        CompilationMessage::FileParsed(FileParseResult::CompilationUnits { file_name, units }) => (file_name, units),
+        CompilationMessage::FileParsed(FileParseResult::CompilationUnits { file_name, units, .. }) => (file_name, units),
         _ => (String::default(), vec!())
     };
 

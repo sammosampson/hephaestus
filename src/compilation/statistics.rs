@@ -44,7 +44,7 @@ pub fn backend_build_compilation_phase() -> CompilationPhase {
 
 pub fn register_units_with_statistics(
     statistics: &mut Statistics,
-    units: &Vec<CompilationUnit>
+    units: &CompilationUnits
 ) {
     for unit in units {
         log_end_compilation_phase(parsing_compilation_phase(), unit.id);
@@ -73,6 +73,10 @@ fn is_final_phase(phase: CompilationPhase) -> bool {
 fn remove_unit_from_statistics_and_check_for_completion(statistics: &mut Statistics, id: CompilationUnitId, ctx: &CompilationMessageContext) {
     remove_unit_from_statistics(statistics, &id);
     log_statistics(statistics);
+    check_for_statistics_completion(statistics, ctx);
+}
+
+pub fn check_for_statistics_completion(statistics: &mut Statistics, ctx: &CompilationMessageContext) {
     if compilation_has_completed(statistics) {
         notify_compiler_of_compilation_completion(ctx);
     }
