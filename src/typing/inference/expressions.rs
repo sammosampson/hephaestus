@@ -256,7 +256,7 @@ fn get_global_type_for_identifier(
             }        
         },
         Err(error) => {
-            add_compilation_error(errors, create_compilation_error(error, identifier_position));
+            add_compilation_error(errors, compilation_error(error, identifier_position));
         },
     }
     

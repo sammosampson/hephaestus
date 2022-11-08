@@ -49,6 +49,7 @@ fn build_bytecode_at_root(unit: &mut CompilationUnit, errors: &mut CompilationEr
             build_bytecode_at_top_root_const(ir, name, value, errors),
         AbstractSyntaxNodeItem::Struct { name, ..} =>
             todo(errors, function!(), &format!("struct bytecode coming soon {}", name)),
+        AbstractSyntaxNodeItem::Error => {},
         item =>
             todo(errors, function!(), &format!("Other root bytecode: {:?}", item))
     }    

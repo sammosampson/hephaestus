@@ -71,7 +71,7 @@ pub fn handle_backend_built_in_error_state<TReader: FileRead, TBackend: BackendB
 pub fn create_errors_for_backend_error_result(result: BackendErrorResult) -> CompilationErrors {
     let mut errors = create_compilation_errors(empty_string());
     if let Err(error) = result {
-        add_compilation_error(&mut errors, create_compilation_error(backend_error(error), no_position()));
+        add_compilation_error(&mut errors, compilation_error(backend_error(error), no_position()));
     }
     errors
 }
@@ -85,7 +85,7 @@ pub fn handle_after_compile_in_error_state<TReader: FileRead, TBackend: BackendB
 ) -> AfterReceiveAction {
     
     handle_any_errors_in_error_state(compiler, &errors);
-    end_compilation_phase_in_statistics(&mut compiler.statistics, phase, id, ctx);
+    end_compilation_phase_in_error_state_in_statistics(&mut compiler.statistics, phase, id, ctx);
     continue_listening_after_receive()
 }
 
@@ -117,7 +117,7 @@ fn handle_any_errors_in_error_state<TReader: FileRead, TBackend: BackendBuild, T
 
 fn create_errors_for_file_not_found(filename: String) -> CompilationErrors {
     let mut errors = create_compilation_errors(filename.clone());
-    add_compilation_error(&mut errors, create_compilation_error(file_not_found_error(filename), no_position()));
+    add_compilation_error(&mut errors, compilation_error(file_not_found_error(filename), no_position()));
     errors
 }
 

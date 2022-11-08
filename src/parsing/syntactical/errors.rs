@@ -23,7 +23,15 @@ pub enum ParseError {
 }
 
 pub fn create_error(error: ParseError, position: SourceFilePosition) -> CompilationError {
-    create_compilation_error(CompilationErrorItem::ParseError(error.clone()), position.clone())
+    compilation_error(parser_error(error.clone()), position.clone())
+}
+
+pub fn create_error_node(error: &CompilationError) -> AbstractSyntaxNode {
+    create_node(error_item(), error.position)
+}
+
+pub fn error_item() -> AbstractSyntaxNodeItem {
+    AbstractSyntaxNodeItem::Error
 }
 
 pub fn tokenisation_error(error: SourceTokenError) -> ParseError {

@@ -99,5 +99,6 @@ pub enum AbstractSyntaxNodeItem {
     Literal(ResolvableLiteral),
     Identifier{ name: String, scope: Scope },
     Operator(Operator),
+    Error,
     Eof
 }

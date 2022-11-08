@@ -1,4 +1,4 @@
-print :: (to_print: string) {
+print :: (to_print!: string) {
 }
 
 main :: () {

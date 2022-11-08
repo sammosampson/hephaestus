@@ -67,7 +67,7 @@ pub fn type_cannot_be_found_error() -> TypeInferenceError {
 }
 
 pub fn add_type_inference_error(errors: &mut CompilationErrors, error: TypeInferenceError, position: SourceFilePosition) {
-    add_compilation_error(errors, create_compilation_error(type_inference_error(error), position));
+    add_compilation_error(errors, compilation_error(type_inference_error(error), position));
 }
 
 

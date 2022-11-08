@@ -24,10 +24,8 @@ fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, T
     errors: CompilationErrors,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
-    if handle_any_errors(compiler, &errors) {
-        check_for_statistics_completion(&mut compiler.statistics, ctx);
-        return continue_listening_after_receive();
-    }
+    
+    handle_any_errors(compiler, &errors);
     
     register_units_with_statistics(&mut compiler.statistics, &units);    
 
@@ -50,7 +48,7 @@ fn process_parse_file_not_found<TReader: FileRead, TBackend: BackendBuild, TMess
 
 fn create_errors_for_file_not_found(filename: String) -> CompilationErrors {
     let mut errors = create_compilation_errors(filename.clone());
-    add_compilation_error(&mut errors, create_compilation_error(file_not_found_error(filename), no_position()));
+    add_compilation_error(&mut errors, compilation_error(file_not_found_error(filename), no_position()));
     errors
 }
 

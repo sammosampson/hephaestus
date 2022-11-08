@@ -165,6 +165,10 @@ pub fn file_not_found_error(filename: String) -> CompilationErrorItem {
     CompilationErrorItem::FileNotFound(filename)
 }
 
+pub fn parser_error(error: ParseError) -> CompilationErrorItem {
+    CompilationErrorItem::ParseError(error)
+}
+
 pub fn type_inference_error(error: TypeInferenceError) -> CompilationErrorItem {
     CompilationErrorItem::TypeInferenceError(error)
 }
@@ -186,16 +190,16 @@ pub fn backend_error(error: BackendError) -> CompilationErrorItem {
 }
 
 pub fn todo(errors: &mut CompilationErrors, function: &str, text: &str) {
-    add_compilation_error(errors, create_compilation_error(todo_error(function, text), no_position()));
+    add_compilation_error(errors, compilation_error(todo_error(function, text), no_position()));
 }
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct CompilationError {
     item: CompilationErrorItem,
-    position: SourceFilePosition,
+    pub position: SourceFilePosition,
 }
 
-pub fn create_compilation_error(item: CompilationErrorItem, position: SourceFilePosition) -> CompilationError {
+pub fn compilation_error(item: CompilationErrorItem, position: SourceFilePosition) -> CompilationError {
     CompilationError {
         item,
         position,
@@ -204,8 +208,8 @@ pub fn create_compilation_error(item: CompilationErrorItem, position: SourceFile
 
 #[derive(Clone, Debug)]
 pub struct CompilationErrors {
-    filename: String,
-    items: Vec<CompilationError>
+    pub filename: String,
+    pub items: Vec<CompilationError>
 }
 
 pub fn create_compilation_errors(filename: String) -> CompilationErrors {

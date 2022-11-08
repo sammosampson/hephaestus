@@ -51,6 +51,6 @@ pub fn register_size_not_resolved_error() -> IntermediateRepresentationError {
 }
 
 pub fn add_intermediate_representation_error(errors: &mut CompilationErrors, error: IntermediateRepresentationError, position: SourceFilePosition) {
-    add_compilation_error(errors, create_compilation_error(intermediate_representation_error(error), position));
+    add_compilation_error(errors, compilation_error(intermediate_representation_error(error), position));
 }
 

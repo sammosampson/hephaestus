@@ -61,6 +61,7 @@ pub fn parse(filename: String, input: &str) -> (CompilationUnits, CompilationErr
                 units.push(create_unit(filename.clone(), node));                  
             }
             Err(error) => {
+                units.push(create_unit(filename.clone(), create_error_node(&error)));
                 add_compilation_error(&mut errors, error);
                 break;
             }

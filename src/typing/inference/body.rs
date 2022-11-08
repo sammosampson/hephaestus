@@ -153,7 +153,7 @@ pub fn perform_typing_for_procedure_call_return_first_return_type(
             }
         }        
         Err(error) => {
-            add_compilation_error(errors, create_compilation_error(error, position));
+            add_compilation_error(errors, compilation_error(error, position));
         },
     }       
 
