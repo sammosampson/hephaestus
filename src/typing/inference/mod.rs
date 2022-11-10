@@ -26,8 +26,8 @@ pub fn create_typing_actor() -> TypingActor {
 impl Actor<CompilationMessage> for TypingActor {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::PerformTyping { unit, type_repository, compiler} => 
-                handle_perform_typing(unit, ctx, &type_repository, &compiler),
+            CompilationMessage::PerformTyping { unit, type_repository, compiler, has_prior_errors } => 
+                handle_perform_typing(unit, ctx, &type_repository, &compiler, has_prior_errors),
             _ => continue_listening_after_receive()
         }
     }
@@ -51,10 +51,11 @@ fn handle_perform_typing(
     mut unit: CompilationUnit, 
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle, 
-    compiler: &CompilationActorHandle
+    compiler: &CompilationActorHandle,
+    has_prior_errors: bool
 ) -> AfterReceiveAction {
     let mut errors = create_compilation_errors(unit.filename.clone());
-    let resolved_types = perform_typing(ctx, type_repository, &mut unit, &mut errors);
+    let resolved_types = perform_typing(ctx, type_repository, &mut unit, &mut errors, has_prior_errors);
     notify_compiler_unit_has_been_typed(compiler, resolved_types, unit, errors);    
     shutdown_after_receive()
 }
@@ -72,9 +73,14 @@ pub fn perform_typing(
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle,
     unit: &mut CompilationUnit,
-    errors: &mut CompilationErrors
+    errors: &mut CompilationErrors,
+    has_prior_errors: bool
 ) -> RuntimeTypePointers {
     let mut resolved_types = vec!();
+
+    if has_prior_errors {
+        return resolved_types;
+    }
 
     match unit.tree.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } => {

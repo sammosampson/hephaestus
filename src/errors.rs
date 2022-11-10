@@ -224,5 +224,5 @@ pub fn add_compilation_error(errors: &mut CompilationErrors, error: CompilationE
 }
 
 pub fn are_any_compilation_errors(errors: &CompilationErrors) -> bool {
-    errors.items.len() == 0
+    errors.items.len() > 0
 }

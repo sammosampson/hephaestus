@@ -15,10 +15,10 @@ pub fn start_backend_actor<TBackend: BackendBuild>(ctx: &CompilationMessageConte
     byte_code_runner
 }
 
-pub fn build_backend(byte_code_runner: CompilationActorHandle, code: IntermediateRepresentation, compiler_handle: CompilationActorHandle) {
+pub fn build_backend(byte_code_runner: CompilationActorHandle, code: IntermediateRepresentation, compiler_handle: CompilationActorHandle, has_prior_errors: bool) {
     send_message_to_actor(
         &byte_code_runner, 
-        create_build_backend_command(code, compiler_handle)
+        create_build_backend_command(code, compiler_handle, has_prior_errors)
     );
 }
 

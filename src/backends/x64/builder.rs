@@ -9,7 +9,10 @@ use crate::{
 pub struct X64Backend;
 
 impl BackendBuild for X64Backend {
-    fn build_backend(&mut self, ir: IntermediateRepresentation) -> BackendErrorResult {
+    fn build_backend(&mut self, ir: IntermediateRepresentation, has_prior_errors: bool) -> BackendErrorResult {
+        if has_prior_errors {
+            return Ok(());
+        }
         let mut coff = create_coff();
         let file_name = build_x64_object(&mut coff, ir)?;   
         write_coff_to_file(&coff, &mut create_coff_file(&file_name).unwrap()).unwrap();

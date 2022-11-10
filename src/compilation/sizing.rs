@@ -20,11 +20,12 @@ pub fn perform_sizing(
     type_repository: CompilationActorHandle,
     sizing_handle: CompilationActorHandle,
     compiler_handle: CompilationActorHandle,
-    unit: CompilationUnit
+    unit: CompilationUnit,
+    has_prior_errors: bool
 ) {
     send_message_to_actor(
         &sizing_handle, 
-        create_perform_sizing_command(unit, type_repository, compiler_handle)
+        create_perform_sizing_command(unit, type_repository, compiler_handle, has_prior_errors)
     );
 }
 
@@ -44,7 +45,7 @@ pub fn handle_unit_sized<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     start_compilation_phase_in_statistics(&mut compiler.statistics, bytecode_creation_compilation_phase(), unit.id);
     let intemediate_representation_handle = start_bytecode_creation_actor(ctx);
     let compiler_handle = create_self_handle(&ctx);
-    perform_bytecode_creation(intemediate_representation_handle, unit, compiler_handle);
+    perform_bytecode_creation(intemediate_representation_handle, unit, compiler_handle, are_any_compilation_errors(&errors));
 
     continue_listening_after_receive()
 }

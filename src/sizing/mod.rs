@@ -13,8 +13,8 @@ pub fn create_sizing_actor() -> SizingActor {
 impl Actor<CompilationMessage> for SizingActor {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::PerformSizing { unit, type_repository, compiler} => 
-                handle_perform_sizing(unit, ctx, &type_repository, compiler),
+            CompilationMessage::PerformSizing { unit, type_repository, compiler, has_prior_errors } => 
+                handle_perform_sizing(unit, ctx, &type_repository, compiler, has_prior_errors),
             _ => continue_listening_after_receive()
         }
     }
@@ -24,9 +24,10 @@ fn handle_perform_sizing(
     mut unit: CompilationUnit, 
     ctx: &CompilationMessageContext,
     type_repository: &CompilationActorHandle, 
-    compiler: CompilationActorHandle
+    compiler: CompilationActorHandle,
+    has_prior_errors: bool
 ) -> AfterReceiveAction {
-    perform_sizing(ctx, type_repository, &mut unit);
+    perform_sizing(ctx, type_repository, &mut unit, has_prior_errors);
     notify_compiler_unit_is_sized(&compiler, unit);    
     shutdown_after_receive()
 }
@@ -39,6 +40,7 @@ fn notify_compiler_unit_is_sized(compiler: &CompilationActorHandle, unit: Compil
 pub fn perform_sizing(
     _ctx: &CompilationMessageContext,
     _type_repository: &CompilationActorHandle,
-    _unit: &mut CompilationUnit
+    _unit: &mut CompilationUnit,
+    _has_prior_errors: bool
 ) {
 }

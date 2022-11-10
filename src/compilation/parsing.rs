@@ -32,7 +32,7 @@ fn process_parsed_compilation_units<TReader: FileRead, TBackend: BackendBuild, T
     for unit in units {
         start_compilation_phase_in_statistics(&mut compiler.statistics, typing_compilation_phase(), unit.id);
         let typing_handle = start_typing_actor(ctx);
-        perform_typing(compiler.type_repository.clone(), typing_handle, unit, ctx);
+        perform_typing(compiler.type_repository.clone(), typing_handle, unit, ctx, are_any_compilation_errors(&errors));
     }
 
     continue_listening_after_receive()

@@ -157,7 +157,7 @@ pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: Compi
         
     send_message_to_actor(
         &typing_actor, 
-        create_perform_typing_command(unit, typing_repository, message_receiver_handle)
+        create_perform_typing_command(unit, typing_repository, message_receiver_handle, false)
     );
 
     let next_message = message_receiver.into_iter().next().unwrap();

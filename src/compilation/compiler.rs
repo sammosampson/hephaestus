@@ -17,17 +17,17 @@ pub enum CompilationMessage {
     Compile(String),
     ParseFile(String, CompilationActorHandle),
     FileParsed(FileParseResult),
-    PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
+    PerformTyping { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle, has_prior_errors: bool },
     UnitTyped { resolved_types: RuntimeTypePointers, unit: CompilationUnit, errors: CompilationErrors },
-    PerformSizing { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle },
+    PerformSizing { unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle, has_prior_errors: bool },
     UnitSized { unit: CompilationUnit, errors: CompilationErrors },
     FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
     TypeFound(RuntimeTypePointer),
     TypeRequestReleaseDueToError(CompilationErrorItem),
     AddResolvedType(RuntimeTypePointer),
-    BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle },
+    BuildByteCode { unit: CompilationUnit, compiler: CompilationActorHandle, has_prior_errors: bool },
     ByteCodeBuilt { unit: CompilationUnit, errors: CompilationErrors, code: IntermediateRepresentation },
-    BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle },
+    BuildBackend { code: IntermediateRepresentation, compiler: CompilationActorHandle, has_prior_errors: bool },
     BackendBuilt { id: CompilationUnitId, result: BackendErrorResult },
     CompilationComplete,
     ReportErrors { errors: CompilationErrors },
@@ -60,12 +60,12 @@ pub fn create_parse_file_command(file_name: String, handle: CompilationActorHand
     CompilationMessage::ParseFile(file_name, handle)
 }
 
-pub fn create_perform_typing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::PerformTyping { unit, type_repository, compiler }
+pub fn create_perform_typing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle, has_prior_errors: bool) -> CompilationMessage {
+    CompilationMessage::PerformTyping { unit, type_repository, compiler, has_prior_errors }
 }
 
-pub fn create_perform_sizing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::PerformSizing { unit, type_repository, compiler }
+pub fn create_perform_sizing_command(unit: CompilationUnit, type_repository: CompilationActorHandle, compiler: CompilationActorHandle, has_prior_errors: bool) -> CompilationMessage {
+    CompilationMessage::PerformSizing { unit, type_repository, compiler, has_prior_errors }
 }
 
 pub fn create_find_type_request(criteria: FindTypeCriteria, respond_to: CompilationActorHandle) -> CompilationMessage {
@@ -96,16 +96,16 @@ pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> Co
     CompilationMessage::AddResolvedType(resolved_type)
 }
 
-pub fn create_build_byte_code_command(unit: CompilationUnit, compiler: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::BuildByteCode { unit, compiler }
+pub fn create_build_byte_code_command(unit: CompilationUnit, compiler: CompilationActorHandle, has_prior_errors: bool) -> CompilationMessage {
+    CompilationMessage::BuildByteCode { unit, compiler, has_prior_errors }
 }
 
 pub fn create_byte_code_built_event(unit: CompilationUnit, errors: CompilationErrors, code: IntermediateRepresentation) -> CompilationMessage {
     CompilationMessage::ByteCodeBuilt { unit, errors, code }
 }
 
-pub fn create_build_backend_command(code: IntermediateRepresentation, compiler: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::BuildBackend { code, compiler }
+pub fn create_build_backend_command(code: IntermediateRepresentation, compiler: CompilationActorHandle, has_prior_errors: bool) -> CompilationMessage {
+    CompilationMessage::BuildBackend { code, compiler, has_prior_errors }
 }
 
 pub fn create_backend_built_event(id: CompilationUnitId, result: BackendErrorResult) -> CompilationMessage {
@@ -153,8 +153,7 @@ pub struct CompilerActor<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     pub error_reporter: CompilationActorHandle,
     pub reader: TReader,
     pub backend: TBackend,
-    pub message_wire_tap: TMessageWireTap,
-    pub errors_exist: bool
+    pub message_wire_tap: TMessageWireTap
 }
 
 fn create_compiler_actor<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
@@ -170,25 +169,13 @@ fn create_compiler_actor<TReader: FileRead, TBackend: BackendBuild, TMessageWire
         error_reporter, 
         reader,
         backend,
-        message_wire_tap,
-        errors_exist: false
+        message_wire_tap
     }
 }
 
 impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> Actor<CompilationMessage> for CompilerActor<TReader, TBackend, TMessageWireTap> {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         self.message_wire_tap.tap(&message);
-
-        if self.errors_exist {
-            return self.error_state_handling(message, ctx)
-        }
-
-        self.normal_state_handling(message, ctx)
-    }
-}
-
-impl<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> CompilerActor<TReader, TBackend, TMessageWireTap> {
-    fn normal_state_handling(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::Compile(file_name) =>
                 handle_compile(file_name, ctx, self.reader.clone()),

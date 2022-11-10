@@ -21,14 +21,16 @@ pub fn perform_typing(
     type_repository: CompilationActorHandle,
     typing_handle: CompilationActorHandle,
     unit: CompilationUnit,
-    ctx: &CompilationMessageContext
+    ctx: &CompilationMessageContext,
+    has_prior_errors: bool
 ) {
     send_message_to_actor(
         &typing_handle, 
         create_perform_typing_command(
             unit, 
             type_repository, 
-            create_self_handle(ctx)
+            create_self_handle(ctx),
+            has_prior_errors
         )
     );
 }
@@ -52,7 +54,7 @@ pub fn handle_unit_typed<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     start_compilation_phase_in_statistics(&mut compiler.statistics, sizing_compilation_phase(), unit.id);
     let sizing_handle = start_sizing_actor(ctx);
     let compiler_handle = create_self_handle(&ctx);
-    perform_sizing(compiler.type_repository.clone(), sizing_handle, compiler_handle, unit);
+    perform_sizing(compiler.type_repository.clone(), sizing_handle, compiler_handle, unit, are_any_compilation_errors(&errors));
 
     continue_listening_after_receive()
 }

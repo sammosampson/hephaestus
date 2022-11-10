@@ -66,11 +66,6 @@ pub fn end_compilation_phase_in_statistics(statistics: &mut Statistics, phase: C
     }
 }
 
-pub fn end_compilation_phase_in_error_state_in_statistics(statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId, ctx: &CompilationMessageContext) {
-    log_end_compilation_phase(phase, id);
-    remove_unit_from_statistics_and_check_for_completion(statistics, id, ctx);
-}
-
 fn is_final_phase(phase: CompilationPhase) -> bool {
     phase == CompilationPhase::BackendBuild
 }
