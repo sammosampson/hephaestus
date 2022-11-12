@@ -13,7 +13,7 @@ pub fn perform_byte_code_creation<TReader: FileRead, TBackend: BackendBuild, TMe
     unit: CompilationUnit,
     ctx: &CompilationMessageContext
 ) {
-    start_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(), unit.id);
+    start_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(unit.id));
 
     let intemediate_representation_handle = start_byte_code_creation_actor(
         ctx,
@@ -50,7 +50,7 @@ pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessag
     backend: TBackend
 ) -> AfterReceiveAction {
 
-    end_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(), unit.id, ctx);
+    end_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(unit.id), ctx);
     
     build_backend(compiler, ctx, backend, unit, code);
 

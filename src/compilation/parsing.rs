@@ -3,15 +3,18 @@ use crate::{
     parsing::*,
     acting::*,
     file_system::*,
-    backends::*
+    backends::*,
+    utilities::*
 };
 
-use log::*;
+pub fn parse_file<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> (
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
+    file_name: String,
+    ctx: &CompilationMessageContext
+) {
+    start_compilation_phase(&mut compiler.statistics, parsing_compilation_phase(string(&file_name)));
 
-pub fn parse_file<TReader: FileRead>(file_name: String, ctx: &CompilationMessageContext, error_reporter: &CompilationActorHandle, reader: TReader) {
-    debug!("handling compile for: {:?}", &file_name);
-
-    let parser_handle = start_parser_actor(ctx, error_reporter, reader);
+    let parser_handle = start_parser_actor(ctx, &compiler.error_reporter, compiler.reader.clone());
 
     send_parse_file_command_to_actor(parser_handle, file_name);
 }
@@ -33,10 +36,11 @@ fn send_parse_file_command_to_actor(parser_handle: CompilationActorHandle, file_
 
 pub fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
+    file_name: String,
     units: CompilationUnits,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
-    register_units_with_statistics(&mut compiler.statistics, &units);    
+    end_compilation_phase(&mut compiler.statistics, parsing_compilation_phase(string(&file_name)), ctx);
 
     for unit in units {
         perform_typing(compiler, unit, ctx);

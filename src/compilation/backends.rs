@@ -13,7 +13,7 @@ pub fn build_backend<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap:
     backend: TBackend,
     unit: CompilationUnit,
     code: IntermediateRepresentation) {
-    start_compilation_phase(&mut compiler.statistics, backend_build_compilation_phase(), unit.id);
+    start_compilation_phase(&mut compiler.statistics, backend_build_compilation_phase(unit.id));
 
     let byte_code_runner = start_backend_actor(
         create_self_handle(ctx), 
@@ -50,6 +50,6 @@ pub fn handle_backend_built<TReader: FileRead, TBackend: BackendBuild, TMessageW
     id: CompilationUnitId,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {    
-    end_compilation_phase(&mut compiler.statistics, backend_build_compilation_phase(), id, ctx);
+    end_compilation_phase(&mut compiler.statistics, backend_build_compilation_phase(id), ctx);
     continue_listening_after_receive()
 }

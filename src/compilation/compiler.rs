@@ -66,9 +66,9 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
         self.message_wire_tap.tap(&message);
         match message {
             CompilationMessage::Compile(file_name) =>
-                handle_compile(&self.error_reporter, self.reader.clone(), ctx, file_name ),
-            CompilationMessage::FileParsed { units, .. } =>
-                handle_file_parsed(self, units, ctx),
+                handle_compile(self, ctx, file_name ),
+            CompilationMessage::FileParsed { units, file_name } =>
+                handle_file_parsed(self, file_name, units, ctx),
             CompilationMessage::UnitTyped { resolved_types, unit } => 
                 handle_unit_typed(self, unit, resolved_types, ctx),
             CompilationMessage::UnitSized { unit } => 
@@ -86,13 +86,12 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
     }
 }
 
-pub fn handle_compile<TReader: FileRead>(
-    error_reporter: &CompilationActorHandle,
-    reader: TReader,
+pub fn handle_compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     ctx: &CompilationMessageContext,
     file_name: String,
 ) -> AfterReceiveAction {
-    parse_file(file_name, ctx, error_reporter, reader);
+    parse_file(compiler, file_name, ctx);
     continue_listening_after_receive()
 }
 

@@ -13,7 +13,7 @@ pub fn perform_typing<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap
     unit: CompilationUnit,
     ctx: &CompilationMessageContext
 ) {
-    start_compilation_phase(&mut compiler.statistics, typing_compilation_phase(), unit.id);
+    start_compilation_phase(&mut compiler.statistics, typing_compilation_phase(unit.id));
 
     let typing_handle = start_typing_actor(
         create_self_handle(ctx), 
@@ -64,7 +64,7 @@ pub fn handle_unit_typed<TReader: FileRead, TBackend: BackendBuild, TMessageWire
         add_resolved_type(compiler.type_repository.clone(), resolved_type);
     }
     
-    end_compilation_phase(&mut compiler.statistics, typing_compilation_phase(), unit.id, ctx);
+    end_compilation_phase(&mut compiler.statistics, typing_compilation_phase(unit.id), ctx);
 
     perform_sizing(compiler, unit, ctx);
 

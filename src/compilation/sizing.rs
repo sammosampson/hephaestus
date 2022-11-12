@@ -12,7 +12,7 @@ pub fn perform_sizing<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap
     unit: CompilationUnit,
     ctx: &CompilationMessageContext
 ) {
-    start_compilation_phase(&mut compiler.statistics, sizing_compilation_phase(), unit.id);
+    start_compilation_phase(&mut compiler.statistics, sizing_compilation_phase(unit.id));
 
     let sizing_handle = start_sizing_actor(
         create_self_handle(&ctx), 
@@ -48,7 +48,7 @@ pub fn handle_unit_sized<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     
-    end_compilation_phase(&mut compiler.statistics, sizing_compilation_phase(), unit.id, ctx);
+    end_compilation_phase(&mut compiler.statistics, sizing_compilation_phase(unit.id), ctx);
     
     perform_byte_code_creation(compiler, unit, ctx);
 
