@@ -7,7 +7,25 @@ use crate::{
     backends::*,
 };
 
-pub fn start_backend_actor<TBackend: BackendBuild>(
+pub fn build_backend<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
+    ctx: &CompilationMessageContext,
+    backend: TBackend,
+    unit: CompilationUnit,
+    code: IntermediateRepresentation) {
+    start_compilation_phase(&mut compiler.statistics, backend_build_compilation_phase(), unit.id);
+
+    let byte_code_runner = start_backend_actor(
+        create_self_handle(ctx), 
+        compiler.error_reporter.clone(),
+        backend,
+        ctx
+    );
+    
+    send_build_backend_command_to_actor(byte_code_runner, code, compiler.errors_have_occurred);
+}
+
+fn start_backend_actor<TBackend: BackendBuild>(
     compiler: CompilationActorHandle,
     error_reporter: CompilationActorHandle,
     backend: TBackend,
@@ -20,7 +38,7 @@ pub fn start_backend_actor<TBackend: BackendBuild>(
     byte_code_runner
 }
 
-pub fn build_backend(byte_code_runner: CompilationActorHandle, code: IntermediateRepresentation, has_prior_errors: bool) {
+fn send_build_backend_command_to_actor(byte_code_runner: CompilationActorHandle, code: IntermediateRepresentation, has_prior_errors: bool) {
     send_message_to_actor(
         &byte_code_runner, 
         create_build_backend_command(code,  has_prior_errors)
@@ -32,6 +50,6 @@ pub fn handle_backend_built<TReader: FileRead, TBackend: BackendBuild, TMessageW
     id: CompilationUnitId,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {    
-    end_compilation_phase_in_statistics(&mut compiler.statistics, backend_build_compilation_phase(), id, ctx);
+    end_compilation_phase(&mut compiler.statistics, backend_build_compilation_phase(), id, ctx);
     continue_listening_after_receive()
 }

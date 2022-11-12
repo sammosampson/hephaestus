@@ -109,7 +109,6 @@ pub fn create_type_repository_actor() -> TypeRepositoryActor {
     }
 }
 
-
 impl Actor<CompilationMessage> for TypeRepositoryActor {
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
@@ -117,8 +116,9 @@ impl Actor<CompilationMessage> for TypeRepositoryActor {
                 handle_find_type(self, criteria, respond_to),
             CompilationMessage::AddResolvedType(resolved_type) => 
                 handle_add_resolved_type(self, resolved_type),
-            CompilationMessage::ShutDown => 
-                handle_shutdown(self),
+            CompilationMessage::ReleaseAllTypeRequests =>
+                handle_release_all_type_requests(self),
+            CompilationMessage::ShutDown => shutdown_after_receive(),
             _ => continue_listening_after_receive()
         }
     }
@@ -139,9 +139,9 @@ fn handle_add_resolved_type(repository: &mut TypeRepositoryActor, resolved_type:
     continue_listening_after_receive()
 }
 
-fn handle_shutdown(repository: &mut TypeRepositoryActor) -> AfterReceiveAction {
+fn handle_release_all_type_requests(repository: &mut TypeRepositoryActor) -> AfterReceiveAction {
     release_all_type_requests_due_to_error(repository, shutdown_requested_error());
-    shutdown_after_receive()
+    continue_listening_after_receive()
 }
 
 

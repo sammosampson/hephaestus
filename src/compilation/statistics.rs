@@ -34,7 +34,7 @@ pub fn sizing_compilation_phase() -> CompilationPhase {
     CompilationPhase::Sizing
 }
 
-pub fn bytecode_creation_compilation_phase() -> CompilationPhase {
+pub fn byte_code_creation_compilation_phase() -> CompilationPhase {
     CompilationPhase::ByteCodeCreation
 }
 
@@ -54,12 +54,12 @@ pub fn register_units_with_statistics(
     log_statistics(statistics);
 }
 
-pub fn start_compilation_phase_in_statistics(_statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId) {
+pub fn start_compilation_phase(_statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId) {
     log_start_compilation_phase(phase, id);
 }
 
 
-pub fn end_compilation_phase_in_statistics(statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId, ctx: &CompilationMessageContext) {
+pub fn end_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase, id: CompilationUnitId, ctx: &CompilationMessageContext) {
     log_end_compilation_phase(phase, id);
     if is_final_phase(phase) {
         remove_unit_from_statistics_and_check_for_completion(statistics, id, ctx);

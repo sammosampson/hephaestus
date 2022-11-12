@@ -7,12 +7,11 @@ use crate::{
     errors::*,
 };
 
-
-
 pub fn handle_errors_reported<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage> (
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>
 ) -> AfterReceiveAction {
     compiler.errors_have_occurred = true;
+    release_all_type_requests(compiler);
     continue_listening_after_receive()
 }
 

@@ -33,7 +33,7 @@ fn handle_parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_repor
     shutdown_after_receive()
 }
 
-pub fn parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, file_reader: &T, filename: &str) -> CompilationUnits {
+fn parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, file_reader: &T, filename: &str) -> CompilationUnits {
     match file_reader.read_file_to_string(filename) {
         Ok(file_content) =>{
             let (units, errors) = parse(string(filename), &file_content);

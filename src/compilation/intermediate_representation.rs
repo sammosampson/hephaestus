@@ -8,7 +8,22 @@ use crate::{
     compilation::*
 };
 
-pub fn start_bytecode_creation_actor(ctx: &CompilationMessageContext, error_reporter: &CompilationActorHandle) -> CompilationActorHandle {
+pub fn perform_byte_code_creation<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
+    compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>, 
+    unit: CompilationUnit,
+    ctx: &CompilationMessageContext
+) {
+    start_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(), unit.id);
+
+    let intemediate_representation_handle = start_byte_code_creation_actor(
+        ctx,
+        &compiler.error_reporter
+    );
+
+    send_build_byte_code_command_to_actor(intemediate_representation_handle, unit, compiler.errors_have_occurred);
+}
+
+fn start_byte_code_creation_actor(ctx: &CompilationMessageContext, error_reporter: &CompilationActorHandle) -> CompilationActorHandle {
     let (intemediate_representation_handle, ..) = start_actor(
         ctx, 
         create_intemediate_representation_actor(create_self_handle(ctx), error_reporter.clone())
@@ -16,7 +31,7 @@ pub fn start_bytecode_creation_actor(ctx: &CompilationMessageContext, error_repo
     intemediate_representation_handle
 }
 
-pub fn perform_bytecode_creation(
+fn send_build_byte_code_command_to_actor(
     intemediate_representation_handle: CompilationActorHandle,
     unit: CompilationUnit,
     has_prior_errors: bool
@@ -35,16 +50,9 @@ pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessag
     backend: TBackend
 ) -> AfterReceiveAction {
 
-    end_compilation_phase_in_statistics(&mut compiler.statistics, bytecode_creation_compilation_phase(), unit.id, ctx);
+    end_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(), unit.id, ctx);
     
-    start_compilation_phase_in_statistics(&mut compiler.statistics, backend_build_compilation_phase(), unit.id);
-    let byte_code_runner = start_backend_actor(
-        create_self_handle(ctx), 
-        compiler.error_reporter.clone(),
-        backend,
-        ctx
-    );
-    build_backend(byte_code_runner, code, compiler.errors_have_occurred);
+    build_backend(compiler, ctx, backend, unit, code);
 
     continue_listening_after_receive()
 }
