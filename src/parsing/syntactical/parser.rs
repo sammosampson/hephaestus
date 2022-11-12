@@ -5,45 +5,52 @@ use crate::compilation::*;
 use crate::utilities::*;
 use crate::errors::*;
 
-pub struct ParserActor<T: FileRead> { file_reader: T }
+pub struct ParserActor<T: FileRead> {
+    compiler: CompilationActorHandle,
+    error_reporter: CompilationActorHandle,
+    file_reader: T }
 
-pub fn create_parser_actor<T: FileRead>(file_reader: T) -> ParserActor<T>  {
-    ParserActor { file_reader }
+pub fn create_parser_actor<T: FileRead>(compiler: CompilationActorHandle, error_reporter: CompilationActorHandle, file_reader: T) -> ParserActor<T>  {
+    ParserActor { 
+        compiler, 
+        error_reporter,
+        file_reader
+    }
 }
 
 impl<T: FileRead> Actor<CompilationMessage> for ParserActor<T>  {
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::ParseFile(file_name, compiler_handle) => handle_parse_file(&self.file_reader, file_name, compiler_handle),
+            CompilationMessage::ParseFile(file_name) => handle_parse_file(&self.compiler, &self.error_reporter, &self.file_reader, file_name),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn handle_parse_file<T: FileRead>(file_reader: &T, file_name: String, compiler_handle: ActorHandle<CompilationMessage>) -> AfterReceiveAction {
-    let result = parse_file(file_reader, &file_name);
-    send_message_to_actor(&compiler_handle, create_file_parsed_event(result));
+fn handle_parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, file_reader: &T, file_name: String) -> AfterReceiveAction {
+    let units = parse_file(compiler, error_reporter, file_reader, &file_name);
+    send_message_to_actor(compiler, create_file_parsed_event(file_name, units));
     shutdown_after_receive()
 }
 
-#[derive(Clone, Debug)]
-pub enum FileParseResult {
-    CompilationUnits { file_name: String, units: CompilationUnits, errors: CompilationErrors },
-    NotFound(String),
-}
-
-pub fn parse_file<T: FileRead>(file_reader: &T, filename: &str) -> FileParseResult {
+pub fn parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, file_reader: &T, filename: &str) -> CompilationUnits {
     match file_reader.read_file_to_string(filename) {
         Ok(file_content) =>{
             let (units, errors) = parse(string(filename), &file_content);
-            return FileParseResult::CompilationUnits { 
-                file_name: filename.to_string(), 
-                units,
-                errors
-            }
+            report_errors(error_reporter, compiler.clone(), errors);
+            return units;
         },
-        Err(_) => FileParseResult::NotFound(string(filename))
+        Err(_) => {
+            report_errors(error_reporter, compiler.clone(), create_errors_for_file_not_found(string(filename)));
+            return create_compilation_units();
+        }
     }
+}
+
+fn create_errors_for_file_not_found(filename: String) -> CompilationErrors {
+    let mut errors = create_compilation_errors(filename.clone());
+    add_compilation_error(&mut errors, compilation_error(file_not_found_error(filename), no_position()));
+    errors
 }
 
 pub fn parse(filename: String, input: &str) -> (CompilationUnits, CompilationErrors) {

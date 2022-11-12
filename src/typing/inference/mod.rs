@@ -17,17 +17,25 @@ use crate::compilation::*;
 use crate::types::*;
 use crate::errors::*;
 
-pub struct TypingActor;
+pub struct TypingActor {
+    compiler: CompilationActorHandle,
+    type_repository: CompilationActorHandle,
+    error_reporter: CompilationActorHandle,
+}
 
-pub fn create_typing_actor() -> TypingActor {
-    TypingActor
+pub fn create_typing_actor(compiler: CompilationActorHandle, type_repository: CompilationActorHandle, error_reporter: CompilationActorHandle) -> TypingActor {
+    TypingActor {
+        compiler,
+        type_repository,
+        error_reporter
+    }
 }
 
 impl Actor<CompilationMessage> for TypingActor {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::PerformTyping { unit, type_repository, compiler, has_prior_errors } => 
-                handle_perform_typing(unit, ctx, &type_repository, &compiler, has_prior_errors),
+            CompilationMessage::PerformTyping { unit, has_prior_errors } => 
+                handle_perform_typing(&self.compiler, &self.type_repository, &self.error_reporter, ctx, unit, has_prior_errors),
             _ => continue_listening_after_receive()
         }
     }
@@ -48,25 +56,26 @@ pub fn create_identifier_type_lookup() -> IdentifierTypeLookup {
 }
 
 fn handle_perform_typing(
-    mut unit: CompilationUnit, 
-    ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle, 
     compiler: &CompilationActorHandle,
+    type_repository: &CompilationActorHandle, 
+    error_reporter: &CompilationActorHandle,
+    ctx: &CompilationMessageContext,
+    mut unit: CompilationUnit, 
     has_prior_errors: bool
 ) -> AfterReceiveAction {
     let mut errors = create_compilation_errors(unit.filename.clone());
     let resolved_types = perform_typing(ctx, type_repository, &mut unit, &mut errors, has_prior_errors);
-    notify_compiler_unit_has_been_typed(compiler, resolved_types, unit, errors);    
+    report_errors(error_reporter, compiler.clone(), errors);
+    notify_compiler_unit_has_been_typed(compiler, resolved_types, unit);    
     shutdown_after_receive()
 }
 
 fn notify_compiler_unit_has_been_typed(
     compiler: &CompilationActorHandle,
     resolved_types: RuntimeTypePointers,
-    unit: CompilationUnit,
-    errors: CompilationErrors
+    unit: CompilationUnit
 ) {
-    send_message_to_actor(compiler, create_unit_typed_event(resolved_types, unit, errors));
+    send_message_to_actor(compiler, create_unit_typed_event(resolved_types, unit));
 }
 
 pub fn perform_typing(

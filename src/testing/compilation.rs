@@ -71,12 +71,12 @@ impl WireTapCompilationMessage for SendMessageWireTap {
     }
 }
 
-pub fn compile_source_and_get_types_and_unit(source: &str) -> Vec<(CompilationUnit, RuntimeTypePointers, CompilationErrors)> {
+pub fn compile_source_and_get_types_and_unit(source: &str) -> Vec<(CompilationUnit, RuntimeTypePointers)> {
     let (file_path, reader) = add_source_to_test_file_system(source);    
     compile_file_and_get_types_and_unit(file_path, reader)
 }
 
-fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) -> Vec<(CompilationUnit, RuntimeTypePointers, CompilationErrors)> {
+fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) -> Vec<(CompilationUnit, RuntimeTypePointers)> {
     let message_receiver = compile_and_get_message_receiver(file_path, reader);
     
     let mut result = vec!();
@@ -84,7 +84,7 @@ fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) 
     loop {
         let next_message = message_receiver.recv().unwrap();
         match next_message {
-            CompilationMessage::UnitTyped { resolved_types, unit, errors } => result.push((unit, resolved_types, errors)),
+            CompilationMessage::UnitTyped { resolved_types, unit } => result.push((unit, resolved_types)),
             CompilationMessage::CompilationComplete => break,           
             _ => {}
         }
@@ -94,12 +94,12 @@ fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) 
 }
 
 
-pub fn compile_source_and_get_parsed_units_and_errors(source: &str) -> Vec<(CompilationUnits, CompilationErrors)> {
+pub fn compile_source_and_get_parsed_units(source: &str) -> Vec<CompilationUnits> {
     let (file_path, reader) = add_source_to_test_file_system(source);    
-    compile_file_and_get_parsed_units_and_errors(file_path, reader)
+    compile_file_and_get_parsed_units(file_path, reader)
 }
 
-fn compile_file_and_get_parsed_units_and_errors(file_path: &str, reader: MockFileReader) -> Vec<(CompilationUnits, CompilationErrors)> {
+fn compile_file_and_get_parsed_units(file_path: &str, reader: MockFileReader) -> Vec<CompilationUnits> {
     let message_receiver = compile_and_get_message_receiver(file_path, reader);
     
     let mut result = vec!();
@@ -107,11 +107,7 @@ fn compile_file_and_get_parsed_units_and_errors(file_path: &str, reader: MockFil
     loop {
         let next_message = message_receiver.recv().unwrap();
         match next_message {
-            CompilationMessage::FileParsed(parse_result) => {
-                if let FileParseResult::CompilationUnits { units, errors, .. } = parse_result {
-                    result.push((units, errors));
-                }
-            },
+            CompilationMessage::FileParsed { units, .. } => result.push(units),
             CompilationMessage::CompilationComplete => break,           
             _ => {}
         }
@@ -121,10 +117,10 @@ fn compile_file_and_get_parsed_units_and_errors(file_path: &str, reader: MockFil
 }
 
 
-pub fn get_first_typed_const_unit(units_and_types: &[(CompilationUnit, RuntimeTypePointers, CompilationErrors)]) -> &(CompilationUnit, RuntimeTypePointers, CompilationErrors) {
+pub fn get_first_typed_const_unit(units_and_types: &[(CompilationUnit, RuntimeTypePointers)]) -> &(CompilationUnit, RuntimeTypePointers) {
     units_and_types
         .iter()
-        .filter(|(unit, _, _)| {
+        .filter(|(unit, _)| {
             match unit.tree.item_ref() {
                 AbstractSyntaxNodeItem::Constant { .. } => true,
                 _ => false,
@@ -134,10 +130,10 @@ pub fn get_first_typed_const_unit(units_and_types: &[(CompilationUnit, RuntimeTy
         .unwrap()
 }
 
-pub fn get_first_typed_procedure_body_unit(units_and_types: &[(CompilationUnit, RuntimeTypePointers, CompilationErrors)]) -> &(CompilationUnit, RuntimeTypePointers, CompilationErrors) {
+pub fn get_first_typed_procedure_body_unit(units_and_types: &[(CompilationUnit, RuntimeTypePointers)]) -> &(CompilationUnit, RuntimeTypePointers) {
     units_and_types
         .iter()
-        .filter(|(unit, _, _)| {
+        .filter(|(unit, _)| {
             match unit.tree.item_ref() {
                 AbstractSyntaxNodeItem::ProcedureBody { .. } => true,
                 _ => false,
@@ -153,11 +149,15 @@ pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: Compi
         message_receiver
     ) = create_test_message_receiver_actor();
     
-    let (typing_actor, ..) = start_singleton_actor(create_typing_actor());
+    let (error_reporter, ..) =  start_singleton_actor(create_error_reporter_actor());
+    
+    let (typing_actor, ..) = start_singleton_actor(
+        create_typing_actor(message_receiver_handle, typing_repository, error_reporter)
+    );
         
     send_message_to_actor(
         &typing_actor, 
-        create_perform_typing_command(unit, typing_repository, message_receiver_handle, false)
+        create_perform_typing_command(unit, false)
     );
 
     let next_message = message_receiver.into_iter().next().unwrap();

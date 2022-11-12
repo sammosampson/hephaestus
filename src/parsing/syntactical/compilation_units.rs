@@ -1,5 +1,5 @@
 use uuid::*;
-use crate::{parsing::*};
+use crate::parsing::*;
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
 pub struct CompilationUnitId {
@@ -34,3 +34,7 @@ pub fn create_unit(filename: String, tree: AbstractSyntaxNode) -> CompilationUni
 }
 
 pub type CompilationUnits = Vec<CompilationUnit>;
+
+pub fn create_compilation_units() -> CompilationUnits {
+    vec!()
+}

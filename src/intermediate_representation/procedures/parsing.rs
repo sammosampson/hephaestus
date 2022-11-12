@@ -2,6 +2,7 @@ use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
 use crate::testing::*;
+use crate::errors::*;
 
 pub fn node(position: SourceFilePosition, item: AbstractSyntaxNodeItem) -> AbstractSyntaxNode {
     create_node(item, position)
@@ -16,14 +17,15 @@ pub fn run_parse_file(file_path: &str, content: &str) -> (String, CompilationUni
     add_mock_file(&mut reader, file_path, content);
 
     let (message_receiver_handle, message_receiver) = create_test_message_receiver_actor();
+    let (error_reporter, ..) = start_singleton_actor(create_error_reporter_actor());
     
-    let (parser, ..) = start_singleton_actor(create_parser_actor(reader));
-    send_message_to_actor(&parser, create_parse_file_command(file_path.to_string(), message_receiver_handle));
+    let (parser, ..) = start_singleton_actor(create_parser_actor(message_receiver_handle, error_reporter, reader));
+    send_message_to_actor(&parser, create_parse_file_command(file_path.to_string()));
 
     let next_message = message_receiver.into_iter().next().unwrap();
 
     let (actual_file_path, units) = match next_message {
-        CompilationMessage::FileParsed(FileParseResult::CompilationUnits { file_name, units, .. }) => (file_name, units),
+        CompilationMessage::FileParsed { file_name, units, .. } => (file_name, units),
         _ => (String::default(), vec!())
     };
 

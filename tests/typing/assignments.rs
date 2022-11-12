@@ -8,7 +8,7 @@ fn typing_procedure_body_assignment_types_variable_int_literal_assignment() {
 
     
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -45,7 +45,7 @@ fn typing_known_type_procedure_body_assignment_types_variable_int_literal_assign
 }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -83,8 +83,8 @@ SomeProcedure :: () {
 }");
     
     assert_eq!(units_and_types.len(), 3);
-    let (_, global_const_types, _) = get_first_typed_const_unit(&units_and_types);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (_, global_const_types) = get_first_typed_const_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
     
     let expected = node(
         position(35, 2, 21),
@@ -121,7 +121,7 @@ fn typing_string_assignment_types_sucessfully() {
 
     
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -158,7 +158,7 @@ fn typing_cast_assignment_types_sucessfully() {
 
     
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -201,7 +201,7 @@ fn typing_struct_member_access_assignment_types_sucessfully() {
 }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -262,7 +262,7 @@ fn typing_struct_member_access_with_cast_assignment_types_sucessfully() {
 }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types, _) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(

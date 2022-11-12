@@ -15,19 +15,25 @@ pub fn create_error_reporter_actor() -> ErrorReporterActor {
 impl Actor<CompilationMessage> for ErrorReporterActor {
     fn receive(&mut self, message: CompilationMessage, _ctx: &ActorContext<CompilationMessage>) -> AfterReceiveAction {
         match message {
-            CompilationMessage::ReportErrors { errors } => report_errors(&errors),
+            CompilationMessage::ReportErrors { errors, compiler} => report_errors(&errors, &compiler),
             CompilationMessage::ShutDown => shutdown_after_receive(),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn report_errors(errors: &CompilationErrors) -> AfterReceiveAction {
+fn report_errors(errors: &CompilationErrors, compiler: &CompilationActorHandle) -> AfterReceiveAction {
     for error in &errors.items {
         report_error(&errors.filename, error);
     }
+    notify_compiler_errors_reported(compiler);
     continue_listening_after_receive()
 }
+
+fn notify_compiler_errors_reported(compiler: &CompilationActorHandle) {
+    send_message_to_actor(compiler, create_errors_reported_event());
+}
+
 
 fn report_error(filename: &str, error: &CompilationError) {
     match &error.item {

@@ -6,27 +6,34 @@ use crate::{
     errors::*
 };
 
-pub struct IntemediateRepresentationActor;
+pub struct IntemediateRepresentationActor {
+    compiler: CompilationActorHandle,
+    error_reporter: CompilationActorHandle
+}
 
-pub fn create_intemediate_representation_actor() -> IntemediateRepresentationActor {
-    IntemediateRepresentationActor
+pub fn create_intemediate_representation_actor(compiler: CompilationActorHandle, error_reporter: CompilationActorHandle) -> IntemediateRepresentationActor {
+    IntemediateRepresentationActor {
+        compiler,
+        error_reporter
+    }
 }
 
 impl Actor<CompilationMessage> for IntemediateRepresentationActor {
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
-            CompilationMessage::BuildByteCode { unit, compiler, has_prior_errors } =>
-                build_bytecode(unit, &compiler, has_prior_errors),
+            CompilationMessage::BuildByteCode { unit, has_prior_errors } =>
+                build_bytecode(unit, &self.compiler, &self.error_reporter, has_prior_errors),
             _ => continue_listening_after_receive()
         }
     }
 }
 
-fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle, has_prior_errors: bool) -> AfterReceiveAction {    
+fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, has_prior_errors: bool) -> AfterReceiveAction {    
     let mut ir = create_intermediate_representation(unit.id, unit.filename.clone());
     let mut errors = create_compilation_errors(unit.filename.clone());
     build_bytecode_at_root(&mut unit, &mut errors, &mut ir, has_prior_errors);
-    notify_compiler_byte_code_built_for_unit(compiler, unit, errors, ir);
+    report_errors(error_reporter, compiler.clone(), errors);
+    notify_compiler_byte_code_built_for_unit(compiler, unit, ir);
     shutdown_after_receive()
 }
 
@@ -34,10 +41,9 @@ fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle, 
 fn notify_compiler_byte_code_built_for_unit(
     compiler: &CompilationActorHandle,
     unit: CompilationUnit,
-    errors: CompilationErrors,
     ir: IntermediateRepresentation
 ) {
-    send_message_to_actor(compiler, create_byte_code_built_event(unit, errors, ir));
+    send_message_to_actor(compiler, create_byte_code_built_event(unit, ir));
 }
 
 fn build_bytecode_at_root(unit: &mut CompilationUnit, errors: &mut CompilationErrors, ir: &mut IntermediateRepresentation, has_prior_errors: bool) {

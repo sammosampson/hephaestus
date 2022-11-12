@@ -5,14 +5,13 @@ use crate::{
     file_system::*,
     intermediate_representation::*,
     backends::*,
-    compilation::*,
-    errors::*
+    compilation::*
 };
 
-pub fn start_bytecode_creation_actor(ctx: &CompilationMessageContext) -> CompilationActorHandle {
+pub fn start_bytecode_creation_actor(ctx: &CompilationMessageContext, error_reporter: &CompilationActorHandle) -> CompilationActorHandle {
     let (intemediate_representation_handle, ..) = start_actor(
         ctx, 
-        create_intemediate_representation_actor()
+        create_intemediate_representation_actor(create_self_handle(ctx), error_reporter.clone())
     );
     intemediate_representation_handle
 }
@@ -20,19 +19,17 @@ pub fn start_bytecode_creation_actor(ctx: &CompilationMessageContext) -> Compila
 pub fn perform_bytecode_creation(
     intemediate_representation_handle: CompilationActorHandle,
     unit: CompilationUnit,
-    compiler_handle: CompilationActorHandle,
     has_prior_errors: bool
 ) {
     send_message_to_actor(
         &intemediate_representation_handle, 
-        create_build_byte_code_command(unit, compiler_handle, has_prior_errors)
+        create_build_byte_code_command(unit, has_prior_errors)
     );
 }
 
 pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>,
     unit: CompilationUnit,
-    errors: CompilationErrors,
     code: IntermediateRepresentation,
     ctx: &CompilationMessageContext,
     backend: TBackend
@@ -40,14 +37,14 @@ pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessag
 
     end_compilation_phase_in_statistics(&mut compiler.statistics, bytecode_creation_compilation_phase(), unit.id, ctx);
     
-    if handle_any_errors(compiler, &errors) {
-        return continue_listening_after_receive();
-    }
-    
     start_compilation_phase_in_statistics(&mut compiler.statistics, backend_build_compilation_phase(), unit.id);
-    let byte_code_runner = start_backend_actor(ctx, backend);
-    let compiler_handle = create_self_handle(&ctx);
-    build_backend(byte_code_runner, code, compiler_handle, are_any_compilation_errors(&errors));
+    let byte_code_runner = start_backend_actor(
+        create_self_handle(ctx), 
+        compiler.error_reporter.clone(),
+        backend,
+        ctx
+    );
+    build_backend(byte_code_runner, code, compiler.errors_have_occurred);
 
     continue_listening_after_receive()
 }
