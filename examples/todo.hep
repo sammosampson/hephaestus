@@ -1,5 +1,6 @@
-//hello_world
-// -- cast IR
-// -- string / struct field access IR
-//ERROR HANDLING: 
-// -- Bail on first error per file when lexxing, report all syntax errors though for undeclared identifier (?)
+1. circuit breaking for awaiting unfound types
+2. x64 backend output in one file
+3. to_c_string - for hello world: needs alloc and memcpy 
+4. structs general use
+5. loops - for, for each
+6. llvm
