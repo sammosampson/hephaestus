@@ -38,7 +38,7 @@ impl<TBackend: BackendBuild> Actor<CompilationMessage> for BackendActor<TBackend
     fn receive(&mut self, message: CompilationMessage, _ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::BuildBackend { code, has_prior_errors } =>
-                build_backend_from_ir(&mut self.backend, code, &self.error_reporter, &self.compiler, has_prior_errors),
+                build_backend_from_ir(&mut self.backend, code, &self.compiler, &self.error_reporter,  has_prior_errors),
             _ => continue_listening_after_receive()
         }
     }

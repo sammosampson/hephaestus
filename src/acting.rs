@@ -1,4 +1,4 @@
-use std::sync::mpsc::*;
+use std::{sync::mpsc::*, any::type_name};
 use crate::threading::*;
 
 pub type ActorThreadPool = ThreadPool<()>;
@@ -38,7 +38,12 @@ pub trait Actor<TMessage> : Parallelisable
 }
 
 pub fn send_message_to_actor<TMessage: core::fmt::Debug>(actor: &ActorHandle<TMessage>, message: TMessage) {
-    actor.sender.send(message).unwrap()
+    match actor.sender.send(message) {
+        Ok(_) => {},
+        Err(error) => {
+            panic!("error {:?} sending message {:?}", error, type_name::<TMessage>());
+        },
+    }
 }
 
 pub fn start_singleton_actor<TActor, TMessage>(actor: TActor) -> (ActorHandle<TMessage>, ActorShutdownNotifier)

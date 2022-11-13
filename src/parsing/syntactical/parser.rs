@@ -34,28 +34,26 @@ fn handle_parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_repor
 }
 
 fn parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, file_reader: &T, filename: &str) -> CompilationUnits {
-    match file_reader.read_file_to_string(filename) {
-        Ok(file_content) =>{
-            let (units, errors) = parse(string(filename), &file_content);
-            report_errors(error_reporter, compiler.clone(), errors);
-            return units;
-        },
-        Err(_) => {
-            report_errors(error_reporter, compiler.clone(), create_errors_for_file_not_found(string(filename)));
-            return create_compilation_units();
-        }
-    }
+    let (units, errors) = match file_reader.read_file_to_string(filename) {
+        Ok(file_content) => parse(string(filename), &file_content),
+        Err(_) => create_units_and_errors_for_file_not_found(string(filename))
+    };
+    report_errors(error_reporter, compiler.clone(), errors);
+    return units;
 }
 
-fn create_errors_for_file_not_found(filename: String) -> CompilationErrors {
+fn create_units_and_errors_for_file_not_found(filename: String) -> (CompilationUnits, CompilationErrors) {
+    let mut units = create_compilation_units();
     let mut errors = create_compilation_errors(filename.clone());
-    add_compilation_error(&mut errors, compilation_error(file_not_found_error(filename), no_position()));
-    errors
+    let error = compilation_error(file_not_found_error(filename.clone()), no_position());
+    units.push(create_unit(filename, create_error_node(&error)));
+    add_compilation_error(&mut errors, error);
+    (units, errors)
 }
 
 pub fn parse(filename: String, input: &str) -> (CompilationUnits, CompilationErrors) {
     let mut lexer = lex(input);
-    let mut units = vec!();
+    let mut units = create_compilation_units();
     let mut errors = create_compilation_errors(filename.clone());
         
     loop {

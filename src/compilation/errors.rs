@@ -20,6 +20,10 @@ pub fn report_errors(
     compiler: CompilationActorHandle,
     errors: CompilationErrors
 ) {
+    if !are_any_compilation_errors(&errors) {
+        return;
+    }
+    
     send_message_to_actor(
         error_reporter, 
         create_report_errors_command(errors, compiler)

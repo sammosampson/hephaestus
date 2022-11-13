@@ -7,7 +7,7 @@ use crate::{
     acting::*
 };
 
-pub type Statistics = HashMap<CompilationPhase, CompilationPhase>;
+pub type Statistics = HashMap<CompilationUnitId, CompilationUnitId>;
 
 pub fn create_statistics() -> Statistics {
     HashMap::default()
@@ -44,29 +44,46 @@ pub fn backend_build_compilation_phase(id: CompilationUnitId) -> CompilationPhas
 
 pub fn start_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase) {
     log_start_compilation_phase(&phase);
-    register_unit_with_statistics(statistics, phase);
+    perform_start_compilation_phase(statistics, phase);
     log_statistics(statistics);
 }
 
 pub fn end_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase, ctx: &CompilationMessageContext) {
     log_end_compilation_phase(&phase);
-    remove_unit_from_statistics(statistics, &phase);
-    check_for_statistics_completion(statistics, ctx);
+    perform_end_compilation_phase(statistics, phase, ctx);
     log_statistics(statistics);
 }
 
-pub fn check_for_statistics_completion(statistics: &mut Statistics, ctx: &CompilationMessageContext) {
+fn perform_start_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase) {
+    match phase {
+        CompilationPhase::Typing(id) => 
+            add_unit_to_statistics(statistics, id),
+        _ => {},
+    }
+}
+
+fn perform_end_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase, ctx: &CompilationMessageContext) {
+    match phase {
+        CompilationPhase::BackendBuild(id) => {
+            remove_unit_from_statistics(statistics, &id);
+            check_for_statistics_completion(statistics, ctx);
+        },
+        _ => {},
+    }
+}
+
+fn check_for_statistics_completion(statistics: &mut Statistics, ctx: &CompilationMessageContext) {
     if compilation_has_completed(statistics) {
         notify_compiler_of_compilation_completion(ctx);
     }
 }
 
-fn register_unit_with_statistics(lookup: &mut Statistics, phase: CompilationPhase) {
-    lookup.insert(phase.clone(), phase);
+fn add_unit_to_statistics(lookup: &mut Statistics, id: CompilationUnitId) {
+    lookup.insert(id, id);
 }
 
-fn remove_unit_from_statistics(lookup: &mut Statistics, phase: &CompilationPhase) {
-    lookup.remove(phase);
+fn remove_unit_from_statistics(lookup: &mut Statistics, id: &CompilationUnitId) {
+    lookup.remove(id);
 }
 
 fn compilation_has_completed(lookup: &Statistics) -> bool {

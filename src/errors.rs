@@ -23,6 +23,9 @@ impl Actor<CompilationMessage> for ErrorReporterActor {
 }
 
 fn report_errors(errors: &CompilationErrors, compiler: &CompilationActorHandle) -> AfterReceiveAction {
+    if !are_any_compilation_errors(errors) {
+        return continue_listening_after_receive();
+    }
     for error in &errors.items {
         report_error(&errors.filename, error);
     }
