@@ -7,10 +7,19 @@ use crate::{
     acting::*
 };
 
-pub type Statistics = HashMap<CompilationUnitId, CompilationUnitId>;
+pub struct Statistics {
+    files_in_pipe: FilesInPipe,
+    units_in_pipe: UnitsInPipe
+}
+
+pub type FilesInPipe = HashMap<String, String>;
+pub type UnitsInPipe = HashMap<CompilationUnitId, CompilationUnitId>;
 
 pub fn create_statistics() -> Statistics {
-    HashMap::default()
+    Statistics {
+        files_in_pipe: HashMap::default(),
+        units_in_pipe: HashMap::default(),
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
@@ -56,14 +65,21 @@ pub fn end_compilation_phase(statistics: &mut Statistics, phase: CompilationPhas
 
 fn perform_start_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase) {
     match phase {
+        CompilationPhase::Parsing(filename) => 
+            add_file_to_statistics(statistics, filename),
         CompilationPhase::Typing(id) => 
             add_unit_to_statistics(statistics, id),
         _ => {},
     }
 }
 
+
 fn perform_end_compilation_phase(statistics: &mut Statistics, phase: CompilationPhase, ctx: &CompilationMessageContext) {
     match phase {
+        CompilationPhase::Parsing(filename) => {
+            remove_file_from_statistics(statistics, &filename);
+            all_files_parsed(statistics);
+        },
         CompilationPhase::BackendBuild(id) => {
             remove_unit_from_statistics(statistics, &id);
             check_for_statistics_completion(statistics, ctx);
@@ -72,22 +88,34 @@ fn perform_end_compilation_phase(statistics: &mut Statistics, phase: Compilation
     }
 }
 
+fn all_files_parsed(statistics: &mut Statistics) -> bool {
+    statistics.files_in_pipe.len() == 0
+}
+
 fn check_for_statistics_completion(statistics: &mut Statistics, ctx: &CompilationMessageContext) {
     if compilation_has_completed(statistics) {
         notify_compiler_of_compilation_completion(ctx);
     }
 }
 
-fn add_unit_to_statistics(lookup: &mut Statistics, id: CompilationUnitId) {
-    lookup.insert(id, id);
+fn add_file_to_statistics(statistics: &mut Statistics, filename: String) {
+    statistics.files_in_pipe.insert(filename.clone(), filename);
 }
 
-fn remove_unit_from_statistics(lookup: &mut Statistics, id: &CompilationUnitId) {
-    lookup.remove(id);
+fn remove_file_from_statistics(statistics: &mut Statistics, filename: &str) {
+    statistics.files_in_pipe.remove(filename);
 }
 
-fn compilation_has_completed(lookup: &Statistics) -> bool {
-    lookup.is_empty()
+fn add_unit_to_statistics(statistics: &mut Statistics, id: CompilationUnitId) {
+    statistics.units_in_pipe.insert(id, id);
+}
+
+fn remove_unit_from_statistics(statistics: &mut Statistics, id: &CompilationUnitId) {
+    statistics.units_in_pipe.remove(id);
+}
+
+fn compilation_has_completed(statistics: &Statistics) -> bool {
+    statistics.units_in_pipe.is_empty()
 }
 
 fn notify_compiler_of_compilation_completion(ctx: &CompilationMessageContext) {
@@ -103,5 +131,5 @@ fn log_end_compilation_phase(phase: &CompilationPhase) {
 }
 
 fn log_statistics(statistics: &mut Statistics) {
-    debug!("unit requsted list is now {:?}", &statistics.keys());
+    debug!("unit requsted list is now {:?}", &statistics.units_in_pipe.keys());
 }
