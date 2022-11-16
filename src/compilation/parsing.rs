@@ -40,7 +40,7 @@ pub fn handle_file_parsed<TReader: FileRead, TBackend: BackendBuild, TMessageWir
     units: CompilationUnits,
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
-    end_compilation_phase(&mut compiler.statistics, parsing_compilation_phase(string(&file_name)), ctx);
+    end_compilation_phase(&mut compiler.statistics, &compiler.type_repository, parsing_compilation_phase(string(&file_name)), ctx);
 
     for unit in units {
         perform_typing(compiler, unit, ctx);

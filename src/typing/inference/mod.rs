@@ -20,14 +20,21 @@ use crate::errors::*;
 pub struct TypingActor {
     compiler: CompilationActorHandle,
     type_repository: CompilationActorHandle,
-    error_reporter: CompilationActorHandle,
+    error_reporter: CompilationActorHandle, 
+    unit_id: CompilationUnitId,
 }
 
-pub fn create_typing_actor(compiler: CompilationActorHandle, type_repository: CompilationActorHandle, error_reporter: CompilationActorHandle) -> TypingActor {
+pub fn create_typing_actor(
+    compiler: CompilationActorHandle,
+    type_repository: CompilationActorHandle,
+    error_reporter: CompilationActorHandle, 
+    unit_id: CompilationUnitId
+) -> TypingActor {
     TypingActor {
         compiler,
         type_repository,
-        error_reporter
+        error_reporter,
+        unit_id
     }
 }
 
@@ -35,7 +42,7 @@ impl Actor<CompilationMessage> for TypingActor {
     fn receive(&mut self, message: CompilationMessage, ctx: &CompilationMessageContext) -> AfterReceiveAction {
         match message {
             CompilationMessage::PerformTyping { unit, has_prior_errors } => 
-                handle_perform_typing(&self.compiler, &self.type_repository, &self.error_reporter, ctx, unit, has_prior_errors),
+                handle_perform_typing(&self, ctx, unit, has_prior_errors),
             _ => continue_listening_after_receive()
         }
     }
@@ -56,17 +63,15 @@ pub fn create_identifier_type_lookup() -> IdentifierTypeLookup {
 }
 
 fn handle_perform_typing(
-    compiler: &CompilationActorHandle,
-    type_repository: &CompilationActorHandle, 
-    error_reporter: &CompilationActorHandle,
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
     mut unit: CompilationUnit, 
     has_prior_errors: bool
 ) -> AfterReceiveAction {
     let mut errors = create_compilation_errors(unit.filename.clone());
-    let resolved_types = perform_typing(ctx, type_repository, &mut unit, &mut errors, has_prior_errors);
-    report_errors(error_reporter, compiler.clone(), errors);
-    notify_compiler_unit_has_been_typed(compiler, resolved_types, unit);    
+    let resolved_types = perform_typing(typing_actor, ctx, &mut unit, &mut errors, has_prior_errors);
+    report_errors(&typing_actor.error_reporter, typing_actor.compiler.clone(), errors);
+    notify_compiler_unit_has_been_typed(&typing_actor.compiler, resolved_types, unit);    
     shutdown_after_receive()
 }
 
@@ -79,8 +84,8 @@ fn notify_compiler_unit_has_been_typed(
 }
 
 pub fn perform_typing(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     unit: &mut CompilationUnit,
     errors: &mut CompilationErrors,
     has_prior_errors: bool
@@ -93,16 +98,16 @@ pub fn perform_typing(
 
     match unit.tree.item_mut() {
         AbstractSyntaxNodeItem::Run { expr } => {
-            perform_typing_for_inferred_type_expression(ctx, type_repository, &create_identifier_type_lookup(), expr, errors);        
+            perform_typing_for_inferred_type_expression(typing_actor, ctx, &create_identifier_type_lookup(), expr, errors);        
         },
         AbstractSyntaxNodeItem::Constant { name, value, constant_type } => {
-            perform_typing_for_constant(unit.id, ctx, type_repository, &mut resolved_types, name, value, constant_type, errors);        
+            perform_typing_for_constant(typing_actor, ctx, &mut resolved_types, name, value, constant_type, errors);        
         },
         AbstractSyntaxNodeItem::ProcedureHeader { name, args, return_args, .. } => {
             perform_typing_for_procedure_header(unit.id, name, &mut resolved_types, args, return_args, errors);                      
         },
         AbstractSyntaxNodeItem::ProcedureBody { args, return_types, statements, .. } => {
-            perform_typing_for_procedure_body(ctx, type_repository, args, return_types, statements, errors);
+            perform_typing_for_procedure_body(typing_actor, ctx, args, return_types, statements, errors);
         },
         _ => {}
     };

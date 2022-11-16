@@ -2,12 +2,12 @@ use rust_hephaestus::*;
 
 #[test]
 fn parse_typed_assigment_parses_correctly() {        
-    let units_and_types = compile_source_and_get_types_and_unit("main :: () {
+    let units_and_types = compile_source_and_get_units_and_types("main :: () {
         x : s32 = 1;
     }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, _,) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, _,) = get_first_typed_procedure_body_unit_named(&units_and_types, "main");
     assert_eq!(
         proc_body_unit.tree, 
         node(
@@ -36,32 +36,28 @@ fn parse_typed_assigment_parses_correctly() {
 
 #[test]
 fn parse_invalid_assigment_parses_correctly() {        
-    let units_and_types = compile_source_and_get_parsed_units("main :: () {
+    let (units, errors) = compile_source_and_get_parsed_units_and_errors("main :: () {
     x :! s32 = 1;
 }");
 
-    assert_eq!(units_and_types.len(), 1);
-    let proc_body_units = &units_and_types.iter().next().unwrap();
-    
-    assert_eq!(proc_body_units.len(), 1);
+    assert_eq!(units.len(), 1);
     assert_eq!(
-        proc_body_units[0].tree, 
+        units[0].tree, 
         node(
             position(20, 2, 8),
             error_item()
         )
     );
 
-    /*
-    assert_eq!(errors.items.len(), 1);
+    assert_eq!(errors.len(), 1);
+    let file_error = &errors[0];
     assert_eq!(
-        errors.items[0], 
+        file_error.items[0], 
         compilation_error(
             parser_error(expected_type_error()),
             position(20, 2, 8)
         )
     )
-    */
 }
 
 #[test]

@@ -7,8 +7,8 @@ use crate::utilities::*;
 use crate::errors::*;
 
 pub fn perform_typing_for_known_target_type_expression(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     expr: &mut AbstractSyntaxNode,
     known_target_type: &RuntimeTypePointer,
@@ -21,16 +21,16 @@ pub fn perform_typing_for_known_target_type_expression(
             perform_typing_for_known_target_type_expression_literal(literal, known_target_type, expr_position, errors);
         },
         AbstractSyntaxNodeItem::Identifier { name, scope }  => {
-            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope, expr_position, errors);
+            perform_typing_for_expression_identifier(typing_actor, ctx, local_type_map, name, scope, expr_position, errors);
         },
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type, ..} => {
-            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, expression_type, errors);
+            perform_typing_for_expression_expression(typing_actor, ctx, local_type_map, lhs, rhs, expression_type, errors);
         },
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type } => {
-            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, procedure_call_type, expr_position, errors);
+            perform_typing_for_expression_procedure_call(typing_actor, ctx, local_type_map, name, args, procedure_call_type, expr_position, errors);
         },
         AbstractSyntaxNodeItem::MemberExpr { instance, member, member_expression_type } => {
-            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type, errors);
+            perform_typing_for_member_expression(typing_actor, ctx, local_type_map, instance, member, member_expression_type, errors);
         },
         _ => {}
     }
@@ -173,8 +173,8 @@ fn resolve_to_float_64_literal_if_possible(number: &str) -> Option<ResolvedLiter
 }
 
 pub fn perform_typing_for_inferred_type_expression(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     expr: &mut AbstractSyntaxNode,
     errors: &mut CompilationErrors
@@ -183,19 +183,19 @@ pub fn perform_typing_for_inferred_type_expression(
 
     match expr.item_mut() {
         AbstractSyntaxNodeItem::ForeignSystemLibrary{ library } =>
-            perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, library, errors),
+            perform_typing_for_inferred_type_expression(typing_actor, ctx, local_type_map, library, errors),
         AbstractSyntaxNodeItem::Literal(literal) =>
             perform_typing_for_inferred_type_expression_literal(literal, expr_position, errors),
         AbstractSyntaxNodeItem::Identifier { name, scope} =>
-            perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope, expr_position, errors),
+            perform_typing_for_expression_identifier(typing_actor, ctx, local_type_map, name, scope, expr_position, errors),
         AbstractSyntaxNodeItem::BinaryExpr { lhs, rhs, expression_type: type_id, ..} =>
-            perform_typing_for_expression_expression(ctx, type_repository, local_type_map, lhs, rhs, type_id, errors),
+            perform_typing_for_expression_expression(typing_actor, ctx, local_type_map, lhs, rhs, type_id, errors),
         AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id } =>
-            perform_typing_for_expression_procedure_call(ctx, type_repository, local_type_map, name, args, type_id, expr_position, errors),
+            perform_typing_for_expression_procedure_call(typing_actor, ctx, local_type_map, name, args, type_id, expr_position, errors),
         AbstractSyntaxNodeItem::Cast { cast_type, expr} =>
-            perform_typing_for_expression_cast(ctx, type_repository, local_type_map, cast_type, expr, errors),
+            perform_typing_for_expression_cast(typing_actor, ctx, local_type_map, cast_type, expr, errors),
         AbstractSyntaxNodeItem::MemberExpr { instance, member, member_expression_type } =>
-            perform_typing_for_member_expression(ctx, type_repository, local_type_map, instance, member, member_expression_type, errors),
+            perform_typing_for_member_expression(typing_actor, ctx, local_type_map, instance, member, member_expression_type, errors),
         _ => None
     }
 }
@@ -225,8 +225,8 @@ fn perform_typing_for_inferred_type_expression_literal(
 }
 
 fn perform_typing_for_expression_identifier(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     name: &mut String,
     scope: &mut Scope,
@@ -238,18 +238,18 @@ fn perform_typing_for_expression_identifier(
         return Some(local_identifier_type.clone());
     }
     *scope = global_scope();
-    get_global_type_for_identifier(ctx, type_repository, name, identifier_position, errors)
+    get_global_type_for_identifier(typing_actor, ctx, name, identifier_position, errors)
 }
 
 fn get_global_type_for_identifier(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     name: &mut String,
     identifier_position: SourceFilePosition,   
     errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
 
-    match find_type_by_name(ctx, type_repository, name) {
+    match find_type_by_name(ctx, &typing_actor.type_repository, name, typing_actor.unit_id, typing_actor.compiler.clone()) {
         Ok(global_type) => {
             if let Some(global_type) = try_get_constant_definition_runtime_type_item(&global_type.item) {
                 return Some(global_type);
@@ -264,16 +264,16 @@ fn get_global_type_for_identifier(
 }
 
 fn perform_typing_for_expression_expression(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     lhs: &mut AbstractSyntaxNode,
     rhs: &mut AbstractSyntaxNode,
     type_id: &mut ResolvableType,
     errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
-    let lhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, lhs, errors);
-    let rhs_resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, rhs, errors);
+    let lhs_resolved_type = perform_typing_for_inferred_type_expression(typing_actor, ctx, local_type_map, lhs, errors);
+    let rhs_resolved_type = perform_typing_for_inferred_type_expression(typing_actor, ctx, local_type_map, rhs, errors);
     
     if lhs_resolved_type != rhs_resolved_type {
         todo(errors, function!(), "deal with different types on either side of expression");
@@ -288,8 +288,8 @@ fn perform_typing_for_expression_expression(
 }
 
 fn perform_typing_for_expression_procedure_call(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     name: &mut String,
     args: &mut AbstractSyntaxChildNodes,
@@ -298,8 +298,8 @@ fn perform_typing_for_expression_procedure_call(
     errors: &mut CompilationErrors
 ) -> OptionalRuntimeTypePointer {
     let resolved_types = perform_typing_for_procedure_call_return_first_return_type(
+        typing_actor,
         ctx,
-        type_repository,
         local_type_map,
         args,
         name,
@@ -317,8 +317,8 @@ fn perform_typing_for_expression_procedure_call(
 }
 
 fn perform_typing_for_expression_cast(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     cast_type: &mut ResolvableType,
     expr: &mut AbstractSyntaxNode,
@@ -326,8 +326,8 @@ fn perform_typing_for_expression_cast(
 ) -> OptionalRuntimeTypePointer {
     if let Some(resolved_cast_type) = try_get_resolved_runtime_type_pointer(&cast_type) {
         perform_typing_for_known_target_type_expression(
+            typing_actor,
             ctx,
-            type_repository,
             local_type_map,
             expr,
             &resolved_cast_type,
@@ -339,8 +339,8 @@ fn perform_typing_for_expression_cast(
 }
 
 fn perform_typing_for_member_expression(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     instance: &mut AbstractSyntaxNode,
     member: &mut AbstractSyntaxNode,
@@ -349,8 +349,8 @@ fn perform_typing_for_member_expression(
 ) -> OptionalRuntimeTypePointer {
     
     if let Some(instance_type) = perform_typing_for_member_expression_instance(
+        typing_actor,
         ctx,
-        type_repository,
         local_type_map,
         instance,
         errors
@@ -364,8 +364,8 @@ fn perform_typing_for_member_expression(
 }
 
 fn perform_typing_for_member_expression_instance(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     instance: &mut AbstractSyntaxNode,
     errors: &mut CompilationErrors
@@ -373,7 +373,7 @@ fn perform_typing_for_member_expression_instance(
     let instance_position = instance.position.clone();
     match instance.item_mut() {
         AbstractSyntaxNodeItem::Instance { name, instance_type, scope} => {
-            if let Some(resolved_member_instance_type) = perform_typing_for_expression_identifier(ctx, type_repository, local_type_map, name, scope, instance_position, errors) {
+            if let Some(resolved_member_instance_type) = perform_typing_for_expression_identifier(typing_actor, ctx, local_type_map, name, scope, instance_position, errors) {
                 *instance_type = resolved_resolvable_type(resolved_member_instance_type.clone());
                 return Some(resolved_member_instance_type);
             }

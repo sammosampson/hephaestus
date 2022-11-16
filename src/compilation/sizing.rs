@@ -48,7 +48,7 @@ pub fn handle_unit_sized<TReader: FileRead, TBackend: BackendBuild, TMessageWire
     ctx: &CompilationMessageContext
 ) -> AfterReceiveAction {
     
-    end_compilation_phase(&mut compiler.statistics, sizing_compilation_phase(unit.id), ctx);
+    end_compilation_phase(&mut compiler.statistics, &compiler.type_repository, sizing_compilation_phase(unit.id), ctx);
     
     perform_byte_code_creation(compiler, unit, ctx);
 

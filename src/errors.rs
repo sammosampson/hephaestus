@@ -29,12 +29,12 @@ fn report_errors(errors: &CompilationErrors, compiler: &CompilationActorHandle) 
     for error in &errors.items {
         report_error(&errors.filename, error);
     }
-    notify_compiler_errors_reported(compiler);
+    notify_compiler_errors_reported(compiler, errors.clone());
     continue_listening_after_receive()
 }
 
-fn notify_compiler_errors_reported(compiler: &CompilationActorHandle) {
-    send_message_to_actor(compiler, create_errors_reported_event());
+fn notify_compiler_errors_reported(compiler: &CompilationActorHandle, errors: CompilationErrors) {
+    send_message_to_actor(compiler, create_errors_reported_event(errors));
 }
 
 
@@ -162,8 +162,8 @@ pub enum CompilationErrorItem {
     TypeInferenceError(TypeInferenceError),
     IntermediateRepresentationError(IntermediateRepresentationError),
     BackendError(BackendError),
-    ToDo{function: String, text: String, },
-    ShutDownRequested,
+    ToDo{ function: String, text: String },
+    ShutDownRequested
 }
 
 pub fn no_error() -> CompilationErrorItem {
@@ -190,12 +190,12 @@ pub fn todo_error(function: &str, text: &str) -> CompilationErrorItem {
     CompilationErrorItem::ToDo { function: string(function), text: string(text) }
 }
 
-pub fn shutdown_requested_error() -> CompilationErrorItem {
-    CompilationErrorItem::ShutDownRequested
-}
-
 pub fn backend_error(error: BackendError) -> CompilationErrorItem {
     CompilationErrorItem::BackendError(error)
+}
+
+pub fn shutdown_requested_error_item() -> CompilationErrorItem {
+    CompilationErrorItem::ShutDownRequested
 }
 
 pub fn todo(errors: &mut CompilationErrors, function: &str, text: &str) {

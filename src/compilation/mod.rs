@@ -34,18 +34,19 @@ pub enum CompilationMessage {
     UnitTyped { resolved_types: RuntimeTypePointers, unit: CompilationUnit },
     PerformSizing { unit: CompilationUnit, has_prior_errors: bool },
     UnitSized { unit: CompilationUnit },
-    FindType { criteria: FindTypeCriteria, respond_to: CompilationActorHandle },
+    FindType { criteria: FindTypeCriteria, respond_to: FindTypeCaller, compiler: CompilationActorHandle },
+    TypeFindRequested { awaiting_unit_id: CompilationUnitId },
     TypeFound(RuntimeTypePointer),
-    TypeRequestReleaseDueToError(CompilationErrorItem),
+    CircuitBreakTypeRequest(TypeRequestCircuitBreakReason),
+    CircuitBreakAllTypeRequests(TypeRequestCircuitBreakReason),
     AddResolvedType(RuntimeTypePointer),
-    ReleaseAllTypeRequests,
     BuildByteCode { unit: CompilationUnit, has_prior_errors: bool },
     ByteCodeBuilt { unit: CompilationUnit, code: IntermediateRepresentation },
     BuildBackend { code: IntermediateRepresentation, has_prior_errors: bool },
     BackendBuilt { id: CompilationUnitId },
     CompilationComplete,
     ReportErrors { errors: CompilationErrors, compiler: CompilationActorHandle },
-    ErrorsReported,
+    ErrorsReported(CompilationErrors),
     ShutDown,
 }
 
@@ -83,8 +84,8 @@ pub fn create_perform_sizing_command(unit: CompilationUnit, has_prior_errors: bo
     CompilationMessage::PerformSizing { unit, has_prior_errors }
 }
 
-pub fn create_find_type_request(criteria: FindTypeCriteria, respond_to: CompilationActorHandle) -> CompilationMessage {
-    CompilationMessage::FindType { criteria, respond_to }
+pub fn create_find_type_request(criteria: FindTypeCriteria, respond_to: FindTypeCaller, compiler: CompilationActorHandle) -> CompilationMessage {
+    CompilationMessage::FindType { criteria, respond_to, compiler }
 }
 
 pub fn create_file_parsed_event(file_name: String, units: CompilationUnits) -> CompilationMessage {
@@ -103,16 +104,20 @@ pub fn create_type_found_event(resolved_type: RuntimeTypePointer) -> Compilation
     CompilationMessage::TypeFound(resolved_type)
 }
 
-pub fn type_request_released_due_to_error_event(error: CompilationErrorItem) -> CompilationMessage {
-    CompilationMessage::TypeRequestReleaseDueToError(error)
+pub fn create_type_find_requested_event(awaiting_unit_id: CompilationUnitId) -> CompilationMessage {
+    CompilationMessage::TypeFindRequested { awaiting_unit_id }
+}
+
+pub fn circuit_break_type_request(reason: TypeRequestCircuitBreakReason) -> CompilationMessage {
+    CompilationMessage::CircuitBreakTypeRequest(reason)
 }
 
 pub fn create_add_resolved_type_command(resolved_type: RuntimeTypePointer) -> CompilationMessage {
     CompilationMessage::AddResolvedType(resolved_type)
 }
 
-pub fn create_release_all_type_requests_command() -> CompilationMessage {
-    CompilationMessage::ReleaseAllTypeRequests
+pub fn circuit_break_all_type_requests_command(reason: TypeRequestCircuitBreakReason) -> CompilationMessage {
+    CompilationMessage::CircuitBreakAllTypeRequests(reason)
 }
 
 pub fn create_build_byte_code_command(unit: CompilationUnit, has_prior_errors: bool) -> CompilationMessage {
@@ -139,8 +144,8 @@ pub fn create_report_errors_command(errors: CompilationErrors, compiler: Compila
     CompilationMessage::ReportErrors { errors, compiler }
 }
 
-pub fn create_errors_reported_event() -> CompilationMessage {
-    CompilationMessage::ErrorsReported
+pub fn create_errors_reported_event(errors: CompilationErrors) -> CompilationMessage {
+    CompilationMessage::ErrorsReported(errors)
 }
 
 pub fn create_shutdown_command() -> CompilationMessage {

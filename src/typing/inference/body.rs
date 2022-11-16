@@ -8,8 +8,8 @@ use crate::errors::*;
 pub type LocalTypes = RuntimeTypePointers;
 
 pub fn perform_typing_for_procedure_body(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     args: &mut AbstractSyntaxChildNodes,
     return_types: &mut AbstractSyntaxChildNodes,
     statements: &mut AbstractSyntaxChildNodes, 
@@ -40,26 +40,27 @@ pub fn perform_typing_for_procedure_body(
         let statement_position = statement.position.clone();
         match statement.item_mut() {
             AbstractSyntaxNodeItem::ProcedureCall { name, args, procedure_call_type: type_id} => 
-                perform_typing_for_procedure_body_procedure_call(ctx, type_repository, &mut local_type_map, name, args, type_id, statement_position, errors),
+                perform_typing_for_procedure_body_procedure_call(typing_actor, ctx, &mut local_type_map, name, args, type_id, statement_position, errors),
             AbstractSyntaxNodeItem::VariableDeclaration { name, value, variable_type: type_id } => 
-                perform_typing_for_procedure_body_assignment(ctx, type_repository, &mut local_type_map, name, value, type_id, errors),
+                perform_typing_for_procedure_body_assignment(typing_actor, ctx, &mut local_type_map, name, value, type_id, errors),
             AbstractSyntaxNodeItem::Return { args } => {
-                perform_typing_for_procedure_body_return_args(ctx, type_repository, &mut local_type_map, args, statement_position, &local_return_types, errors);
+                perform_typing_for_procedure_body_return_args(typing_actor, ctx, &mut local_type_map, args, statement_position, &local_return_types, errors);
             },
             _ => add_type_inference_error(errors, not_viable_procedure_body_statement_error(), statement_position) 
         }
     }    
 }
 
-fn perform_typing_for_procedure_body_return_args(ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
+fn perform_typing_for_procedure_body_return_args(
+    typing_actor: &TypingActor,
+    ctx: &CompilationMessageContext,
     local_type_map: &mut IdentifierTypeLookup,
     args: &mut AbstractSyntaxChildNodes,
     args_position: SourceFilePosition,
     local_return_types: &RuntimeTypePointers, 
     errors: &mut CompilationErrors
 ) {
-    perform_typing_for_known_target_type_args(ctx, type_repository, local_type_map, local_return_types, args, args_position, errors);
+    perform_typing_for_known_target_type_args(typing_actor, ctx, local_type_map, local_return_types, args, args_position, errors);
 }
 
 fn perform_typing_for_procedure_body_argument_declaration(local_type_map: &mut IdentifierTypeLookup, name: &mut String, arg_type: &mut ResolvableType) {
@@ -75,8 +76,8 @@ fn perform_typing_for_procedure_body_return_type_declaration(local_return_types:
 }
 
 fn perform_typing_for_procedure_body_procedure_call(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &mut IdentifierTypeLookup,
     name: &mut String,
     args: &mut AbstractSyntaxChildNodes,
@@ -84,12 +85,12 @@ fn perform_typing_for_procedure_body_procedure_call(
     position: SourceFilePosition,
     errors: &mut CompilationErrors
 ) {   
-    perform_typing_for_procedure_call_return_first_return_type(ctx, type_repository, local_type_map, args, name, type_id, position, errors);
+    perform_typing_for_procedure_call_return_first_return_type(typing_actor, ctx, local_type_map, args, name, type_id, position, errors);
 }
 
 fn perform_typing_for_procedure_body_assignment(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &mut IdentifierTypeLookup,
     name: &mut String,
     value: &mut AbstractSyntaxNode,
@@ -97,35 +98,35 @@ fn perform_typing_for_procedure_body_assignment(
     errors: &mut CompilationErrors
 ) {
     if let Some(resolved_assignment_type) = try_get_resolved_runtime_type_pointer(assignment_type) {
-        perform_typing_for_known_type_procedure_body_assignment(ctx, type_repository, local_type_map, name, value, &resolved_assignment_type, errors);
+        perform_typing_for_known_type_procedure_body_assignment(typing_actor, ctx, local_type_map, name, value, &resolved_assignment_type, errors);
     } else {
-        perform_typing_for_inferred_procedure_body_assignment(ctx, type_repository, local_type_map, name, value, assignment_type, errors);
+        perform_typing_for_inferred_procedure_body_assignment(typing_actor, ctx, local_type_map, name, value, assignment_type, errors);
     }
 }
 
 fn perform_typing_for_known_type_procedure_body_assignment(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &mut IdentifierTypeLookup,
     name: &mut String,
     value: &mut AbstractSyntaxNode,
     resolved_type: &RuntimeTypePointer,
     errors: &mut CompilationErrors
 ) {
-    perform_typing_for_known_target_type_expression(ctx, type_repository, local_type_map, value, resolved_type, errors);
+    perform_typing_for_known_target_type_expression(typing_actor, ctx, local_type_map, value, resolved_type, errors);
     add_to_identifier_type_lookup(local_type_map, name.clone(), resolved_type.clone());    
 }
 
 fn perform_typing_for_inferred_procedure_body_assignment(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &mut IdentifierTypeLookup,
     name: &mut String,
     value: &mut AbstractSyntaxNode,
     resolvable_type: &mut ResolvableType,
     errors: &mut CompilationErrors
 ) {
-    let resolved_type = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, value, errors);
+    let resolved_type = perform_typing_for_inferred_type_expression(typing_actor, ctx, local_type_map, value, errors);
     
     if let Some(resolved_type) = resolved_type {
         *resolvable_type = resolved_resolvable_type(resolved_type.clone());
@@ -134,8 +135,8 @@ fn perform_typing_for_inferred_procedure_body_assignment(
 }
 
 pub fn perform_typing_for_procedure_call_return_first_return_type(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     args: &mut AbstractSyntaxChildNodes,
     name: &mut String, 
@@ -143,9 +144,9 @@ pub fn perform_typing_for_procedure_call_return_first_return_type(
     position: SourceFilePosition,
     errors: &mut CompilationErrors
 ) -> RuntimeTypePointers {  
-    let resolved_arg_types = perform_typing_for_unknown_target_type_args(ctx, type_repository, local_type_map, args, errors);
+    let resolved_arg_types = perform_typing_for_unknown_target_type_args(typing_actor, ctx, local_type_map, args, errors);
     
-    match find_type_by_name_and_args(ctx, type_repository, name, resolved_arg_types) {
+    match find_type_by_name_and_args(ctx, &typing_actor.type_repository, name, resolved_arg_types, typing_actor.unit_id, typing_actor.compiler.clone()) {
         Ok(resolved_type) => {
             *type_id = resolved_resolvable_type(resolved_type.clone());
             if let Some((_arg_types, return_types)) = try_get_procedure_definition_runtime_type_item(&resolved_type.item) {
@@ -160,8 +161,8 @@ pub fn perform_typing_for_procedure_call_return_first_return_type(
     vec!()
 }
 fn perform_typing_for_unknown_target_type_args(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     args: &mut AbstractSyntaxChildNodes,
     errors: &mut CompilationErrors
@@ -169,15 +170,15 @@ fn perform_typing_for_unknown_target_type_args(
     let mut resolved_types = vec!();
 
     for arg in args {
-        perform_typing_for_unknown_target_type_arg(ctx, type_repository, local_type_map, &mut resolved_types, arg, errors);
+        perform_typing_for_unknown_target_type_arg(typing_actor, ctx, local_type_map, &mut resolved_types, arg, errors);
     }
 
     resolved_types
 }
 
 fn perform_typing_for_unknown_target_type_arg(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     resolved_types: &mut RuntimeTypePointers,
     arg: &mut AbstractSyntaxNode,
@@ -185,7 +186,7 @@ fn perform_typing_for_unknown_target_type_arg(
 ) {
     match arg.item_mut() {
         AbstractSyntaxNodeItem::Argument { expr, arg_type } => {
-            if let Some(resolved_type) = perform_typing_for_inferred_type_expression(ctx, type_repository, local_type_map, expr, errors) {
+            if let Some(resolved_type) = perform_typing_for_inferred_type_expression(typing_actor, ctx, local_type_map, expr, errors) {
                 *arg_type = resolved_resolvable_type(resolved_type.clone());
                 resolved_types.push(resolved_type);
             }
@@ -195,8 +196,8 @@ fn perform_typing_for_unknown_target_type_arg(
 }
 
 fn perform_typing_for_known_target_type_args(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     known_target_types: &RuntimeTypePointers,
     args: &mut AbstractSyntaxChildNodes,
@@ -209,8 +210,8 @@ fn perform_typing_for_known_target_type_args(
 
     for arg_index in 0..args.len() {
         perform_typing_for_known_target_type_arg(
+            typing_actor,
             ctx,
-            type_repository,
             local_type_map,
             &known_target_types[arg_index],
             &mut args[arg_index],
@@ -220,8 +221,8 @@ fn perform_typing_for_known_target_type_args(
 }
 
 fn perform_typing_for_known_target_type_arg(
+    typing_actor: &TypingActor,
     ctx: &CompilationMessageContext,
-    type_repository: &CompilationActorHandle,
     local_type_map: &IdentifierTypeLookup,
     known_target_type: &RuntimeTypePointer,
     arg: &mut AbstractSyntaxNode,
@@ -229,7 +230,7 @@ fn perform_typing_for_known_target_type_arg(
 ) {
     match arg.item_mut() {
         AbstractSyntaxNodeItem::Argument { expr, arg_type } => {
-            perform_typing_for_known_target_type_expression(ctx, type_repository, local_type_map, expr, known_target_type, errors);
+            perform_typing_for_known_target_type_expression(typing_actor, ctx, local_type_map, expr, known_target_type, errors);
             *arg_type = resolved_resolvable_type(known_target_type.clone());
         }
         _ => {}

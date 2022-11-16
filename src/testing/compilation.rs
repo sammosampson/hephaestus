@@ -71,7 +71,7 @@ impl WireTapCompilationMessage for SendMessageWireTap {
     }
 }
 
-pub fn compile_source_and_get_types_and_unit(source: &str) -> Vec<(CompilationUnit, RuntimeTypePointers)> {
+pub fn compile_source_and_get_units_and_types(source: &str) -> Vec<(CompilationUnit, RuntimeTypePointers)> {
     let (file_path, reader) = add_source_to_test_file_system(source);    
     compile_file_and_get_types_and_unit(file_path, reader)
 }
@@ -94,26 +94,28 @@ fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) 
 }
 
 
-pub fn compile_source_and_get_parsed_units(source: &str) -> Vec<CompilationUnits> {
+pub fn compile_source_and_get_parsed_units_and_errors(source: &str) -> (CompilationUnits, Vec<CompilationErrors>) {
     let (file_path, reader) = add_source_to_test_file_system(source);    
-    compile_file_and_get_parsed_units(file_path, reader)
+    compile_file_and_get_parsed_units_and_errors(file_path, reader)
 }
 
-fn compile_file_and_get_parsed_units(file_path: &str, reader: MockFileReader) -> Vec<CompilationUnits> {
+fn compile_file_and_get_parsed_units_and_errors(file_path: &str, reader: MockFileReader) -> (CompilationUnits, Vec<CompilationErrors>) {
     let message_receiver = compile_and_get_message_receiver(file_path, reader);
     
-    let mut result = vec!();
+    let mut units_result = vec!();
+    let mut errors_result = vec!();
 
     loop {
         let next_message = message_receiver.recv().unwrap();
         match next_message {
-            CompilationMessage::FileParsed { units, .. } => result.push(units),
+            CompilationMessage::FileParsed { mut units, .. } => units_result.append(&mut units),
+            CompilationMessage::ErrorsReported(errors) => errors_result.push(errors),
             CompilationMessage::CompilationComplete => break,           
             _ => {}
         }
     }
 
-    return result
+    return (units_result, errors_result)
 }
 
 
@@ -130,12 +132,29 @@ pub fn get_first_typed_const_unit(units_and_types: &[(CompilationUnit, RuntimeTy
         .unwrap()
 }
 
-pub fn get_first_typed_procedure_body_unit(units_and_types: &[(CompilationUnit, RuntimeTypePointers)]) -> &(CompilationUnit, RuntimeTypePointers) {
+pub fn get_first_typed_procedure_body_unit_named<'a>(units_and_types: &'a [(CompilationUnit, RuntimeTypePointers)], unit_name: &str) -> &'a (CompilationUnit, RuntimeTypePointers) {
     units_and_types
         .iter()
         .filter(|(unit, _)| {
             match unit.tree.item_ref() {
-                AbstractSyntaxNodeItem::ProcedureBody { .. } => true,
+                AbstractSyntaxNodeItem::ProcedureBody { name, .. } => name == unit_name,
+                _ => false,
+            }
+        })
+        .next()
+        .unwrap()
+}
+
+pub fn get_first_typed_procedure_header_unit_named_with_arg_count<'a>(
+    units_and_types: &'a [(CompilationUnit, RuntimeTypePointers)],
+    unit_name: &str,
+    arg_count: usize
+) -> &'a (CompilationUnit, RuntimeTypePointers) {
+    units_and_types
+        .iter()
+        .filter(|(unit, _)| {
+            match unit.tree.item_ref() {
+                AbstractSyntaxNodeItem::ProcedureHeader { name, args, .. } => name == unit_name && arg_count == args.len(),
                 _ => false,
             }
         })
@@ -152,7 +171,7 @@ pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: Compi
     let (error_reporter, ..) =  start_singleton_actor(create_error_reporter_actor());
     
     let (typing_actor, ..) = start_singleton_actor(
-        create_typing_actor(message_receiver_handle, typing_repository, error_reporter)
+        create_typing_actor(message_receiver_handle, typing_repository, error_reporter, unit.id)
     );
         
     send_message_to_actor(

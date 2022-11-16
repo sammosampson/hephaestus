@@ -11,9 +11,11 @@ pub fn handle_errors_reported<TReader: FileRead, TBackend: BackendBuild, TMessag
     compiler: &mut CompilerActor<TReader, TBackend, TMessageWireTap>
 ) -> AfterReceiveAction {
     compiler.errors_have_occurred = true;
-    release_all_type_requests(compiler);
+    circuit_break_all_type_requests(&compiler.type_repository, compilation_error_type_request_circuit_break_reason(shutdown_requested_error_item()));
     continue_listening_after_receive()
 }
+
+
 
 pub fn report_errors(
     error_reporter: &CompilationActorHandle,

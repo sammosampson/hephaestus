@@ -50,7 +50,7 @@ pub fn handle_byte_code_built<TReader: FileRead, TBackend: BackendBuild, TMessag
     backend: TBackend
 ) -> AfterReceiveAction {
 
-    end_compilation_phase(&mut compiler.statistics, byte_code_creation_compilation_phase(unit.id), ctx);
+    end_compilation_phase(&mut compiler.statistics,  &compiler.type_repository, byte_code_creation_compilation_phase(unit.id), ctx);
     
     build_backend(compiler, ctx, backend, unit, code);
 

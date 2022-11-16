@@ -71,13 +71,15 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
                 handle_file_parsed(self, file_name, units, ctx),
             CompilationMessage::UnitTyped { resolved_types, unit } => 
                 handle_unit_typed(self, unit, resolved_types, ctx),
+            CompilationMessage::TypeFindRequested { awaiting_unit_id } => 
+                handle_type_find_requested(self, awaiting_unit_id),
             CompilationMessage::UnitSized { unit } => 
                 handle_unit_sized(self, unit, ctx),
             CompilationMessage::ByteCodeBuilt { code, unit  } => 
                 handle_byte_code_built(self, unit, code, ctx, self.backend.clone()),
             CompilationMessage::BackendBuilt { id, .. } => 
                 handle_backend_built(self, id, ctx),
-            CompilationMessage::ErrorsReported => 
+            CompilationMessage::ErrorsReported(_) => 
                 handle_errors_reported(self),
             CompilationMessage::CompilationComplete =>
                 handle_compilation_complete(self),
