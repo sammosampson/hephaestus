@@ -15,8 +15,6 @@ pub fn handle_errors_reported<TReader: FileRead, TBackend: BackendBuild, TMessag
     continue_listening_after_receive()
 }
 
-
-
 pub fn report_errors(
     error_reporter: &CompilationActorHandle,
     compiler: CompilationActorHandle,

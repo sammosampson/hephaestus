@@ -14,7 +14,7 @@ pub fn compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireT
     message_wire_tap: TMessageWireTap
 ) {
     let type_repository = create_type_repository_actor();
-    let error_reporter = create_error_reporter_actor();
+    let error_reporter = create_error_reporter_actor(reader.clone());
     let (type_repository_handle, ..) = start_singleton_actor(type_repository);
     let (error_reporter_handle, ..) = start_singleton_actor(error_reporter);
     let (compiler_handle, compiler_shutdown_notifier) = start_singleton_actor(

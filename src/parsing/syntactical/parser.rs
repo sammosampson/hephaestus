@@ -8,7 +8,8 @@ use crate::errors::*;
 pub struct ParserActor<T: FileRead> {
     compiler: CompilationActorHandle,
     error_reporter: CompilationActorHandle,
-    file_reader: T }
+    file_reader: T
+}
 
 pub fn create_parser_actor<T: FileRead>(compiler: CompilationActorHandle, error_reporter: CompilationActorHandle, file_reader: T) -> ParserActor<T>  {
     ParserActor { 
