@@ -1,11 +1,31 @@
 use std::{
     *,
     time::*,
-    num::*
+    num::*,
+    any::*
 };
+
+macro_rules! function {
+    () => {{
+        fn f() {}
+        fn type_name_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let name = type_name_of(f);
+        &name[..name.len() - 3]
+    }}
+}
 
 pub fn string(value: &str) -> String {
     value.to_string()
+}
+
+pub fn string_type_name<T>() -> String {
+    string(type_name::<T>())
+}
+
+pub fn empty_string() -> String {
+    string("")
 }
 
 pub fn is_int_string(to_check: &str) -> bool{

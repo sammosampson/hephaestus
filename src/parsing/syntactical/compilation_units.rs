@@ -29,8 +29,12 @@ pub fn create_unit(filename: String, tree: AbstractSyntaxNode) -> CompilationUni
     CompilationUnit {
         id: create_compilation_unit_id(),
         filename,
-        tree
+        tree,
     }
 }
 
 pub type CompilationUnits = Vec<CompilationUnit>;
+
+pub fn create_compilation_units() -> CompilationUnits {
+    vec!()
+}

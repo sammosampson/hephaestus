@@ -52,6 +52,8 @@ pub enum ResolvableLiteral {
     Resolved(ResolvedLiteral),
 }
 
+pub type OptionalResolvedLiteral = Option<ResolvedLiteral>;
+
 pub fn unresolved_resolvable_literal(literal :UnresolvedLiteral) -> ResolvableLiteral {
     ResolvableLiteral::Unresolved(literal)
 }
@@ -60,11 +62,11 @@ pub fn resolved_resolvable_literal(literal :ResolvedLiteral) -> ResolvableLitera
     ResolvableLiteral::Resolved(literal)
 }
 
-pub fn get_resolved_literal(literal: &ResolvableLiteral) -> ResolvedLiteral {
+pub fn try_get_resolved_literal(literal: &ResolvableLiteral) -> OptionalResolvedLiteral {
     if let ResolvableLiteral::Resolved(literal) = literal {
-        return literal.clone();
+        return Some(literal.clone());
     }
-    panic!("resolvable literal is not resolved")
+    None
 }
 
 #[derive(PartialEq, Debug, Clone)]

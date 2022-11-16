@@ -146,10 +146,6 @@ pub fn add_absolute_external_symbol_32(coff: &mut Coff, name: &str, value: u32) 
     add_external_symbol(coff, name, value, IMAGE_SYM_ABSOLUTE);
 }
 
-pub fn add_absolute_external_symbol_64(_coff: &mut Coff, _name: &str, _value: u64) {
-    todo!("not sure how to do a 64bit symbol in coff")
-}
-
 pub fn add_data_section_static_symbol(coff: &mut Coff, name: &str, value: u32) {
     add_static_symbol(coff, name, value, 1);
 }

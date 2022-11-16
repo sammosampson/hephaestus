@@ -1,21 +1,23 @@
 use crate::{
     parsing::*,
-    intermediate_representation::*
+    intermediate_representation::*,
+    errors::*
 };
 
 pub fn build_bytecode_at_procedure_body(
     ir: &mut IntermediateRepresentation, 
     name: &str,
     args: &AbstractSyntaxChildNodes,
-    statements: &AbstractSyntaxChildNodes
+    statements: &AbstractSyntaxChildNodes,
+    errors: &mut CompilationErrors
 ) {
     ir.top_level_symbol = string(&name);
-    let assignment_map = get_assignment_map(args, statements);
+    let assignment_map = get_assignment_map(args, statements, errors);
     store_procedure_name_as_external_symbol(ir, name);
     build_bytecode_for_procedure_prologue(ir);
     build_bytecode_for_procedure_argument_shadow_storage(args, ir);
     build_bytecode_for_procedure_assignments_storage_reservation(ir, &assignment_map);
-    build_bytecode_for_procedure_body_statements(ir, &assignment_map, statements);
+    build_bytecode_for_procedure_body_statements(ir, &assignment_map, statements, errors);
     build_bytecode_for_procedure_epilogue(ir);
 }
 
@@ -50,19 +52,29 @@ fn build_bytecode_for_procedure_assignments_storage_reservation(ir: &mut Interme
     );
 }
 
-fn build_bytecode_for_procedure_body_statements(ir: &mut IntermediateRepresentation, assignment_map: &AssignmentMap, statements: &AbstractSyntaxChildNodes) {
+fn build_bytecode_for_procedure_body_statements(
+    ir: &mut IntermediateRepresentation,
+    assignment_map: &AssignmentMap,
+    statements: &AbstractSyntaxChildNodes,
+    errors: &mut CompilationErrors
+) {
     for statement in statements {
-        build_bytecode_at_procedure_body_statement(ir, assignment_map, statement);
+        build_bytecode_at_procedure_body_statement(ir, assignment_map, statement, errors);
     }
 }
 
-fn build_bytecode_at_procedure_body_statement(ir: &mut IntermediateRepresentation, assignment_map: &AssignmentMap, statement: &AbstractSyntaxNode) {
+fn build_bytecode_at_procedure_body_statement(
+    ir: &mut IntermediateRepresentation,
+    assignment_map: &AssignmentMap,
+    statement: &AbstractSyntaxNode,
+    errors: &mut CompilationErrors
+) {
     match statement.item_ref() {
         AbstractSyntaxNodeItem::ProcedureCall { name, args, .. } => 
-            build_bytecode_at_procedure_call(ir, assignment_map, name, args),
+            build_bytecode_at_procedure_call(ir, assignment_map, name, args, errors),
         AbstractSyntaxNodeItem::VariableDeclaration { name, value, .. } => 
-            build_bytecode_at_variable_declaration(ir, assignment_map, name, value),
-        _ => todo!()
+            build_bytecode_at_variable_declaration(ir, assignment_map, name, statement.position.clone(), value, errors),
+        _ => todo(errors, function!(), "Other procedure body statement types")
     }
 }
 

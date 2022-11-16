@@ -4,6 +4,7 @@ mod builder;
 mod procedures;
 mod constants;
 mod strings;
+mod errors;
 
 use std::ops::{Deref, Add};
 
@@ -11,6 +12,7 @@ pub use builder::*;
 pub use procedures::*;
 pub use constants::*;
 pub use strings::*;
+pub use errors::*;
 
 use crate::{
     parsing::*,
@@ -77,12 +79,15 @@ pub fn stack_pointer_register() -> ByteCodeRegister {
     ByteCodeRegister::StackPointer
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum InstructionValue {
     Byte(u8),
     Word(u16),
     DoubleWord(u32),
-    QuadWord(u64)
+    QuadWord(u64),
+    Float(f32),
+    LargeFloat(f64),
+    Unsupported
 }
 
 pub fn instruction_value_8(value: u8) -> InstructionValue {
@@ -108,9 +113,9 @@ impl From<&ResolvedLiteral> for InstructionValue {
             ResolvedLiteral::SignedInt32(value) => InstructionValue::DoubleWord(*value as u32),
             ResolvedLiteral::UnsignedInt64(value) => InstructionValue::QuadWord(*value),
             ResolvedLiteral::SignedInt64(value) => InstructionValue::QuadWord(*value as u64),
-            ResolvedLiteral::Float32(_) => todo!("Float32 instruction value"),
-            ResolvedLiteral::Float64(_) => todo!("Float64 instruction value"),
-            ResolvedLiteral::String(_) => panic!("String instruction value not supported"),
+            ResolvedLiteral::Float32(value) => InstructionValue::Float(*value),
+            ResolvedLiteral::Float64(value) => InstructionValue::LargeFloat(*value),
+            ResolvedLiteral::String(_) => InstructionValue::Unsupported,
         }
     }
 }
@@ -124,7 +129,9 @@ pub enum RegisterSize {
     Byte,
     Word,
     DoubleWord,
-    QuadWord
+    QuadWord, 
+    Float,
+    LargeFloat
 }
 
 pub fn register_size_32() -> RegisterSize {
@@ -146,8 +153,8 @@ impl From<BuiltInType> for RegisterSize {
             BuiltInType::SignedInt32 => RegisterSize::DoubleWord,
             BuiltInType::UnsignedInt64 => RegisterSize::QuadWord,
             BuiltInType::SignedInt64 => RegisterSize::QuadWord,
-            BuiltInType::Float32 => todo!("Float32 register size"),
-            BuiltInType::Float64 => todo!("Float64 register size"),
+            BuiltInType::Float32 => RegisterSize::Float,
+            BuiltInType::Float64 => RegisterSize::LargeFloat,
             BuiltInType::String => RegisterSize::QuadWord,
             BuiltInType::Boolean => RegisterSize::Byte,
             BuiltInType::Void => RegisterSize::QuadWord,
@@ -160,17 +167,19 @@ pub fn built_in_type_to_register_size(from: BuiltInType) -> RegisterSize {
 }
 
 
-pub fn resolved_type_to_register_size(from: &RuntimeTypePointer) -> RegisterSize {
+pub fn resolved_type_to_register_size(from: &RuntimeTypePointer) -> Option<RegisterSize> {
     if let Some((built_in_arg_type, ..)) = try_get_built_in_type(&from.id) {
-        return built_in_type_to_register_size(built_in_arg_type);
+        return Some(built_in_type_to_register_size(built_in_arg_type));
     }
-    panic!();
+    None
 }
 
 
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ByteCodeInstruction {
+    Unsupported,
+    Unimplemented,
     CallToSymbol(SymbolIndex),
     AddValueToReg8 { value: u8, to: ByteCodeRegister },
     SubValueFromReg8 { value: u8, from: ByteCodeRegister },
@@ -257,53 +266,68 @@ pub fn call_to_symbol_instruction(symbol_index: SymbolIndex) -> ByteCodeInstruct
 
 pub fn push_reg_instruction(register_size: RegisterSize, register: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
-        RegisterSize::Byte => todo!("push_reg_instruction for byte"),
-        RegisterSize::Word => todo!("push_reg_instruction for word"),
-        RegisterSize::DoubleWord => todo!("push_reg_instruction for double word"),
-        RegisterSize::QuadWord => ByteCodeInstruction::PushReg64(register)
+        RegisterSize::Byte => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Word => ByteCodeInstruction::Unimplemented,
+        RegisterSize::DoubleWord => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Float => ByteCodeInstruction::Unimplemented,
+        RegisterSize::LargeFloat => ByteCodeInstruction::Unimplemented,
+        RegisterSize::QuadWord => ByteCodeInstruction::PushReg64(register),
     }
 }
 
 pub fn pop_reg_instruction(register_size: RegisterSize, register: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
-        RegisterSize::Byte => todo!("pop_reg_instruction for byte"),
-        RegisterSize::Word => todo!("pop_reg_instruction for word"),
-        RegisterSize::DoubleWord => todo!("pop_reg_instruction for double word"),
+        RegisterSize::Byte => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Word => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Float => ByteCodeInstruction::Unimplemented,
+        RegisterSize::LargeFloat => ByteCodeInstruction::Unimplemented,
+        RegisterSize::DoubleWord => ByteCodeInstruction::Unimplemented,
         RegisterSize::QuadWord => ByteCodeInstruction::PopReg64(register)
     }
 }
 
 pub fn add_value_to_reg_instruction(value: InstructionValue, to: ByteCodeRegister) -> ByteCodeInstruction {
     match value {
+        InstructionValue::Unsupported => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Float(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::LargeFloat(_) => ByteCodeInstruction::Unimplemented,
         InstructionValue::Byte(value) => ByteCodeInstruction::AddValueToReg8 { value, to },
-        InstructionValue::Word(_) => todo!("add_value_to_reg_instruction for word"),
-        InstructionValue::DoubleWord(_) => todo!("add_value_to_reg_instruction for double word"),
-        InstructionValue::QuadWord(_) =>  todo!("add_value_to_reg_instruction for quad word")
+        InstructionValue::Word(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::DoubleWord(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::QuadWord(_) =>  ByteCodeInstruction::Unimplemented,
     }
 }
 
 pub fn sub_value_from_reg_instruction(value: InstructionValue, from: ByteCodeRegister) -> ByteCodeInstruction {
     match value {
+        InstructionValue::Unsupported => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Float(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::LargeFloat(_) => ByteCodeInstruction::Unimplemented,
         InstructionValue::Byte(value) => ByteCodeInstruction::SubValueFromReg8 { value, from },
-        InstructionValue::Word(_) => todo!("sub_value_from_reg_instruction for word"),
-        InstructionValue::DoubleWord(_) => todo!("sub_value_from_reg_instruction for double word"),
-        InstructionValue::QuadWord(_) =>  todo!("sub_value_from_reg_instruction for quad word")
+        InstructionValue::Word(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::DoubleWord(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::QuadWord(_) =>  ByteCodeInstruction::Unimplemented
     }
 }
 
 pub fn move_symbol_to_reg_instruction(register_size: RegisterSize, symbol_index: SymbolIndex, to: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
-        RegisterSize::Byte => todo!("move_symbol_to_reg_instruction for byte"),
-        RegisterSize::Word => todo!("move_symbol_to_reg_instruction for word"),
+        RegisterSize::Byte => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Word => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Float => ByteCodeInstruction::Unimplemented,
+        RegisterSize::LargeFloat => ByteCodeInstruction::Unimplemented,
         RegisterSize::DoubleWord => ByteCodeInstruction::MoveSymbolToReg32 { symbol_index, to },
-        RegisterSize::QuadWord => todo!("move_symbol_to_reg_instruction for quad word")
+        RegisterSize::QuadWord => ByteCodeInstruction::Unimplemented
     }
 }
 
 pub fn move_value_to_reg_instruction(value: InstructionValue, to: ByteCodeRegister) -> ByteCodeInstruction {
     match value {
-        InstructionValue::Byte(_) => todo!("move_value_to_reg_plus_offset_instruction for byte"),
-        InstructionValue::Word(_) => todo!("move_value_to_reg_plus_offset_instruction for word"),
+        InstructionValue::Unsupported => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Float(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::LargeFloat(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Byte(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Word(_) => ByteCodeInstruction::Unimplemented,
         InstructionValue::DoubleWord(value) => ByteCodeInstruction::MoveValueToReg32 { value, to },
         InstructionValue::QuadWord(value) =>  ByteCodeInstruction::MoveValueToReg64 { value, to }
     }
@@ -311,26 +335,33 @@ pub fn move_value_to_reg_instruction(value: InstructionValue, to: ByteCodeRegist
 
 pub fn move_reg_to_reg_instruction(register_size: RegisterSize, from: ByteCodeRegister, to: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
-        RegisterSize::Byte => todo!("move_reg_to_reg_instruction for byte"),
-        RegisterSize::Word => todo!("move_reg_to_reg_instruction for word"),
-        RegisterSize::DoubleWord => todo!("move_reg_to_reg_instruction for double word"),
+        RegisterSize::Byte => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Word => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Float => ByteCodeInstruction::Unimplemented,
+        RegisterSize::LargeFloat => ByteCodeInstruction::Unimplemented,
+        RegisterSize::DoubleWord => ByteCodeInstruction::Unimplemented,
         RegisterSize::QuadWord => ByteCodeInstruction::MoveRegToReg64 { from, to }
     }
 }
 
 pub fn move_value_to_reg_plus_offset_instruction(value: InstructionValue, to: ByteCodeRegister, offset: AddressOffset) -> ByteCodeInstruction {
     match value {
-        InstructionValue::Byte(_) => todo!("move_value_to_reg_plus_offset_instruction for byte"),
-        InstructionValue::Word(_) => todo!("move_value_to_reg_plus_offset_instruction for word"),
+        InstructionValue::Unsupported => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Float(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::LargeFloat(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Byte(_) => ByteCodeInstruction::Unimplemented,
+        InstructionValue::Word(_) => ByteCodeInstruction::Unimplemented,
         InstructionValue::DoubleWord(value) => ByteCodeInstruction::MoveValueToRegPlusOffset32 { value, to, offset },
-        InstructionValue::QuadWord(value) =>  ByteCodeInstruction::MoveValueToRegPlusOffset64 { value, to, offset }
+        InstructionValue::QuadWord(value) => ByteCodeInstruction::MoveValueToRegPlusOffset64 { value, to, offset }
     }
 }
 
 pub fn move_reg_to_reg_plus_offset_instruction(register_size: RegisterSize, from: ByteCodeRegister, to: ByteCodeRegister, offset: AddressOffset) -> ByteCodeInstruction {
     match register_size {
-        RegisterSize::Byte => todo!("move_reg_to_reg_plus_offset_instruction for byte"),
-        RegisterSize::Word => todo!("move_reg_to_reg_plus_offset_instruction for word"),
+        RegisterSize::Byte => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Word => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Float => ByteCodeInstruction::Unimplemented,
+        RegisterSize::LargeFloat => ByteCodeInstruction::Unimplemented,
         RegisterSize::DoubleWord => ByteCodeInstruction::MoveRegToRegPlusOffset32 { from, to, offset },
         RegisterSize::QuadWord => ByteCodeInstruction::MoveRegToRegPlusOffset64 { from, to, offset },
     }
@@ -338,8 +369,10 @@ pub fn move_reg_to_reg_plus_offset_instruction(register_size: RegisterSize, from
 
 pub fn move_reg_plus_offset_to_reg_instruction(register_size: RegisterSize, from: ByteCodeRegister, offset: AddressOffset, to: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
-        RegisterSize::Byte => todo!("move_reg_plus_offset_to_reg_instruction for byte"),
-        RegisterSize::Word => todo!("move_reg_plus_offset_to_reg_instruction for word"),
+        RegisterSize::Byte => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Word => ByteCodeInstruction::Unimplemented,
+        RegisterSize::Float => ByteCodeInstruction::Unimplemented,
+        RegisterSize::LargeFloat => ByteCodeInstruction::Unimplemented,
         RegisterSize::DoubleWord => ByteCodeInstruction::MoveRegPlusOffsetToReg32 { from, offset, to },
         RegisterSize::QuadWord => ByteCodeInstruction::MoveRegPlusOffsetToReg64 { from, offset, to },
     }    
@@ -348,14 +381,14 @@ pub fn move_reg_plus_offset_to_reg_instruction(register_size: RegisterSize, from
 pub fn load_data_section_address_to_reg(register_size: RegisterSize, data_section_offset: DataSectionOffset, to: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
         RegisterSize::QuadWord => ByteCodeInstruction::LoadDataSectionAddressToReg64 { data_section_offset, to },
-        _ => panic!("load_data_section_address_to_reg non quad word not supported")
+        _ => ByteCodeInstruction::Unsupported
     }
 }
 
 pub fn load_address_in_reg_plus_offset_to_reg(register_size: RegisterSize, from: ByteCodeRegister, offset: AddressOffset, to: ByteCodeRegister) -> ByteCodeInstruction {
     match register_size {
         RegisterSize::QuadWord => ByteCodeInstruction::LoadAddressInRegPlusOffsetToReg64 { from, offset, to },
-        _ => panic!("load_address_in_reg_plus_offset_to_reg for non quad word not supported")
+        _ => ByteCodeInstruction::Unsupported
     }
 }
 

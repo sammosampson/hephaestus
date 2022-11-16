@@ -1,6 +1,12 @@
 use crate::parsing::*;
 
-pub fn parse_top_level_identifier(filename: String, name: String, lexer: &mut Lexer, position: SourceFilePosition, units: &mut CompilationUnits) -> AbstractSyntaxNode {
+pub fn parse_top_level_identifier(
+    filename: String,
+    name: String,
+    lexer: &mut Lexer,
+    position: SourceFilePosition,
+    units: &mut CompilationUnits
+) -> AbstractSyntaxNodeResult {
     if is_declaration_assignment(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
         return parse_top_level_declaration(filename, name, lexer, position, units);
@@ -15,7 +21,7 @@ pub fn parse_top_level_identifier(filename: String, name: String, lexer: &mut Le
 }
 
 
-pub fn parse_identifier(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn parse_identifier(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNodeResult {
     if is_declaration_assignment(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
         return parse_inferred_constant(name, lexer, position);
@@ -33,13 +39,13 @@ pub fn parse_identifier(name: String, lexer: &mut Lexer, position: SourceFilePos
 
     if is_period(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
-        return parse_struct_instance_access(name, lexer, position)
+        return parse_struct_instance_access(name, lexer, position);
     }
 
     parse_remainder_of_identifier(name, lexer, position)
 }
 
-pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNodeResult {
     if is_open_paren(&peek_next_token(lexer).item) {
         eat_next_token(lexer);
         return parse_procedure_call(name, lexer, position);
@@ -51,7 +57,7 @@ pub fn parse_remainder_of_identifier(name: String, lexer: &mut Lexer, position: 
         return parse_expression(lexer, node, position);
     }
 
-    node
+    Ok(node)
 }
 
 pub fn unknown_scope_identifier_item(name: String) -> AbstractSyntaxNodeItem {

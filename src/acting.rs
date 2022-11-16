@@ -1,5 +1,9 @@
-use std::sync::mpsc::*;
+use std::{
+    sync::mpsc::*,
+    any::*
+};
 use crate::threading::*;
+use crate::utilities::*;
 
 pub type ActorThreadPool = ThreadPool<()>;
 
@@ -10,12 +14,14 @@ pub fn create_actor_thread_pool() -> ActorThreadPool {
 #[derive(Clone, Debug)]
 pub struct ActorHandle<TMessage> {
     sender: Sender<TMessage>,
+    actor_name: String
 }
 
-pub fn create_handle<TMessage>(sender: Sender<TMessage>) -> ActorHandle<TMessage>
+pub fn create_handle<TMessage>(sender: Sender<TMessage>, actor_name: String) -> ActorHandle<TMessage>
 where TMessage: ParallelisableClone {
     ActorHandle {
-        sender
+        sender,
+        actor_name
     }
 }
 
@@ -35,10 +41,16 @@ pub fn shutdown_after_receive() -> AfterReceiveAction {
 pub trait Actor<TMessage> : Parallelisable
     where TMessage: ParallelisableClone {
     fn receive(&mut self, message: TMessage, ctx: &ActorContext<TMessage>) -> AfterReceiveAction;
+    fn get_type_name(&self) -> String;
 }
 
-pub fn send_message_to_actor<TMessage>(actor: &ActorHandle<TMessage>, message: TMessage) {
-    actor.sender.send(message).unwrap();
+pub fn send_message_to_actor<TMessage: core::fmt::Debug>(actor: &ActorHandle<TMessage>, message: TMessage) {
+    match actor.sender.send(message) {
+        Ok(_) => {},
+        Err(error) => {
+            panic!("error {:?} sending message {:?} to {:?}", error, type_name::<TMessage>(), actor.actor_name);
+        },
+    }
 }
 
 pub fn start_singleton_actor<TActor, TMessage>(actor: TActor) -> (ActorHandle<TMessage>, ActorShutdownNotifier)
@@ -62,18 +74,19 @@ where TActor: Actor<TMessage>, TMessage: ParallelisableClone {
     let concurrent_task_sender = get_concurrent_sender(task_sender);
     
     let pool_for_task = pool.clone();
-    let context = create_context(self_sender, receiver, pool);
-    let actor = create_actor(actor, context);
+    let actor_name = actor.get_type_name();
+    let context = create_context(self_sender, receiver, pool, actor_name.clone());
+    let actor_runner = create_actor(actor, context);
     
     schedule_task(
         pool_for_task.lock().as_ref().unwrap(), 
         create_task(
-            Box::new(move || run_actor(actor)), 
+            Box::new(move || run_actor(actor_runner)), 
             clone_concurrent_sender(&concurrent_task_sender)
         )
     );
 
-    (create_handle(sender), create_shutdown_notifier(task_receiver))
+    (create_handle(sender, actor_name), create_shutdown_notifier(task_receiver))
 }
 
 pub struct ActorShutdownNotifier {
@@ -92,21 +105,23 @@ pub struct ActorContext<TMessage>
 where TMessage: ParallelisableClone {
     self_sender: Sender<TMessage>,
     receiver: Receiver<TMessage>,
-    thread_pool: Concurrent<ActorThreadPool>
+    thread_pool: Concurrent<ActorThreadPool>,
+    actor_name: String
 }
 
-fn create_context<TMessage>(self_sender: Sender<TMessage>, receiver: Receiver<TMessage>, thread_pool: Concurrent<ActorThreadPool>) -> ActorContext<TMessage>
+fn create_context<TMessage>(self_sender: Sender<TMessage>, receiver: Receiver<TMessage>, thread_pool: Concurrent<ActorThreadPool>, actor_name: String) -> ActorContext<TMessage>
 where TMessage: ParallelisableClone {
     ActorContext {
         self_sender,
         receiver,
-        thread_pool
+        thread_pool,
+        actor_name
     }
 }
 
 pub fn create_self_handle<TMessage>(context: &ActorContext<TMessage>) -> ActorHandle<TMessage>
 where TMessage: ParallelisableClone {
-    create_handle(context.self_sender.clone())
+    create_handle(context.self_sender.clone(), string(&context.actor_name))
 }
 
 struct ActorRunner<TActor, TMessage>

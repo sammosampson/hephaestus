@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::file_system::*;
+use crate::{file_system::*, empty_string};
 use std::io::*;
 
 #[derive(Clone)]
@@ -12,6 +12,10 @@ impl FileRead for MockFileReader {
             return Ok(content.clone());
         }
         Err(ErrorKind::NotFound.into())
+    }
+
+    fn read_line_from_file(&self, _location: &str, _line_number: usize) -> Result<String> {
+        Ok(empty_string())
     }
 }
 

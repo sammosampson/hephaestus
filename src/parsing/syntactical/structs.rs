@@ -10,65 +10,64 @@ pub fn struct_item(
     AbstractSyntaxNodeItem::Struct { name, fields }
 }
 
-pub fn parse_struct(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn parse_struct(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNodeResult {
 
     if !is_open_brace(&peek_next_token(lexer).item) {
         // no brace not supported yet
-        return create_error_node(unimplemented_error(), position);
+        return Err(create_error(unimplemented_error(), position));
     }
 
     eat_next_token(lexer);
 
-    let fields = parse_struct_fields(lexer);
+    let fields = parse_struct_fields(lexer)?;
     
     assert!(is_close_brace(&peek_next_token(lexer).item));
     eat_next_token(lexer);
 
 
-    create_node(struct_item(name, fields), position)
+    Ok(create_node(struct_item(name, fields), position))
 }
 
-fn parse_struct_fields(lexer: &mut Lexer) -> AbstractSyntaxChildNodes {
+fn parse_struct_fields(lexer: &mut Lexer) -> AbstractSyntaxChildNodesResult {
     let mut fields = vec!();
     
     loop {
         if is_close_brace(&peek_next_token(lexer).item) {
-            return fields
+            return Ok(fields)
         }
     
-        fields.push(parse_declaration(lexer));
+        fields.push(parse_declaration(lexer)?);
 
         let next_token = peek_next_token(lexer);
         
         if is_close_brace(&next_token.item) {
-            return fields
+            return Ok(fields)
         }
 
         if is_line_terminiator(&next_token.item) {
             eat_next_token(lexer);
         } else {
-            fields.push(create_error_node(expected_line_terminator_error(), next_token.position));  
-            return fields;
+            return Err(create_error(expected_line_terminator_error(), next_token.position));
         }
     }
 }
 
-pub fn parse_struct_instance_access(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNode {
+pub fn parse_struct_instance_access(name: String, lexer: &mut Lexer, position: SourceFilePosition) -> AbstractSyntaxNodeResult {
     let instance = create_node(
         instance_item(name, unresolved_resolvable_type(), unknown_scope()),
         position
     );
-    let member = parse_struct_instance_member(lexer);
-    create_node(member_expr_item(instance, member, unresolved_resolvable_type()), position)
+    let member = parse_struct_instance_member(lexer)?;
+    Ok(create_node(member_expr_item(instance, member, unresolved_resolvable_type()), position))
 }
 
-pub fn parse_struct_instance_member(lexer: &mut Lexer) -> AbstractSyntaxNode {
+pub fn parse_struct_instance_member(lexer: &mut Lexer) -> AbstractSyntaxNodeResult {
     let token = get_next_token(lexer);
 
     match token.item {
         SourceTokenItem::Identifier(name) =>
-            create_node(member_item(name, unresolved_resolvable_type()), token.position),
-        _ => create_error_node(expected_identifier_error(), token.position),
+            Ok(create_node(member_item(name, unresolved_resolvable_type()), token.position)),
+        _ => Err(create_error(expected_identifier_error(), token.position)),
     }
 }
 

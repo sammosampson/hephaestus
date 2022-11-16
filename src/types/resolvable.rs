@@ -20,15 +20,15 @@ pub fn resolved_resolvable_type(type_pointer: RuntimeTypePointer) -> ResolvableT
     ResolvableType::Resolved(type_pointer)
 }
 
-pub fn get_instance_member_offset(instance_type: &ResolvableType, member_name: &str) -> usize {
+pub fn try_get_instance_member_offset(instance_type: &ResolvableType, member_name: &str) -> Option<usize> {
     if let Some(pointer) = try_get_resolved_runtime_type_pointer(instance_type) {
         return match &pointer.item {
-            RuntimeTypeItem::String { members } => get_member_offset(members, member_name),
+            RuntimeTypeItem::String { members } => Some(get_member_offset(members, member_name)),
             //RuntimeTypeItem::Struct { members } => get_member_offset(members, member_name),
-            _ => panic!()
+            _ => None
         }
     }
-    panic!()
+    None
 }
 
 fn get_member_offset(members: &RuntimeTypeMembers, member_name: &str) -> usize {

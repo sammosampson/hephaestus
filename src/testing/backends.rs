@@ -5,7 +5,8 @@ use crate::backends::*;
 pub struct TestBackend; 
 
 impl BackendBuild for TestBackend {
-    fn build_backend(&mut self, _ir: IntermediateRepresentation) {
+    fn build_backend(&mut self, _ir: IntermediateRepresentation, _has_prior_errors: bool) -> BackendErrorResult {
+        Ok(())
     }
 }
 

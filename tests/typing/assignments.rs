@@ -2,13 +2,13 @@ use rust_hephaestus::*;
 
 #[test]
 fn typing_procedure_body_assignment_types_variable_int_literal_assignment() {
-    let units_and_types = compile_source_and_get_types_and_unit("SomeProcedure :: () {
+    let units_and_types = compile_source_and_get_units_and_types("SomeProcedure :: () {
     x := 1;
 }");
 
     
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "SomeProcedure");
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -40,12 +40,12 @@ fn typing_procedure_body_assignment_types_variable_int_literal_assignment() {
 
 #[test]
 fn typing_known_type_procedure_body_assignment_types_variable_int_literal_assignment() {
-    let units_and_types = compile_source_and_get_types_and_unit("SomeProcedure :: () {
+    let units_and_types = compile_source_and_get_units_and_types("SomeProcedure :: () {
     x : u32 = 1;
 }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "SomeProcedure");
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -77,14 +77,14 @@ fn typing_known_type_procedure_body_assignment_types_variable_int_literal_assign
 
 #[test]
 fn typing_known_type_assignment_to_global_const() {
-    let units_and_types = compile_source_and_get_types_and_unit("GLOBAL :: -11;
+    let units_and_types = compile_source_and_get_units_and_types("GLOBAL :: -11;
 SomeProcedure :: () {
     x := GLOBAL;
 }");
     
     assert_eq!(units_and_types.len(), 3);
     let (_, global_const_types) = get_first_typed_const_unit(&units_and_types);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "SomeProcedure");
     
     let expected = node(
         position(35, 2, 21),
@@ -115,13 +115,13 @@ SomeProcedure :: () {
 
 #[test]
 fn typing_string_assignment_types_sucessfully() {
-    let units_and_types = compile_source_and_get_types_and_unit("main :: () {
+    let units_and_types = compile_source_and_get_units_and_types("main :: () {
     s := \"hello\"
 }");
 
     
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "main");
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -152,13 +152,13 @@ fn typing_string_assignment_types_sucessfully() {
 
 #[test]
 fn typing_cast_assignment_types_sucessfully() {
-    let units_and_types = compile_source_and_get_types_and_unit("main :: () {
+    let units_and_types = compile_source_and_get_units_and_types("main :: () {
     x := cast(u32) 1;
 }");
 
     
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "main");
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -196,12 +196,12 @@ fn typing_cast_assignment_types_sucessfully() {
 
 #[test]
 fn typing_struct_member_access_assignment_types_sucessfully() {
-    let units_and_types = compile_source_and_get_types_and_unit("proc :: (s: string) {
+    let units_and_types = compile_source_and_get_units_and_types("proc :: (s: string) {
     x := s.count;
 }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "proc");
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
@@ -257,12 +257,12 @@ fn typing_struct_member_access_assignment_types_sucessfully() {
 
 #[test]
 fn typing_struct_member_access_with_cast_assignment_types_sucessfully() {
-    let units_and_types = compile_source_and_get_types_and_unit("proc :: (s: string) {
+    let units_and_types = compile_source_and_get_units_and_types("proc :: (s: string) {
     x := cast(*void) s.count;
 }");
 
     assert_eq!(units_and_types.len(), 2);
-    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit(&units_and_types);
+    let (proc_body_unit, proc_body_types) = get_first_typed_procedure_body_unit_named(&units_and_types, "proc");
 
     assert_eq!(proc_body_types.len(), 0);
     assert_eq!(
