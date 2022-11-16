@@ -42,6 +42,10 @@ impl<TBackend: BackendBuild> Actor<CompilationMessage> for BackendActor<TBackend
             _ => continue_listening_after_receive()
         }
     }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<BackendActor<TBackend>>()
+    }
 }
 
 fn build_backend_from_ir<TBackend: BackendBuild>(

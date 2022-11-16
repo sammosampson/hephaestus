@@ -16,6 +16,7 @@ use crate::acting::*;
 use crate::compilation::*;
 use crate::types::*;
 use crate::errors::*;
+use crate::utilities::*;
 
 pub struct TypingActor {
     compiler: CompilationActorHandle,
@@ -45,6 +46,10 @@ impl Actor<CompilationMessage> for TypingActor {
                 handle_perform_typing(&self, ctx, unit, has_prior_errors),
             _ => continue_listening_after_receive()
         }
+    }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<TypingActor>()
     }
 }
 

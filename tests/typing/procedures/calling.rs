@@ -52,10 +52,23 @@ SomeExternalProcedure :: (arg: int) {
             )
         )
     );
-
     assert_eq!(unit.tree, result);
 }
 
+
+#[test]
+fn typing_procedure_body_does_not_wait_for_external_procedure_that_does_not_exist() {
+    let errors = compile_source_and_get_errors("SomeProcedure :: () {
+    SomeExternalProcedure(1);
+}
+
+SomeExternalProcedure :: () {
+}
+
+SomeOtherExternalProcedure :: () {
+}");    
+    assert_eq!(errors.len(), 1);
+}
 
 #[test]
 fn typing_procedure_body_waits_for_external_procedure_with_string_arg() {

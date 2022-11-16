@@ -7,6 +7,7 @@ use crate::compilation::*;
 use crate::types::*;
 use crate::typing::*;
 use crate::errors::*;
+use crate::utilities::*;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct FindTypeCriteria { 
@@ -168,6 +169,10 @@ impl Actor<CompilationMessage> for TypeRepositoryActor {
             _ => continue_listening_after_receive()
         }
     }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<TypeRepositoryActor>()
+    }
 }
 
 fn handle_find_type(repository: &mut TypeRepositoryActor, criteria: FindTypeCriteria, respond_to: FindTypeCaller, compiler: CompilationActorHandle) -> AfterReceiveAction {
@@ -236,6 +241,7 @@ fn release_all_type_requests(repository: &mut TypeRepositoryActor, reason: TypeR
     for request in &repository.find_type_requests {
         release_type_request(request, reason.clone())
     }
+    repository.find_type_requests.clear();
 }
 
 fn release_type_request(request: &FindTypeRequest, reason: TypeRequestCircuitBreakReason) {

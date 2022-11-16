@@ -2,6 +2,7 @@
 use crate::parsing::*;
 use crate::acting::*;
 use crate::compilation::*;
+use crate::utilities::*;
 
 pub struct SizingActor {    
     compiler: CompilationActorHandle,
@@ -22,6 +23,10 @@ impl Actor<CompilationMessage> for SizingActor {
                 handle_perform_sizing(self.compiler.clone(), &self.type_repository, ctx, unit, has_prior_errors),
             _ => continue_listening_after_receive()
         }
+    }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<SizingActor>()
     }
 }
 

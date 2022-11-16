@@ -93,6 +93,28 @@ fn compile_file_and_get_types_and_unit(file_path: &str, reader: MockFileReader) 
     return result
 }
 
+pub fn compile_source_and_get_errors(source: &str) -> Vec<CompilationErrors> {
+    let (file_path, reader) = add_source_to_test_file_system(source);    
+    compile_file_and_get_errors(file_path, reader)
+}
+
+fn compile_file_and_get_errors(file_path: &str, reader: MockFileReader) -> Vec<CompilationErrors> {
+    let message_receiver = compile_and_get_message_receiver(file_path, reader);
+    
+    let mut result = vec!();
+
+    loop {
+        let next_message = message_receiver.recv().unwrap();
+        match next_message {
+            CompilationMessage::ErrorsReported(errors) => result.push(errors),
+            CompilationMessage::CompilationComplete => break,           
+            _ => {}
+        }
+    }
+
+    return result
+}
+
 
 pub fn compile_source_and_get_parsed_units_and_errors(source: &str) -> (CompilationUnits, Vec<CompilationErrors>) {
     let (file_path, reader) = add_source_to_test_file_system(source);    
@@ -171,7 +193,8 @@ pub fn run_typing_on_unit(typing_repository: CompilationActorHandle, unit: Compi
     let (error_reporter, ..) =  start_singleton_actor(create_error_reporter_actor());
     
     let (typing_actor, ..) = start_singleton_actor(
-        create_typing_actor(message_receiver_handle, typing_repository, error_reporter, unit.id)
+        create_typing_actor(message_receiver_handle, typing_repository, error_reporter, unit.id),
+        
     );
         
     send_message_to_actor(

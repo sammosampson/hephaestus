@@ -26,6 +26,10 @@ impl Actor<CompilationMessage> for IntemediateRepresentationActor {
             _ => continue_listening_after_receive()
         }
     }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<IntemediateRepresentationActor>()
+    }
 }
 
 fn build_bytecode(mut unit: CompilationUnit, compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, has_prior_errors: bool) -> AfterReceiveAction {    

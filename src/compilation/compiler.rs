@@ -4,7 +4,7 @@ use crate::{
     acting::*,
     file_system::*,
     backends::*,
-    errors::*,
+    errors::*, string_type_name,
 };
 
 pub fn compile<TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompilationMessage>(
@@ -85,6 +85,10 @@ impl <TReader: FileRead, TBackend: BackendBuild, TMessageWireTap: WireTapCompila
                 handle_compilation_complete(self),
             _ => continue_listening_after_receive()
         }
+    }
+
+    fn get_type_name(&self) -> String {
+        string_type_name::<CompilerActor::<TReader, TBackend, TMessageWireTap>>()
     }
 }
 

@@ -20,6 +20,10 @@ impl Actor<CompilationMessage> for ErrorReporterActor {
             _ => continue_listening_after_receive()
         }
     }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<ErrorReporterActor>()
+    }
 }
 
 fn report_errors(errors: &CompilationErrors, compiler: &CompilationActorHandle) -> AfterReceiveAction {

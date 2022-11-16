@@ -1,7 +1,8 @@
 use std::{
     *,
     time::*,
-    num::*
+    num::*,
+    any::*
 };
 
 macro_rules! function {
@@ -17,6 +18,10 @@ macro_rules! function {
 
 pub fn string(value: &str) -> String {
     value.to_string()
+}
+
+pub fn string_type_name<T>() -> String {
+    string(type_name::<T>())
 }
 
 pub fn empty_string() -> String {

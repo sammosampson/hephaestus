@@ -25,6 +25,10 @@ impl<T: FileRead> Actor<CompilationMessage> for ParserActor<T>  {
             _ => continue_listening_after_receive()
         }
     }
+    
+    fn get_type_name(&self) -> String {
+        string_type_name::<ParserActor<T>>()
+    }
 }
 
 fn handle_parse_file<T: FileRead>(compiler: &CompilationActorHandle, error_reporter: &CompilationActorHandle, file_reader: &T, file_name: String) -> AfterReceiveAction {
